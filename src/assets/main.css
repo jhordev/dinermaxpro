@@ -1,0 +1,6 @@
+@import './base.css';
+@import './fonts_css/main.css';
+
+html, body {
+    font-family: 'Satoshi-Regular', cursive;
+}
