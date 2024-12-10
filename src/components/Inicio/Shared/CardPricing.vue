@@ -28,8 +28,8 @@ const props = defineProps({
 <template>
   <article
       :class="[
-      'flex flex-col bg-white dark:bg-black border-[8px] border-colorPurpleCard rounded-[32px] py-8 px-6',
-      { 'bg-colorBgPopular dark:bg-colorBgPopular text-white': isMostPopular },
+      'flex flex-col  dark:bg-black border-[8px] border-colorPurpleCard rounded-[32px] py-8 px-6',
+      { 'bg-colorBgPopular dark:bg-colorBgPopular': isMostPopular },
     ]"
   >
     <header class="relative">
