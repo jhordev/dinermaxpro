@@ -17,7 +17,15 @@ export default {
         colorPurpleCard: 'rgba(182, 178, 255, 0.50)',
         colorBtnButton: 'rgba(241, 239, 255, 0.20)',
         colorBgButton: '#8C77ED',
-        colorBgPopular: '#262689'
+        colorBgPopular: '#262689',
+        colorSimulador: '#0D1927',
+        colorInput: '#201F21',
+        colorBgClaro: '#E1DCFB',
+        colorInputClaro: '#EDEBF5',
+        colorBorder: '#0F161F'
+      },
+      backgroundImage: {
+        'custom-gradient': 'linear-gradient(180deg, rgba(240, 237, 251, 0.00) 0%, #E1DCFB 100%)',
       },
       boxShadow: {
         'custom-inset-black': 'inset 0 0 30px 0 rgba(10, 124, 255, 0.8)',

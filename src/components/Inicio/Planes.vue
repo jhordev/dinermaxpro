@@ -42,7 +42,7 @@ const pricingPlans = [
 </script>
 
 <template>
-  <section class="pt-[55px] md:mt-[100px] container-section">
+  <section class="pt-[55px] md:pt-[100px] container-section">
     <h2 class="text-colorTextBlack dark:text-white text-[32px] md:text-[60px] font-extrabold">
       Planes
     </h2>

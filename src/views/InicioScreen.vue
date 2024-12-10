@@ -5,6 +5,9 @@ import About from "@/components/Inicio/About.vue";
 import Planes from "@/components/Inicio/Planes.vue";
 import CircleDecoration from "@/components/Inicio/Shared/CircleDecoration.vue";
 import StarsDecoration from "@/components/Inicio/Shared/StarsDecoration.vue";
+import Simulador from "@/components/Inicio/Simulador.vue";
+import EmailMarketing from "@/components/Inicio/EmailMarketing.vue";
+import Footer from "@/components/Inicio/Footer.vue";
 </script>
 
 <template>
@@ -18,6 +21,9 @@ import StarsDecoration from "@/components/Inicio/Shared/StarsDecoration.vue";
       <Hero />
       <About />
       <Planes />
+      <Simulador/>
+      <EmailMarketing/>
+      <Footer/>
     </main>
   </div>
 </template>
