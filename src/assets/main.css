@@ -2,5 +2,16 @@
 @import './fonts_css/main.css';
 
 html, body {
-    font-family: 'Satoshi-Regular', cursive;
+    font-family: 'Satoshi-Variable', cursive;
+}
+
+.container {
+    width: 98%;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+.container-section {
+    width: 90%;
+    max-width: 1165px;
+    margin: 0 auto;
 }

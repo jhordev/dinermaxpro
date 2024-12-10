@@ -10,6 +10,10 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  server: {
+    host: true, // Esto permite el acceso desde dispositivos en la misma red
+    port: 3000, // Puedes especificar el puerto que prefieras
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

@@ -1,0 +1,12 @@
+<svg width="29" height="28" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="63011f1a01baa4acd99a562a_corner.svg">
+<path id="Vector" d="M21.5 7C6.43637 7 7.51701 21 7.51701 21H21.5V7Z" fill="url(#paint0_linear_28_116)"/>
+<path id="Vector_2" d="M7.51701 21C7.51701 21 6.43637 7 21.5 7" stroke="#0A7CFF" stroke-width="2.25" stroke-linecap="round"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_28_116" x1="7.5" y1="7" x2="21.5" y2="21" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1F87FF" stop-opacity="0.64"/>
+<stop offset="1" stop-color="#1F87FF" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>
