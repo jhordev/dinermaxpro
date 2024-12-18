@@ -1,5 +1,16 @@
 <script setup>
 import {Instagram, Facebook} from 'lucide-vue-next'
+import {ref} from "vue";
+
+const isMenuOpen = ref(false);
+const scrollToSection = (sectionId) => {
+  const section = document.getElementById(sectionId);
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth' });
+  }
+  isMenuOpen.value = false;
+  document.body.classList.remove('overflow-hidden');
+};
 </script>
 
 <template>
@@ -31,11 +42,11 @@ import {Instagram, Facebook} from 'lucide-vue-next'
          <div class="mt-5 grid grid-cols-2 md:gap-[100px]">
            <div class="flex flex-col gap-[10px] md:gap-[24px] text-colorTextBlack dark:text-white">
              <h3 class="text-[18px] font-semibold">Estructura</h3>
-             <a href="">Home</a>
-             <a href="">¿Quiénes somos?</a>
-             <a href="">Planes</a>
-             <a href="">Calcular Ganancias</a>
-             <a href="">Contácto</a>
+             <a @click="scrollToSection('header')" class="cursor-pointer">Home</a>
+             <a @click="scrollToSection('about')" class="cursor-pointer">¿Quiénes somos?</a>
+             <a @click="scrollToSection('plans')" class="cursor-pointer">Planes</a>
+             <a @click="scrollToSection('simulator')" class="cursor-pointer">Calcular Ganancias</a>
+             <a @click="scrollToSection('contact')" class="cursor-pointer">Contácto</a>
            </div>
            <div class="flex flex-col gap-[10px] md:gap-6 text-colorTextBlack dark:text-white">
              <h3 class="text-[18px] font-semibold">Planes</h3>

@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <section class="container-section pt-[45px] md:pt-[105px] flex flex-col items-center w-full">
+  <section class="container-section pt-[45px] md:pt-[105px] flex flex-col items-center w-full" id="simulator">
     <h2 class="text-center text-[32px] md:text-[60px]  leading-10 md:leading-[140%] text-colorTextBlack dark:text-white font-black">Simulador de Ganacias</h2>
     <div class="bg-white dark:bg-colorSimulador py-11 px-5 mt-4 md:mt-8 rounded-[30px] flex flex-col items-center gap-6 md:max-w-[630px] md:px-[135px]">
 

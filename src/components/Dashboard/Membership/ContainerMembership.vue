@@ -1,5 +1,15 @@
 <script setup>
-import CardPricing from "@/components/Inicio/Shared/CardPricing.vue";
+import CardMembership from "@/components/Dashboard/Membership/CardMembership.vue";
+import { ref } from 'vue';
+import AddPlanModal from "@/components/Dashboard/Membership/AddPlanModal.vue";
+
+const isModalVisible = ref(false);
+const selectedPlan = ref(null);
+
+const openModal = (plan) => {
+  selectedPlan.value = plan;
+  isModalVisible.value = true;
+};
 
 const pricingPlans = [
   {
@@ -12,7 +22,7 @@ const pricingPlans = [
       "Acceso a Soporte Básico: Atención al cliente para resolver dudas sobre el plan y la plataforma.",
       "Actualizaciones Diarias de Rendimiento: Informe diario del crecimiento y rendimiento de tu inversión.",
     ],
-    isMostPopular: false,
+    isMostPopular: true,
   },
   {
     planName: "Plan Avanzado",
@@ -24,7 +34,7 @@ const pricingPlans = [
       "Acceso a Soporte Premium: Atención dedicada 24/7.",
       "Actualizaciones Diarias de Rendimiento: Informe diario con métricas avanzadas.",
     ],
-    isMostPopular: true,
+    isMostPopular: false,
   },
   {
     planName: "Plan Pro",
@@ -42,22 +52,19 @@ const pricingPlans = [
 </script>
 
 <template>
-  <section class="pt-[55px] md:pt-[100px] container-section" id="plans">
-    <h2 class="text-colorTextBlack dark:text-white text-[32px] md:text-[60px] font-extrabold">
-      Planes
-    </h2>
-    <div class="mt-4 md:mt-[36px] flex flex-col gap-5 md:flex-row md:mx-8">
-      <CardPricing
-          v-for="(plan, index) in pricingPlans"
-          :key="index"
-          :planName="plan.planName"
-          :priceRange="plan.priceRange"
-          :duration="plan.duration"
-          :features="plan.features"
-          :isMostPopular="plan.isMostPopular"
-      />
-    </div>
+  <section class="flex flex-col md:flex-row gap-5 md:gap-20 pb-10 md:p-0">
+    <CardMembership
+        v-for="(plan, index) in pricingPlans"
+        :key="index"
+        :planName="plan.planName"
+        :priceRange="plan.priceRange"
+        :duration="plan.duration"
+        :features="plan.features"
+        :isMostPopular="plan.isMostPopular"
+        @open-modal="() => openModal(plan)"
+    />
   </section>
 </template>
 
-<style scoped></style>
+<style scoped>
+</style>

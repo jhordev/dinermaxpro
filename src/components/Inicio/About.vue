@@ -4,7 +4,7 @@ import Button from "@/components/Inicio/Shared/Button.vue";
 </script>
 
 <template>
-  <section class="container-section pt-[45px] md:pt-[105px]">
+  <section class="container-section pt-[45px] md:pt-[105px]" id="about">
     <h2 class="text-[32px] text-colorTextBlack dark:text-white font-extrabold max-w-48 md:max-w-[200px] md:text-[100px] md:leading-[100px]">Sobre DinerMax</h2>
     <div class="flex flex-col-reverse gap-4 mt-4 md:flex-row md:mt-[60px] md:gap-[122px]">
       <img src="@/assets/img/wallet.png"/>

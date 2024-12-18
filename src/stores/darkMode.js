@@ -5,7 +5,7 @@ export const useDarkModeStore = defineStore('darkMode', () => {
   const darkMode = ref(false); // Estado inicial del modo oscuro
 
   // Inicializar el modo oscuro al cargar la aplicación
-  function initializeDarkMode() {
+  const initializeDarkMode = () => {
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode !== null) {
       // Si hay un modo guardado, úsalo
@@ -18,28 +18,29 @@ export const useDarkModeStore = defineStore('darkMode', () => {
 
     // Aplicar la clase al <html>
     applyDarkMode();
-  }
+  };
 
   // Alternar el modo oscuro manualmente
-  function toggleDarkMode() {
+  const toggleDarkMode = () => {
     darkMode.value = !darkMode.value;
-    localStorage.setItem('darkMode', darkMode.value); // Guardar el estado en Local Storage
+    localStorage.setItem('darkMode', darkMode.value.toString()); // Guardar el estado en Local Storage
     applyDarkMode();
-  }
+  };
 
   // Aplicar la clase `dark` al <html>
-  function applyDarkMode() {
+  const applyDarkMode = () => {
     if (darkMode.value) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }
+  };
 
   // Ejecutar la inicialización al montar el store
   onMounted(() => {
     initializeDarkMode();
   });
 
-  return { darkMode, toggleDarkMode, initializeDarkMode };
+  // Retornar el estado y las funciones
+  return { darkMode, toggleDarkMode };
 });
