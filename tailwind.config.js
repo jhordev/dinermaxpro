@@ -37,7 +37,11 @@ export default {
         colorGraydark: '#ADADAD',
         colorGraySecundary: '#D1D1D1',
         colorfila: '#12223C',
-        colorGray2: '#6D6D6D'
+        colorGray2: '#6D6D6D',
+        bgModal: '#23212C',
+        bgimg: '#4D607C',
+
+        bginputDark: '#232323'
       },
       backgroundImage: {
         'custom-gradient': 'linear-gradient(180deg, rgba(240, 237, 251, 0.00) 0%, #E1DCFB 100%)', // Light gradient

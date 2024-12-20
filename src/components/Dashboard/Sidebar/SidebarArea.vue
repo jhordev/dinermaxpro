@@ -41,7 +41,7 @@ const menuGroups = ref([
     <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
       <router-link to="/" class="flex items-center">
         <img src="@/assets/img/isotipo.png" alt="Logo" class="w-12" />
-        <span class="text-[24px] font-bold text-colorTextBlack dark:text-white">DinnerMax</span>
+        <span class="md:text-[24px] font-bold text-colorTextBlack dark:text-white">DinnerMax</span>
       </router-link>
 
       <button class="block lg:hidden text-colorTextBlack dark:text-white" @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen">
@@ -62,6 +62,7 @@ const menuGroups = ref([
                   :key="index"
                   :index="index"
                   :icon="menuItem.icon"
+                  @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen"
               />
             </ul>
           </div>

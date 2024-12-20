@@ -35,7 +35,7 @@ defineProps({
       class="flex flex-col gap-2 md:gap-4 rounded-[8px] bg-bgCardLigth py-4 px-5 shadow-default dark:bg-bgDashboardDark"
   >
     <header class="flex items-center gap-2 md:gap-3">
-      <img :src="imageSrc" alt="Crypto Image" class="w-5 md:w-auto" />
+      <img :src="imageSrc" alt="Crypto Image" class="w-5 md:w-[32px]" />
       <h3 class="text-[14px] md:text-[18px] font-semibold text-colorTextBlack dark:text-white">
         {{ name }}
       </h3>

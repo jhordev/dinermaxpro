@@ -3,6 +3,7 @@ import ContainerDashboard from "@/components/Dashboard/Home/ContainerDashboard.v
 import Membership from "@/views/Membership.vue";
 import ContainerMembership from "@/components/Dashboard/Membership/ContainerMembership.vue";
 import ContainerWallet from "@/components/Dashboard/Wallet/ContainerWallet.vue";
+import ContainerProfile from "@/components/Dashboard/Profile/ContainerProfile.vue";
 
 const Inicio = () => import("@/views/InicioScreen.vue");
 const LoginScreen = () => import("@/views/LoginScreen.vue");
@@ -52,6 +53,11 @@ const router = createRouter({
           path: 'wallet',
           name: 'wallet',
           component: ContainerWallet,
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: ContainerProfile,
         }
       ],
     },

@@ -38,7 +38,8 @@ onClickOutside(target, () => {
       <ul class="flex flex-col gap-5  ">
         <li>
           <router-link
-            to="/profile"
+              @click.prevent="dropdownOpen = !dropdownOpen"
+            to="/dashboard/profile"
             class="text-colorTextBlack dark:text-white flex px-2 py-4 md:px-6 items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base hover:bg-bghoverligth  dark:hover:bg-colorTextBlack"
           >
             <CircleUserRound />

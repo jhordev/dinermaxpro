@@ -43,7 +43,7 @@ const brandData = ref([
         Últimos movimientos
       </h2>
       <router-link
-          to="/movimientos"
+          to="/dashboard/wallet"
           class="text-[16px] text-colorGraydark tracking-[1.6px] font-bold hover:underline"
       >
         Ver todo

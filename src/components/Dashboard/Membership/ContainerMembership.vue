@@ -3,12 +3,16 @@ import CardMembership from "@/components/Dashboard/Membership/CardMembership.vue
 import { ref } from 'vue';
 import AddPlanModal from "@/components/Dashboard/Membership/AddPlanModal.vue";
 
+// Controlar la visibilidad del modal
 const isModalVisible = ref(false);
-const selectedPlan = ref(null);
 
-const openModal = (plan) => {
-  selectedPlan.value = plan;
+// Función para abrir el modal
+const openModal = () => {
   isModalVisible.value = true;
+};
+// Función para manejar el envío de datos
+const handleSubmit = () => {
+  console.log('Producto creado.');
 };
 
 const pricingPlans = [
@@ -52,7 +56,7 @@ const pricingPlans = [
 </script>
 
 <template>
-  <section class="flex flex-col md:flex-row gap-5 md:gap-20 pb-10 md:p-0">
+  <section class="flex flex-col md:flex-row gap-5 md:gap-10 pb-10 md:p-0">
     <CardMembership
         v-for="(plan, index) in pricingPlans"
         :key="index"
@@ -61,8 +65,9 @@ const pricingPlans = [
         :duration="plan.duration"
         :features="plan.features"
         :isMostPopular="plan.isMostPopular"
-        @open-modal="() => openModal(plan)"
+        :onChoosePlan="openModal"
     />
+    <AddPlanModal v-model="isModalVisible" />
   </section>
 </template>
 

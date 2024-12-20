@@ -22,13 +22,21 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  onChoosePlan: {
+    type: Function,
+    required: true,
+  },
 });
+
+const handleButtonClick = () => {
+  props.onChoosePlan();
+};
 </script>
 
 <template>
   <article
       :class="[
-      'flex flex-col  dark:bg-black border-[8px] border-colorPurpleCard rounded-[32px] py-8 px-6',
+      'flex flex-col dark:bg-black border-[8px] border-colorPurpleCard rounded-[32px] py-8 px-6',
       { 'bg-colorBgPopular dark:bg-colorBgPopular': isMostPopular },
     ]"
   >
@@ -74,12 +82,12 @@ const props = defineProps({
         </div>
       </li>
     </ul>
-    <router-link
-        to="/login"
+    <button
+        @click="handleButtonClick"
         class="rounded-[8px] mt-7 bg-colorBgButton w-full text-center py-3 text-[16px] text-white font-semibold"
     >
       Elegir plan
-    </router-link>
+    </button>
   </article>
 </template>
 
