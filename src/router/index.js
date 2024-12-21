@@ -6,9 +6,13 @@ import { logInfo, logError } from '@/utils/logger.js';
 
 // Componentes
 import ContainerDashboard from "@/components/Dashboard/Home/ContainerDashboard.vue";
+import ContainerDashboardAdmin from "@/components/DashboardAdmin/Home/ContainerDashboard.vue";
 import ContainerMembership from "@/components/Dashboard/Membership/ContainerMembership.vue";
 import ContainerWallet from "@/components/Dashboard/Wallet/ContainerWallet.vue";
 import ContainerProfile from "@/components/Dashboard/Profile/ContainerProfile.vue";
+import HomeViewAdmin from "@/views/Admin/HomeViewAdmin.vue";
+import ContainerUsers from "@/components/DashboardAdmin/User/ContainerUsers.vue";
+import ContainerContratos from "@/components/DashboardAdmin/Contratos/ContainerContratos.vue";
 
 // Vistas con lazy loading
 const Inicio = () => import("@/views/InicioView.vue");

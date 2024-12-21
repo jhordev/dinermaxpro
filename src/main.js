@@ -5,7 +5,6 @@ import App from './App.vue';
 import router from './router';
 
 const app = createApp(App);
-
 const pinia = createPinia(); // Crea la instancia de Pinia
 app.use(pinia); // Usa Pinia
 app.use(router); // Usa el enrutador

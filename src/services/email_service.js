@@ -1,7 +1,7 @@
 import { logInfo, logError } from '@/utils/logger.js';
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
-const BREVO_API_KEY = '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';
+
 
 export const emailService = {
     async sendEmail(to, subject, code) {
