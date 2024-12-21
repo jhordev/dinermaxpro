@@ -128,6 +128,30 @@ export const authService = {
         }
     },
 
+    async checkValidationStatus(email) {
+        try {
+            const docRef = doc(db, 'users', auth.currentUser.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (!docSnap.exists()) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            const userData = docSnap.data();
+
+            return {
+                success: true,
+                isValidated: userData.isValidated || false
+            };
+        } catch (error) {
+            logError(`Error al verificar estado de validación: ${error.message}`);
+            return {
+                success: false,
+                error: 'Error al verificar el estado de validación'
+            };
+        }
+    },
+
     async verifyCode(email, code) {
         try {
             const docRef = doc(db, 'verification_codes', email);
@@ -147,6 +171,11 @@ export const authService = {
             if (code !== data.code) {
                 throw new Error('Código inválido');
             }
+
+            // Actualizar el estado de validación del usuario
+            await setDoc(doc(db, 'users', auth.currentUser.uid), {
+                isValidated: true
+            }, { merge: true });
 
             await deleteDoc(docRef);
 

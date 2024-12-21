@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/services/firebase_config';
+import { authService } from '@/services/auth_service';
 import { logInfo, logError } from '@/utils/logger.js';
 
 // Componentes
@@ -78,16 +79,13 @@ const router = createRouter({
   }
 });
 
-// Variable para controlar el estado de inicialización de Firebase Auth
 let authInitialized = false;
 
-// Guardia de navegación
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
 
   try {
-    // Esperar a que Firebase Auth inicialice en la primera carga
     if (!authInitialized) {
       await new Promise((resolve) => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -100,23 +98,42 @@ router.beforeEach(async (to, from, next) => {
 
     const currentUser = auth.currentUser;
 
-    // Lógica de navegación
-    if (requiresAuth && !currentUser) {
-      logInfo('Acceso denegado: se requiere autenticación');
-      next('/login');
+    if (requiresAuth) {
+      if (!currentUser) {
+        logInfo('Acceso denegado: se requiere autenticación');
+        next('/login');
+      } else {
+        // Verificar validación del usuario
+        const validationResult = await authService.checkValidationStatus(currentUser.email);
+        if (!validationResult.success || !validationResult.isValidated) {
+          logInfo('Usuario no validado, redirigiendo a login');
+          await authService.logout();
+          next('/login');
+        } else {
+          next();
+        }
+      }
     } else if (requiresGuest && currentUser) {
-      logInfo('Redirigiendo: usuario ya autenticado');
-      next('/dashboard');
+      // Verificar si el usuario está validado antes de redirigir al dashboard
+      const validationResult = await authService.checkValidationStatus(currentUser.email);
+      if (validationResult.success && validationResult.isValidated) {
+        logInfo('Usuario autenticado y validado, redirigiendo al dashboard');
+        next('/dashboard');
+      } else {
+        // Si no está validado, cerrar sesión y permitir acceso a rutas de invitados
+        await authService.logout();
+        next();
+      }
     } else {
       next();
     }
   } catch (error) {
     logError('Error en la navegación:', error);
+    await authService.logout();
     next('/login');
   }
 });
 
-// Manejo de errores globales de navegación
 router.onError((error) => {
   logError('Error en el router:', error);
   router.push('/');
