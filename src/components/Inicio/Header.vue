@@ -50,7 +50,7 @@ const scrollToSection = (sectionId) => {
     <div class="flex gap-5 items-center">
       <router-link to="/login" class="dark:text-white text-[14px] md:text-[18px] hidden sm:flex">Iniciar Sesión</router-link>
       <Button label="Iniciar Sesión" to="/login" class="flex sm:hidden"/>
-      <Button label="Registrarse" to="/sigup" class="hidden sm:flex" />
+      <Button label="Registrarse" to="/register" class="hidden sm:flex" />
     </div>
     <button @click="toggleMenu" class="sm:hidden p-2">
       <Menu v-if="!isMenuOpen" class="w-6 h-6 dark:text-white" />

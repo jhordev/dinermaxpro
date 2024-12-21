@@ -1,0 +1,19 @@
+POST https://api.brevo.com/v3/smtp/email
+accept: application/json
+api-key: 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
+Content-Type: application/json
+
+{
+  "sender": {
+    "name": "Jhordy Mondragon",
+    "email": "jhordymondragon4@gmail.com"
+  },
+  "to": [
+    {
+      "email": "xtremixurban@gmail.com",
+      "name": "Destinatario"
+    }
+  ],
+  "subject": "Asunto del Email",
+  "htmlContent": "<html><body><h1>¡Hola!</h1><p>Este es un mensaje de prueba enviado a través de la API de Brevo.</p></body></html>"
+}
