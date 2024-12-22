@@ -22,8 +22,8 @@ const pageTitle = computed(() => {
       return 'Billetera'
     case '/dashboard/profile':
       return 'Perfil'
-    case '/transactions':
-      return 'Transacciones'
+    case '/dashboard/references':
+      return 'Red de Referidos'
     default:
       return 'Dashboard'
   }

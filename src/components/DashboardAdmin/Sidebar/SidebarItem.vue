@@ -6,7 +6,10 @@ import SidebarDropdown from './SidebarDropdown.vue'
 const props = defineProps({
   item: Object,
   index: Number,
-  icon: {type: Object, default: null}
+  icon: {
+    type: [ String],
+    default: 'hola',
+  }
 })
 
 const sidebarStore = useSidebarStore()

@@ -20,7 +20,7 @@ const menuGroups = ref([
       { icon: LayoutDashboard, label: 'Dashboard', route: '/dashboard' },
       { icon: Gem, label: 'Membresia', route: '/dashboard/membership' },
       { icon: Wallet, label: 'Billetera', route: '/dashboard/wallet' },
-      { icon: Network, label: 'Red de referidos', route: '/network' },
+      { icon: Network, label: 'Red de referidos', route: '/dashboard/references' },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
     ]
   }

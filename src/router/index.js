@@ -13,6 +13,11 @@ import ContainerProfile from "@/components/Dashboard/Profile/ContainerProfile.vu
 import HomeViewAdmin from "@/views/HomeAdminView.vue";
 import ContainerUsers from "@/components/DashboardAdmin/User/ContainerUsers.vue";
 import ContainerContratos from "@/components/DashboardAdmin/Contratos/ContainerContratos.vue";
+import ContainerReferences from "@/components/Dashboard/References/ContainerReferences.vue";
+import ContainerPlanes from "@/components/DashboardAdmin/Planes/ContainerPlanes.vue";
+import ContainerConfig from "@/components/DashboardAdmin/Config/ContainerConfig.vue";
+import ContainerAsistens from "@/components/DashboardAdmin/Asistentes/ContainerAsistens.vue";
+import ContainerProfileAdmin from "@/components/DashboardAdmin/Profile/ContainerProfileAdmin.vue";
 
 // Vistas con lazy loading
 const Inicio = () => import("@/views/InicioView.vue");
@@ -59,6 +64,11 @@ const routes = [
         component: ContainerWallet,
       },
       {
+        path: 'references',
+        name: 'references',
+        component: ContainerReferences,
+      },
+      {
         path: 'profile',
         name: 'profile',
         component: ContainerProfile,
@@ -84,6 +94,26 @@ const routes = [
         path: 'contracts',
         name: 'contracts',
         component: ContainerContratos,
+      },
+      {
+        path: 'plans',
+        name: 'plans',
+        component: ContainerPlanes,
+      },
+      {
+        path: 'configurations',
+        name: 'configurations',
+        component: ContainerConfig,
+      },
+      {
+        path: 'asistentials',
+        name: 'asistentials',
+        component: ContainerAsistens,
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: ContainerProfileAdmin,
       },
     ]
   },

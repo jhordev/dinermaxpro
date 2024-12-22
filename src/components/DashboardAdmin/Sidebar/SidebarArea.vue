@@ -20,7 +20,16 @@ const menuGroups = ref([
       { icon: LayoutDashboard, label: 'Dashboard', route: '/admin' },
       { icon: Users, label: 'Usuarios', route: '/admin/user' },
       { icon: BookUser , label: 'Contratos', route: '/admin/contracts' },
-      { icon: MonitorCog , label: 'Sistema', route: '/network' },
+      {
+        icon: MonitorCog ,
+        label: 'Sistema',
+        route: '#',
+        children: [
+          { label: 'Planes', route: '/admin/plans' },
+          { label: 'Configuración', route: '/admin/configurations' },
+          { label: 'Asistentea', route: '/admin/asistentials' }
+        ]
+      },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
     ]
   }
