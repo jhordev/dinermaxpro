@@ -1,43 +1,33 @@
+// TableMovimientos.vue
 <script setup>
-import CardLayout from "@/layouts/CardLayout.vue";
 import { ref, computed } from 'vue';
-import { Search, ChevronDown, Sheet, FileText, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Search, ChevronDown, Sheet, FileText, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
-// Data
-const products = ref([
-  { fecha: "2024-12-20", transaccion: "Apple MacBook Pro 17\"", operacion: "Compra", monto: 2999 },
-  { fecha: "2024-12-20", transaccion: "Microsoft Surface Pro", operacion: "Compra", monto: 1999 },
-  { fecha: "2024-12-20", transaccion: "Magic Mouse 2", operacion: "Compra", monto: 99 },
-  { fecha: "2024-12-20", transaccion: "Apple Watch", operacion: "Compra", monto: 199 },
-  { fecha: "2024-12-20", transaccion: "Apple iMac", operacion: "Compra", monto: 2999 },
-  { fecha: "2024-12-20", transaccion: "Apple AirPods", operacion: "Compra", monto: 399 },
-  { fecha: "2024-12-20", transaccion: "iPad Pro", operacion: "Compra", monto: 699 },
-  { fecha: "2024-12-20", transaccion: "Magic Keyboard", operacion: "Compra", monto: 99 },
-  { fecha: "2024-12-20", transaccion: "Smart Folio iPad Air", operacion: "Compra", monto: 79 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-  { fecha: "2024-12-20", transaccion: "AirTag", operacion: "Compra", monto: 29 },
-]);
+// Props
+const props = defineProps({
+  datos: {
+    type: Array,
+    required: true,
+  },
+});
+
+// Dropdown state
+const dropdownOpen = ref(false);
+const toggleDropdown = () => {
+  dropdownOpen.value = !dropdownOpen.value;
+};
 
 // Pagination
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
-const totalItems = computed(() => products.value.length);
+const totalItems = computed(() => props.datos.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
 
 // Computed
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return products.value.slice(start, end);
+  return props.datos.slice(start, end);
 });
 
 const showingFrom = computed(() => ((currentPage.value - 1) * itemsPerPage.value) + 1);
@@ -67,43 +57,36 @@ const paginationRange = computed(() => {
   const range = [];
   const maxPages = totalPages.value;
 
-  // Start page
   let startPage = currentPage.value - 1;
-  // End page
   let endPage = currentPage.value + 1;
 
-  // Ensure range is within the page limits
   if (startPage < 1) startPage = 1;
   if (endPage > maxPages) endPage = maxPages;
 
-  // Add pages to range
   for (let i = startPage; i <= endPage; i++) {
     range.push(i);
   }
 
-  // Add dots if needed
   if (startPage > 2) range.unshift('...');
   if (endPage < maxPages - 1) range.push('...');
 
   return range;
 });
-
-// Dropdown state
-const dropdownOpen = ref(false);
-const toggleDropdown = () => {
-  dropdownOpen.value = !dropdownOpen.value;
-};
 </script>
 
 <template>
-  <CardLayout>
-    <header class="flex gap-2.5 md:gap-5 md:justify-between items-center mb-4">
+  <div class="rounded-[15px] bg-bgCardLigth p-5 md:p-6 shadow-default dark:bg-bgDashboardDark w-full ">
+    <h2 class="text-[18px] text-colorTextBlack dark:text-white tracking-[1.8px] font-bold">
+      Historial de Movimientos
+    </h2>
+    <!-- Search bar -->
+    <header class="mt-5 flex gap-2.5 md:gap-5 md:justify-between items-center mb-4">
       <div class="w-full bg-colorInputClaro dark:bg-gray-800 rounded-[15px] flex gap-1.5 py-2.5 px-4">
-        <Search class="text-gray-500"/>
+        <Search class="text-gray-500" />
         <input type="text" class="text-[16px] font-normal bg-transparent w-full outline-none text-colorTextBlack dark:text-white" placeholder="Buscar...">
       </div>
       <div class="relative">
-        <button @click="toggleDropdown" id="dropdownActionButton" data-dropdown-toggle="dropdownAction" class="py-2.5 rounded-[15px] inline-flex items-center text-gray-500 focus:outline-none hover:bg-gray-100 font-medium text-sm px-3 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 bg-colorInputClaro dark:hover:border-gray-600 dark:focus:ring-gray-700" type="button">
+        <button @click="toggleDropdown" id="dropdownActionButton" class="py-2.5 rounded-[15px] inline-flex items-center text-gray-500 focus:outline-none hover:bg-gray-100 font-medium text-sm px-3 dark:bg-gray-800 dark:text-gray-400 bg-colorInputClaro" type="button">
           Exportar
           <ChevronDown class="ml-1.5 w-5" />
         </button>
@@ -140,9 +123,7 @@ const toggleDropdown = () => {
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(product, index) in paginatedProducts"
-            :key="index"
-            :class="index % 2 === 0 ? 'bg-transparent' : 'bg-bgf3 dark:bg-colorfila'">
+        <tr v-for="(product, index) in paginatedProducts" :key="index" :class="index % 2 === 0 ? 'bg-transparent' : 'bg-bgf3 dark:bg-colorfila'">
           <td class="p-4 text-[14px] font-normal text-colorTextBlack dark:text-white">{{ product.fecha }}</td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">{{ product.transaccion }}</td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">{{ product.operacion }}</td>
@@ -161,27 +142,25 @@ const toggleDropdown = () => {
 
       <ul class="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
         <li>
-          <a href="#" @click.prevent="previousPage"
-             class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-             :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }">
+          <a href="#" @click.prevent="previousPage" class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white rounded-s-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white" :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }">
             <ChevronLeft />
           </a>
         </li>
         <li v-for="(page, index) in paginationRange" :key="index">
-          <a href="#" @click.prevent="page !== '...' && changePage(page)"
-             class="flex items-center justify-center px-3 h-8 leading-tight "
-             :class="[page === '...' ? 'text-gray-500 dark:bg-gray-800 ' : (currentPage === page ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white' : 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white')]">
+          <a href="#" @click.prevent="page !== '...' && changePage(page)" class="flex items-center justify-center px-3 h-8 leading-tight " :class="[page === '...' ? 'text-gray-500 dark:bg-gray-800 ' : (currentPage === page ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white' : 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white')]">
             {{ page }}
           </a>
         </li>
         <li>
-          <a href="#" @click.prevent="nextPage"
-             class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-             :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }">
+          <a href="#" @click.prevent="nextPage" class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white rounded-e-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white" :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }">
             <ChevronRight />
           </a>
         </li>
       </ul>
     </nav>
-  </CardLayout>
+  </div>
 </template>
+
+<style scoped>
+/* Agregar estilos si es necesario */
+</style>

@@ -1,7 +1,7 @@
 <script setup>
 import { useSidebarStore } from '@/stores/sidebar'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronsLeft, LayoutDashboard, Gem, Wallet, Network, MessageCircleQuestion } from 'lucide-vue-next'
+import { ChevronsLeft, LayoutDashboard, MonitorCog , MessageCircleQuestion, Users, BookUser  } from 'lucide-vue-next'
 import { ref } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import DarkModeSwitcher from "./DarkModeSwitcher.vue"
@@ -17,10 +17,10 @@ onClickOutside(target, () => {
 const menuGroups = ref([
   {
     menuItems: [
-      { icon: LayoutDashboard, label: 'Dashboard', route: '/dashboard' },
-      { icon: Gem, label: 'Membresia', route: '/dashboard/membership' },
-      { icon: Wallet, label: 'Billetera', route: '/dashboard/wallet' },
-      { icon: Network, label: 'Red de referidos', route: '/network' },
+      { icon: LayoutDashboard, label: 'Dashboard', route: '/admin' },
+      { icon: Users, label: 'Usuarios', route: '/admin/user' },
+      { icon: BookUser , label: 'Contratos', route: '/admin/contracts' },
+      { icon: MonitorCog , label: 'Sistema', route: '/network' },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
     ]
   }

@@ -1,10 +1,12 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { Eye, EyeOff, Loader2 } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { authService } from '@/services/auth_service';
 import DialogValidation from '@/dialogs/DialogValidation.vue';
 import { logError, logInfo } from '@/utils/logger.js';
+import { useDarkModeStore } from '@/stores/darkMode.js';
+useDarkModeStore();
 
 const router = useRouter();
 const passwordVisible = ref(false);
@@ -14,10 +16,12 @@ const loading = ref(false);
 const errorMessage = ref('');
 const showValidationDialog = ref(false);
 const isSubmitting = ref(false);
+const isDarkMode = ref(true);
 
 const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value;
 };
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();

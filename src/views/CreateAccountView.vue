@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router';
 import { authService } from '@/services/auth_service';
 import DialogValidation from '@/dialogs/DialogValidation.vue';
 import { logError, logInfo } from '@/utils/logger.js';
+import { useDarkModeStore } from '@/stores/darkMode.js';
+
+useDarkModeStore();
 
 const router = useRouter();
 const passwordVisible = ref(false);

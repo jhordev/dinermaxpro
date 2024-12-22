@@ -6,9 +6,13 @@ import { logInfo, logError } from '@/utils/logger.js';
 
 // Componentes
 import ContainerDashboard from "@/components/Dashboard/Home/ContainerDashboard.vue";
+import ContainerDashboardAdmin from "@/components/DashboardAdmin/Home/ContainerDashboard.vue";
 import ContainerMembership from "@/components/Dashboard/Membership/ContainerMembership.vue";
 import ContainerWallet from "@/components/Dashboard/Wallet/ContainerWallet.vue";
 import ContainerProfile from "@/components/Dashboard/Profile/ContainerProfile.vue";
+import HomeViewAdmin from "@/views/HomeAdminView.vue";
+import ContainerUsers from "@/components/DashboardAdmin/User/ContainerUsers.vue";
+import ContainerContratos from "@/components/DashboardAdmin/Contratos/ContainerContratos.vue";
 
 // Vistas con lazy loading
 const Inicio = () => import("@/views/InicioView.vue");
@@ -37,7 +41,7 @@ const routes = [
   {
     path: '/dashboard',
     component: HomeScreen,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: false },
     children: [
       {
         path: '',
@@ -60,6 +64,28 @@ const routes = [
         component: ContainerProfile,
       }
     ],
+  },
+  {
+    path: '/admin',
+    component: HomeViewAdmin,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'dashboardadmin',
+        component: ContainerDashboardAdmin,
+      },
+      {
+        path: 'user',
+        name: 'user',
+        component: ContainerUsers,
+      },
+      {
+        path: 'contracts',
+        name: 'contracts',
+        component: ContainerContratos,
+      },
+    ]
   },
   {
     path: '/:pathMatch(.*)*',

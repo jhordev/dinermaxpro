@@ -41,7 +41,11 @@ export default {
         bgModal: '#23212C',
         bgimg: '#4D607C',
 
-        bginputDark: '#232323'
+        bginputDark: '#232323',
+
+        colorstatuspendiente: '#DAAA39',
+        colorstatusaprovado: '#03A66D',
+        colorstatuscancelado: '#DC2626',
       },
       backgroundImage: {
         'custom-gradient': 'linear-gradient(180deg, rgba(240, 237, 251, 0.00) 0%, #E1DCFB 100%)', // Light gradient
