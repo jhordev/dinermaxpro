@@ -28,3 +28,6 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Archivos de servicios sensibles
+src/services/email_service.js
