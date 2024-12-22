@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    Admin admin
+    <h1 class="text-colorTextBlack dark:text-white">dasboard</h1>
 </template>
 
 <style scoped>

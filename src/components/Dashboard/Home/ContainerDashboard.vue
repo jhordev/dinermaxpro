@@ -15,8 +15,8 @@ import ActivosComponent from "@/components/Dashboard/Home/ActivosComponent.vue";
   <main class="grid grid-cols-1 md:grid-cols-[1fr_minmax(0,400px)] mt-5 md:mt-10 gap-10">
     <section class="flex flex-col gap-10">
       <TotalComponent
-          totalAmount="$ 345,045.31"
-          totalInUSD="~ 345,045.31 USD"
+          totalAmount="345,045.31"
+          totalInUSD="345,045.31 USD"
       />
       <MembershipComponent/>
       <MovementsComponent/>

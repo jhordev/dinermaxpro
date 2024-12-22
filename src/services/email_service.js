@@ -2,7 +2,6 @@ import { logInfo, logError } from '@/utils/logger.js';
 
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
-
 export const emailService = {
     async sendEmail(to, subject, code) {
         // Contenido HTML del correo electrónico
@@ -25,7 +24,7 @@ export const emailService = {
         const requestBody = {
             sender: {
                 name: "DinerMax | Inversión",
-                email: "jhordymondragon4@gmail.com"
+                email: "dinermax2025@gmail.com"
             },
             to: [{ email: to }],
             subject,

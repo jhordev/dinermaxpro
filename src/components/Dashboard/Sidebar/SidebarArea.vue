@@ -18,7 +18,7 @@ const menuGroups = ref([
   {
     menuItems: [
       { icon: LayoutDashboard, label: 'Dashboard', route: '/dashboard' },
-      { icon: Gem, label: 'Membresía', route: '/dashboard/membership' },
+      { icon: Gem, label: 'Membresia', route: '/dashboard/membership' },
       { icon: Wallet, label: 'Billetera', route: '/dashboard/wallet' },
       { icon: Network, label: 'Red de referidos', route: '/network' },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }

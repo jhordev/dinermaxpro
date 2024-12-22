@@ -34,11 +34,11 @@ const toggleVisibility = () => {
 
       <!-- Valores visibles u ocultos con asteriscos dinámicos -->
       <strong class="text-colorTextBlack dark:text-white text-[30px] tracking-[3px] font-bold">
-        {{ isHidden ? generateMask(totalAmount) : totalAmount }}
+        $ {{ isHidden ? generateMask(totalAmount) : totalAmount }}
       </strong>
 
       <span class="text-[16px] text-colorGraydark tracking-[1.6px] font-bold">
-        {{ isHidden ? generateMask(totalInUSD) : totalInUSD }}
+        ~ {{ isHidden ? generateMask(totalInUSD) : totalInUSD }}
       </span>
     </div>
 
