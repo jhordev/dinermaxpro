@@ -1,8 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Eye, EyeOff, Loader2 } from 'lucide-vue-next';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { authService } from '@/services/auth_service';
+import { referralService } from '@/services/referral_service';
 import DialogValidation from '@/dialogs/DialogValidation.vue';
 import { logError, logInfo } from '@/utils/logger.js';
 import { useDarkModeStore } from '@/stores/darkMode.js';
@@ -10,6 +11,7 @@ import { useDarkModeStore } from '@/stores/darkMode.js';
 useDarkModeStore();
 
 const router = useRouter();
+const route = useRoute();
 const passwordVisible = ref(false);
 const nombre = ref('');
 const email = ref('');
@@ -17,6 +19,15 @@ const password = ref('');
 const loading = ref(false);
 const errorMessage = ref('');
 const showValidationDialog = ref(false);
+const referralCode = ref(null);
+
+onMounted(() => {
+  const refCode = route.query.ref;
+  if (refCode) {
+    referralCode.value = refCode;
+    logInfo(`Código de referido detectado: ${refCode}`);
+  }
+});
 
 const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value;
@@ -54,6 +65,21 @@ const handleSubmit = async (e) => {
     );
 
     if (result.success) {
+      if (referralCode.value) {
+        try {
+          await referralService.processReferral(referralCode.value, result.user.uid);
+          logInfo(`Referido procesado exitosamente para usuario: ${result.user.uid}`);
+        } catch (refError) {
+          logError(`Error al procesar referido: ${refError.message}`);
+        }
+      }
+
+      try {
+        await referralService.createReferralCode(result.user.uid);
+      } catch (codeError) {
+        logError(`Error al crear código de referido: ${codeError.message}`);
+      }
+
       logInfo(`Usuario registrado exitosamente: ${email.value}`);
       showValidationDialog.value = true;
     } else {

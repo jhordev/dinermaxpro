@@ -1,8 +1,9 @@
 <script setup>
 import { onClickOutside } from '@vueuse/core'
-import { ref } from 'vue'
-import { ChevronDown, CircleUserRound, LogOut, Loader2 } from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
+import { ChevronDown, CircleUserRound, LogOut, Loader2, UserCircle2 } from 'lucide-vue-next'
 import { authService } from '@/services/auth_service'
+import { userService } from '@/services/user_service'
 import { useRouter } from 'vue-router'
 import { logError } from '@/utils/logger'
 
@@ -10,6 +11,24 @@ const router = useRouter()
 const target = ref(null)
 const dropdownOpen = ref(false)
 const isLoading = ref(false)
+const imageLoading = ref(true)
+const imageError = ref(false)
+const userData = ref({
+  nombre: '',
+  email: '',
+  photoURL: null
+})
+
+onMounted(async () => {
+  try {
+    const response = await userService.getUserData()
+    if (response.success) {
+      userData.value = response.data
+    }
+  } catch (error) {
+    logError('Error al obtener datos del usuario:', error)
+  }
+})
 
 onClickOutside(target, () => {
   dropdownOpen.value = false
@@ -31,6 +50,15 @@ const handleLogout = async () => {
     dropdownOpen.value = false
   }
 }
+
+const handleImageLoad = () => {
+  imageLoading.value = false
+}
+
+const handleImageError = () => {
+  imageLoading.value = false
+  imageError.value = true
+}
 </script>
 
 <template>
@@ -41,21 +69,36 @@ const handleLogout = async () => {
         @click.prevent="dropdownOpen = !dropdownOpen"
     >
       <span class="hidden text-right lg:block">
-        <span class="block text-sm font-medium text-colorTextBlack dark:text-white">Jhordy Mondragon</span>
-        <span class="block text-xs font-medium text-colorTextBlack dark:text-white">jhordy@gmail.com</span>
+        <span class="block text-sm font-medium text-colorTextBlack dark:text-white">
+          {{ userData.nombre }}
+        </span>
+        <span class="block text-xs font-medium text-colorTextBlack dark:text-white">
+          {{ userData.email }}
+        </span>
       </span>
 
-      <span class="w-10 h-10 md:h-12 md:w-12 rounded-full">
-        <img src="@/assets/img/user/user-01.png" alt="User" />
+      <span class="w-10 h-10 md:h-12 md:w-12 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 overflow-hidden">
+        <template v-if="userData.photoURL">
+          <Loader2 v-if="imageLoading" class="animate-spin w-6 h-6 text-primary" />
+          <UserCircle2 v-else-if="imageError" class="w-full h-full text-gray-400" />
+          <img
+              v-show="!imageLoading && !imageError"
+              :src="userData.photoURL"
+              alt="User"
+              class="w-full h-full object-cover"
+              @load="handleImageLoad"
+              @error="handleImageError"
+          />
+        </template>
+        <UserCircle2 v-else class="w-full h-full text-gray-400" />
       </span>
 
       <ChevronDown class="text-colorTextBlack dark:text-white hidden md:block" />
     </router-link>
 
-    <!-- Dropdown Start -->
     <div
         v-show="dropdownOpen"
-        class=" shadow-lg border-[3px] w-48 md:w-auto absolute py-[18px] px-4 right-0 mt-4 flex w-62.5 flex-col rounded-[16px] bg-white dark:bg-bgDashboardDark"
+        class="shadow-lg border-[3px] w-48 md:w-auto absolute py-[18px] px-4 right-0 mt-4 flex w-62.5 flex-col rounded-[16px] bg-white dark:bg-bgDashboardDark"
     >
       <ul class="flex flex-col gap-5">
         <li>
@@ -79,7 +122,6 @@ const handleLogout = async () => {
         Cerrar sesión
       </button>
     </div>
-    <!-- Dropdown End -->
   </div>
 </template>
 

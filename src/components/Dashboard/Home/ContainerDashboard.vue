@@ -2,7 +2,6 @@
 
 import ReferidosComponent from "@/components/Dashboard/Home/ReferidosComponent.vue";
 import MembershipComponent from "@/components/Dashboard/Home/MembershipComponent.vue";
-import ConversorComponent from "@/components/Dashboard/Home/ConversorComponent.vue";
 import TotalComponent from "@/components/Dashboard/Home/TotalComponent.vue";
 import MovementsComponent from "@/components/Dashboard/Home/MovementsComponent.vue";
 import ProfileCardComponent from "@/components/Dashboard/Home/ProfileCardComponent.vue";
@@ -23,7 +22,6 @@ import ActivosComponent from "@/components/Dashboard/Home/ActivosComponent.vue";
     </section>
     <section class="flex flex-col gap-10">
       <ProfileCardComponent/>
-      <ConversorComponent/>
       <ReferidosComponent/>
     </section>
   </main>
