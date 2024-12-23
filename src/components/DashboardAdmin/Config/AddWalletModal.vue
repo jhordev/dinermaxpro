@@ -1,7 +1,6 @@
 <script setup>
 import {ref, watch} from 'vue';
 import {Plus} from "lucide-vue-next";
-import imgVoucher from '@/assets/img/imgview.png';
 
 const props = defineProps({
   modelValue: {
@@ -29,8 +28,8 @@ const walletData = ref({
 });
 
 // Previsualización de la imagen
-const defaultImage = imgVoucher;
-const imagePreview = ref(defaultImage);
+const imagePreview = ref(null);
+const defaultImage = "ruta/a/imagen/por/defecto.jpg"; // Cambia esta ruta según corresponda
 
 // Inicializar datos en modo edición
 watch(
@@ -40,12 +39,6 @@ watch(
         walletData.value = {...newData};
         imagePreview.value = newData.voucherImage || defaultImage;
       } else {
-        walletData.value = {
-          paymentMethod: "",
-          network: "",
-          walletAddress: "",
-          voucherImage: null,
-        };
         imagePreview.value = defaultImage;
       }
     },
@@ -134,17 +127,15 @@ watch(
         </div>
         <!-- Modal body -->
         <form class="p-4 md:p-5 " @submit.prevent="handleSubmit">
-          <div class="grid grid-cols-1 gap-6">
-            <div class="col-span-2 flex flex-col gap-2.5">
-              <label for="paymentMethod"
-                     class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Forma de
-                Pago</label>
+          <div class="grid grid-cols-3 gap-6">
+            <div class="col-span-1 flex flex-col gap-2.5">
+              <label for="paymentMethod" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Método</label>
               <input
                   v-model="walletData.paymentMethod"
                   type="text"
                   id="paymentMethod"
                   class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
-                  placeholder="Ejemplo: bv"
+                  placeholder="BV"
                   required>
             </div>
             <div class="col-span-2 flex flex-col gap-2.5">
@@ -154,28 +145,26 @@ watch(
                   type="text"
                   id="network"
                   class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
-                  placeholder="Ejemplo: Wallet-Tron (TRC20)"
+                  placeholder="Wallet-Tron (TRC20)"
                   required>
             </div>
-            <div class="col-span-2 flex flex-col gap-2.5">
-              <label for="walletAddress"
-                     class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Dirección de
-                Billetera</label>
+            <div class="col-span-3 flex flex-col gap-2.5">
+              <label for="walletAddress" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Dirección de Billetera</label>
               <input
                   v-model="walletData.walletAddress"
                   type="text"
                   id="walletAddress"
                   class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
-                  placeholder="Ejemplo: 12eb5cRuXFwaXwKFsqUFS7yYTFVXwsHak9"
+                  placeholder="12eb5cRuXFwaXwKFsqUFS7yYTFVXwsHak9"
                   required>
             </div>
-            <div class="mt-5 flex items-center gap-5 ">
+            <div class="col-span-3 mt-5 flex items-center gap-5 ">
               <div>
                 <img :src="imagePreview" alt="visualización de voucher" class="w-[100px] h-[100px] object-cover">
               </div>
               <div>
                 <label class="mb-3 block text-sm font-medium text-colorTextBlack dark:text-white">
-                  Cargar Voucher
+                  Cargar QR
                 </label>
                 <input
                     type="file"

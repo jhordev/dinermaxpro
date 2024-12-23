@@ -19,6 +19,9 @@ import ContainerPlanes from "@/components/DashboardAdmin/Planes/ContainerPlanes.
 import ContainerConfig from "@/components/DashboardAdmin/Config/ContainerConfig.vue";
 import ContainerAsistens from "@/components/DashboardAdmin/Asistentes/ContainerAsistens.vue";
 import ContainerProfileAdmin from "@/components/DashboardAdmin/Profile/ContainerProfileAdmin.vue";
+import Wallets from "@/components/DashboardAdmin/Config/Wallets.vue";
+import Recompensas from "@/components/DashboardAdmin/Config/Recompensas.vue";
+import Profile from "@/components/DashboardAdmin/Config/Profile.vue";
 
 // Vistas con lazy loading
 const Inicio = () => import("@/views/InicioView.vue");
@@ -80,7 +83,7 @@ const routes = [
     path: '/admin',
     component: HomeViewAdmin,
     meta: {
-      requiresAuth: true,
+      requiresAuth: false,
       requiresAdmin: true
     },
     children: [
@@ -108,6 +111,25 @@ const routes = [
         path: 'configurations',
         name: 'configurations',
         component: ContainerConfig,
+        meta: { requiresAdmin: true },
+        redirect: { name: 'wallets' },
+        children:[
+          {
+            path: 'wallets',
+            name: 'wallets',
+            component: Wallets,
+          },
+          {
+            path: 'recompensas',
+            name: 'recompensas',
+            component: Recompensas,
+          },
+          {
+            path: 'profile',
+            name: 'profile',
+            component: Profile,
+          }
+        ]
       },
       {
         path: 'asistentials',
