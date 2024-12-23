@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue';
-import AddPlanModal from "@/components/DashboardAdmin/Planes/AddPlanModal.vue";
+import AddPlanModal from "@/dialogs/PlanDialog.vue";
 import CardPlan from "@/components/DashboardAdmin/Planes/CardPlan.vue";
 import { Plus } from "lucide-vue-next";
 

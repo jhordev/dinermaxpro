@@ -200,10 +200,27 @@ export const authService = {
             // Establecer la sesión como validada
             ls.set(SESSION_KEY, 'true');
 
-            // Obtener el rol del usuario actual
-            const user = auth.currentUser;
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const userRole = userDoc.data()?.role || 'user';
+            let userRole = 'user';
+            let user = null;
+
+            // Verificar si hay datos temporales de registro
+            const tempUserData = ls.get(TEMP_USER_KEY);
+
+            if (tempUserData) {
+                // Es un nuevo registro, no necesitamos verificar el usuario actual
+                userRole = 'user';
+            } else {
+                // Es un usuario existente
+                user = auth.currentUser;
+                if (!user) {
+                    throw new Error('Usuario no autenticado');
+                }
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (!userDoc.exists()) {
+                    throw new Error('Datos de usuario no encontrados');
+                }
+                userRole = userDoc.data()?.role || 'user';
+            }
 
             // Eliminar el código de verificación
             await deleteDoc(docRef);
@@ -212,7 +229,8 @@ export const authService = {
             return {
                 success: true,
                 message: 'Código verificado correctamente',
-                role: userRole
+                role: userRole,
+                isNewRegistration: !!tempUserData
             };
         } catch (error) {
             logError(`Error en verificación de código: ${error.message}`);

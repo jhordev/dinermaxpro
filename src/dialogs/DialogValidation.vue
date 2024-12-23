@@ -4,6 +4,10 @@ import { Loader2, RefreshCw } from 'lucide-vue-next';
 import { authService } from '@/services/auth_service';
 import { logError, logInfo } from '@/utils/logger.js';
 import { useRouter } from 'vue-router';
+import SecureLS from 'secure-ls';
+
+const ls = new SecureLS({ encodingType: 'aes' });
+const TEMP_USER_KEY = 'temp_user_data';
 
 const router = useRouter();
 const props = defineProps({
@@ -62,26 +66,32 @@ const handleValidate = async () => {
       throw new Error(verificationResult.error);
     }
 
+    // Si es un nuevo registro (no login)
     if (!props.isLogin) {
-      const registrationResult = await authService.completeRegistration();
-      if (!registrationResult.success) {
-        throw new Error(registrationResult.error);
+      const tempUserData = ls.get(TEMP_USER_KEY);
+      if (tempUserData) {
+        const registrationResult = await authService.completeRegistration();
+        if (!registrationResult.success) {
+          throw new Error(registrationResult.error);
+        }
+        // Nuevo usuario registrado, siempre va al dashboard
+        successMessage.value = 'Registro completado exitosamente';
+        setTimeout(() => router.push('/dashboard'), 1000);
       }
+    } else {
+      // Es un login existente, redirigir según el rol
+      successMessage.value = 'Validación exitosa';
+      setTimeout(() => {
+        if (verificationResult.role === 'admin') {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
+      }, 1000);
     }
 
-    successMessage.value = 'Validación exitosa';
     logInfo('Sesión validada correctamente');
-
-    // Usar el rol devuelto por verifyCode
-    const userRole = verificationResult.role;
-
-    setTimeout(() => {
-      if (userRole === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
-      }
-    }, 1000);
+    emit('validated');
 
   } catch (error) {
     logError(`Error en validación: ${error.message}`);
