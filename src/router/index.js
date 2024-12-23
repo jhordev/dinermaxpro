@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/services/firebase_config';
+import { auth, db } from '@/services/firebase_config';
 import { authService } from '@/services/auth_service';
 import { logInfo, logError } from '@/utils/logger.js';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Componentes
 import ContainerDashboard from "@/components/Dashboard/Home/ContainerDashboard.vue";
@@ -46,7 +47,7 @@ const routes = [
   {
     path: '/dashboard',
     component: HomeScreen,
-    meta: { requiresAuth: false },
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -78,11 +79,14 @@ const routes = [
   {
     path: '/admin',
     component: HomeViewAdmin,
-    meta: { requiresAuth: false },
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true
+    },
     children: [
       {
         path: '',
-        name: 'dashboardadmin',
+        name: 'dashboardAdmin',
         component: ContainerDashboardAdmin,
       },
       {
@@ -112,7 +116,7 @@ const routes = [
       },
       {
         path: 'profile',
-        name: 'profile',
+        name: 'profileAdmin',
         component: ContainerProfileAdmin,
       },
     ]
@@ -140,6 +144,7 @@ let authInitialized = false;
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
 
   try {
     if (!authInitialized) {
@@ -153,36 +158,59 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const currentUser = auth.currentUser;
+    const isSessionValidated = authService.isSessionValidated();
 
+    // Verificar autenticación básica
     if (requiresAuth) {
       if (!currentUser) {
         logInfo('Acceso denegado: se requiere autenticación');
         next('/login');
-      } else {
-        // Verificar validación del usuario
-        const validationResult = await authService.checkValidationStatus(currentUser.email);
-        if (!validationResult.success || !validationResult.isValidated) {
-          logInfo('Usuario no validado, redirigiendo a login');
-          await authService.logout();
-          next('/login');
-        } else {
-          next();
+        return;
+      }
+
+      if (!isSessionValidated) {
+        logInfo('Sesión no validada, redirigiendo a login');
+        await authService.logout();
+        next('/login');
+        return;
+      }
+
+      // Verificar rol de admin si es necesario
+      if (requiresAdmin) {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const userRole = userDoc.data().role;
+
+        if (userRole !== 'admin') {
+          logInfo('Acceso denegado: se requiere rol de administrador');
+          next('/dashboard');
+          return;
         }
       }
-    } else if (requiresGuest && currentUser) {
-      // Verificar si el usuario está validado antes de redirigir al dashboard
-      const validationResult = await authService.checkValidationStatus(currentUser.email);
-      if (validationResult.success && validationResult.isValidated) {
-        logInfo('Usuario autenticado y validado, redirigiendo al dashboard');
-        next('/dashboard');
-      } else {
-        // Si no está validado, cerrar sesión y permitir acceso a rutas de invitados
-        await authService.logout();
-        next();
-      }
-    } else {
+
       next();
+      return;
     }
+
+    // Verificar rutas de invitados
+    if (requiresGuest) {
+      if (currentUser && isSessionValidated) {
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+        const userRole = userDoc.data().role;
+
+        logInfo('Usuario autenticado y validado, redirigiendo');
+        next(userRole === 'admin' ? '/admin' : '/dashboard');
+        return;
+      }
+
+      if (currentUser && !isSessionValidated) {
+        await authService.logout();
+      }
+
+      next();
+      return;
+    }
+
+    next();
   } catch (error) {
     logError('Error en la navegación:', error);
     await authService.logout();

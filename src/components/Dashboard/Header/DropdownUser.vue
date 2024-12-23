@@ -1,6 +1,6 @@
 <script setup>
 import { onClickOutside } from '@vueuse/core'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { ChevronDown, CircleUserRound, LogOut, Loader2, UserCircle2 } from 'lucide-vue-next'
 import { authService } from '@/services/auth_service'
 import { userService } from '@/services/user_service'
@@ -19,14 +19,21 @@ const userData = ref({
   photoURL: null
 })
 
-onMounted(async () => {
-  try {
-    const response = await userService.getUserData()
+let unsubscribe = null
+
+onMounted(() => {
+  unsubscribe = userService.subscribeToUser((response) => {
     if (response.success) {
       userData.value = response.data
+    } else {
+      logError('Error al obtener datos del usuario:', response.error)
     }
-  } catch (error) {
-    logError('Error al obtener datos del usuario:', error)
+  })
+})
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe()
   }
 })
 
@@ -39,6 +46,9 @@ const handleLogout = async () => {
   try {
     const result = await authService.logout()
     if (result.success) {
+      if (unsubscribe) {
+        unsubscribe()
+      }
       router.push('/login')
     } else {
       throw new Error(result.error)

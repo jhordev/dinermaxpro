@@ -58,44 +58,24 @@ const handleSubmit = async (e) => {
   errorMessage.value = '';
 
   try {
-    const result = await authService.registerUser(
+    // Iniciar proceso de registro
+    const result = await authService.initializeRegistration(
         email.value,
         password.value,
         nombre.value
     );
 
     if (result.success) {
-      if (referralCode.value) {
-        try {
-          await referralService.processReferral(referralCode.value, result.user.uid);
-          logInfo(`Referido procesado exitosamente para usuario: ${result.user.uid}`);
-        } catch (refError) {
-          logError(`Error al procesar referido: ${refError.message}`);
-        }
-      }
-
-      try {
-        await referralService.createReferralCode(result.user.uid);
-      } catch (codeError) {
-        logError(`Error al crear código de referido: ${codeError.message}`);
-      }
-
-      logInfo(`Usuario registrado exitosamente: ${email.value}`);
       showValidationDialog.value = true;
     } else {
       errorMessage.value = result.error;
     }
   } catch (error) {
     logError(`Error en registro: ${error.message}`);
-    errorMessage.value = 'Error al crear la cuenta';
+    errorMessage.value = 'Error al iniciar el registro';
   } finally {
     loading.value = false;
   }
-};
-
-const handleValidated = () => {
-  showValidationDialog.value = false;
-  router.push('/dashboard');
 };
 </script>
 
@@ -193,7 +173,6 @@ const handleValidated = () => {
         v-if="showValidationDialog"
         :email="email"
         @close="showValidationDialog = false"
-        @validated="handleValidated"
     />
   </main>
 </template>

@@ -1,12 +1,61 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
+import { doc, setDoc, getDoc, deleteDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { auth, db } from './firebase_config';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { emailService } from './email_service';
+import SecureLS from 'secure-ls';
+
+const ls = new SecureLS({ encodingType: 'aes' });
+const SESSION_KEY = 'auth_validated';
+const TEMP_USER_KEY = 'temp_user_data';
 
 export const authService = {
-    async registerUser(email, password, nombre) {
+    async initializeRegistration(email, password, nombre) {
         try {
+            // Verificar si el correo ya está registrado
+            const userDocs = await getDocs(
+                query(collection(db, 'users'), where('email', '==', email))
+            );
+
+            if (!userDocs.empty) {
+                return {
+                    success: false,
+                    error: 'El correo electrónico ya está registrado'
+                };
+            }
+
+            // Guardar datos temporalmente
+            ls.set(TEMP_USER_KEY, { email, password, nombre });
+
+            // Enviar código de verificación
+            const verificationResult = await this.sendVerificationCode(email);
+            if (!verificationResult.success) {
+                throw new Error(verificationResult.error);
+            }
+
+            logInfo(`Inicio de registro para: ${email}`);
+            return {
+                success: true,
+                message: 'Código de verificación enviado'
+            };
+        } catch (error) {
+            logError(`Error en inicio de registro: ${error.message}`);
+            return {
+                success: false,
+                error: 'Error al iniciar el registro'
+            };
+        }
+    },
+
+    async completeRegistration() {
+        try {
+            const userData = ls.get(TEMP_USER_KEY);
+            if (!userData) {
+                throw new Error('No hay datos de registro temporales');
+            }
+
+            const { email, password, nombre } = userData;
+
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
             await updateProfile(userCredential.user, {
@@ -20,8 +69,7 @@ export const authService = {
                 role: 'user'
             });
 
-            await this.sendVerificationCode(email);
-
+            ls.remove(TEMP_USER_KEY);
             logInfo(`Usuario registrado exitosamente: ${email}`);
 
             return {
@@ -30,16 +78,12 @@ export const authService = {
             };
         } catch (error) {
             let errorMessage = '';
-
             switch (error.code) {
                 case 'auth/email-already-in-use':
                     errorMessage = 'El correo electrónico ya está registrado';
                     break;
                 case 'auth/invalid-email':
                     errorMessage = 'El correo electrónico no es válido';
-                    break;
-                case 'auth/operation-not-allowed':
-                    errorMessage = 'La operación no está permitida';
                     break;
                 case 'auth/weak-password':
                     errorMessage = 'La contraseña debe tener al menos 6 caracteres';
@@ -59,15 +103,20 @@ export const authService = {
     async loginUser(email, password) {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            logInfo(`Inicio de sesión exitoso: ${email}`);
+            ls.remove(SESSION_KEY);
 
+            // Obtener el rol del usuario
+            const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+            const userRole = userDoc.data().role;
+
+            logInfo(`Inicio de sesión exitoso para: ${email}`);
             return {
                 success: true,
-                user: userCredential.user
+                user: userCredential.user,
+                role: userRole
             };
         } catch (error) {
             let errorMessage = '';
-
             switch (error.code) {
                 case 'auth/user-not-found':
                     errorMessage = 'Usuario no encontrado';
@@ -77,9 +126,6 @@ export const authService = {
                     break;
                 case 'auth/invalid-email':
                     errorMessage = 'Correo electrónico inválido';
-                    break;
-                case 'auth/user-disabled':
-                    errorMessage = 'Usuario deshabilitado';
                     break;
                 default:
                     errorMessage = 'Error al iniciar sesión';
@@ -114,7 +160,6 @@ export const authService = {
             }
 
             logDebug(`Código de verificación enviado a ${email}: ${verificationCode}`);
-
             return {
                 success: true,
                 message: 'Código de verificación enviado'
@@ -124,30 +169,6 @@ export const authService = {
             return {
                 success: false,
                 error: 'Error al enviar el código de verificación'
-            };
-        }
-    },
-
-    async checkValidationStatus(email) {
-        try {
-            const docRef = doc(db, 'users', auth.currentUser.uid);
-            const docSnap = await getDoc(docRef);
-
-            if (!docSnap.exists()) {
-                throw new Error('Usuario no encontrado');
-            }
-
-            const userData = docSnap.data();
-
-            return {
-                success: true,
-                isValidated: userData.isValidated || false
-            };
-        } catch (error) {
-            logError(`Error al verificar estado de validación: ${error.message}`);
-            return {
-                success: false,
-                error: 'Error al verificar el estado de validación'
             };
         }
     },
@@ -165,24 +186,33 @@ export const authService = {
             const now = new Date();
 
             if (now > data.expiresAt.toDate()) {
+                await deleteDoc(docRef);
                 throw new Error('El código ha expirado');
             }
 
-            if (code !== data.code) {
+            const storedCode = String(data.code);
+            const submittedCode = String(code);
+
+            if (submittedCode !== storedCode) {
                 throw new Error('Código inválido');
             }
 
-            // Actualizar el estado de validación del usuario
-            await setDoc(doc(db, 'users', auth.currentUser.uid), {
-                isValidated: true
-            }, { merge: true });
+            // Establecer la sesión como validada
+            ls.set(SESSION_KEY, 'true');
 
+            // Obtener el rol del usuario actual
+            const user = auth.currentUser;
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            const userRole = userDoc.data()?.role || 'user';
+
+            // Eliminar el código de verificación
             await deleteDoc(docRef);
 
             logInfo(`Código verificado exitosamente para: ${email}`);
             return {
                 success: true,
-                message: 'Código verificado correctamente'
+                message: 'Código verificado correctamente',
+                role: userRole
             };
         } catch (error) {
             logError(`Error en verificación de código: ${error.message}`);
@@ -193,8 +223,14 @@ export const authService = {
         }
     },
 
+    isSessionValidated() {
+        return ls.get(SESSION_KEY) === 'true';
+    },
+
     async logout() {
         try {
+            ls.remove(SESSION_KEY);
+            ls.remove(TEMP_USER_KEY);
             await signOut(auth);
             logInfo('Sesión cerrada exitosamente');
             return {
@@ -208,5 +244,5 @@ export const authService = {
                 error: 'Error al cerrar sesión'
             };
         }
-    },
+    }
 };

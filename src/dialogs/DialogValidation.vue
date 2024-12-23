@@ -3,11 +3,17 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { Loader2, RefreshCw } from 'lucide-vue-next';
 import { authService } from '@/services/auth_service';
 import { logError, logInfo } from '@/utils/logger.js';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const props = defineProps({
   email: {
     type: String,
     required: true
+  },
+  isLogin: {
+    type: Boolean,
+    default: false
   }
 });
 
@@ -51,18 +57,38 @@ const handleValidate = async () => {
   successMessage.value = '';
 
   try {
-    const result = await authService.verifyCode(props.email, code.value);
-    if (result.success) {
-      successMessage.value = 'Código verificado correctamente';
-      setTimeout(() => {
-        emit('validated');
-      }, 1000);
-    } else {
-      errorMessage.value = result.error;
+    const verificationResult = await authService.verifyCode(props.email, code.value);
+    if (!verificationResult.success) {
+      throw new Error(verificationResult.error);
     }
+
+    if (!props.isLogin) {
+      const registrationResult = await authService.completeRegistration();
+      if (!registrationResult.success) {
+        throw new Error(registrationResult.error);
+      }
+    }
+
+    successMessage.value = 'Validación exitosa';
+    logInfo('Sesión validada correctamente');
+
+    // Usar el rol devuelto por verifyCode
+    const userRole = verificationResult.role;
+
+    setTimeout(() => {
+      if (userRole === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
+    }, 1000);
+
   } catch (error) {
     logError(`Error en validación: ${error.message}`);
-    errorMessage.value = 'Error al validar el código';
+    errorMessage.value = error.message || 'Error al validar el código';
+    if (props.isLogin) {
+      await authService.logout();
+    }
   } finally {
     loading.value = false;
   }

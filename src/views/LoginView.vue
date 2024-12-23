@@ -22,7 +22,6 @@ const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value;
 };
 
-
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -38,15 +37,20 @@ const handleSubmit = async (e) => {
   errorMessage.value = '';
 
   try {
+    // Primero intentamos autenticar al usuario
     const result = await authService.loginUser(email.value, password.value);
 
     if (result.success) {
-      logInfo(`Inicio de sesión exitoso: ${email.value}`);
+      logInfo(`Credenciales verificadas para: ${email.value}`);
+      // Inmediatamente enviamos el código de verificación
       const verificationResult = await authService.sendVerificationCode(email.value);
+
       if (verificationResult.success) {
         showValidationDialog.value = true;
       } else {
         errorMessage.value = verificationResult.error;
+        // Si falla el envío del código, cerramos la sesión
+        await authService.logout();
       }
     } else {
       errorMessage.value = result.error;
@@ -54,15 +58,11 @@ const handleSubmit = async (e) => {
   } catch (error) {
     logError(`Error en login: ${error.message}`);
     errorMessage.value = 'Error al iniciar sesión';
+    await authService.logout();
   } finally {
     loading.value = false;
     isSubmitting.value = false;
   }
-};
-
-const handleValidated = () => {
-  showValidationDialog.value = false;
-  router.push('/dashboard');
 };
 </script>
 
@@ -137,8 +137,8 @@ const handleValidated = () => {
     <DialogValidation
         v-if="showValidationDialog"
         :email="email"
+        :isLogin="true"
         @close="showValidationDialog = false"
-        @validated="handleValidated"
     />
   </main>
 </template>

@@ -1,12 +1,31 @@
 // services/user_service.js
 import { auth, db, storage } from './firebase_config';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
-import {referralService} from "@/services/referral_service.js";
+import { referralService } from "@/services/referral_service.js";
 
 export const userService = {
+    subscribeToUser(callback) {
+        if (!auth.currentUser) return null;
+
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        return onSnapshot(userRef,
+            (doc) => {
+                if (doc.exists()) {
+                    callback({ success: true, data: doc.data() });
+                } else {
+                    callback({ success: false, error: 'Usuario no encontrado' });
+                }
+            },
+            (error) => {
+                logError(`Error en snapshot: ${error.message}`);
+                callback({ success: false, error: 'Error al obtener datos' });
+            }
+        );
+    },
+
     async getUserData() {
         try {
             const userRef = doc(db, 'users', auth.currentUser.uid);
@@ -53,7 +72,6 @@ export const userService = {
         try {
             if (!file) throw new Error('No se proporcionó ningún archivo');
 
-            // Validaciones de archivo
             const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
             if (!validTypes.includes(file.type)) {
                 throw new Error('Formato de imagen no válido. Use JPG, PNG o GIF');
@@ -64,7 +82,6 @@ export const userService = {
                 throw new Error('La imagen no debe superar los 5MB');
             }
 
-            // Eliminar foto anterior
             if (auth.currentUser.photoURL) {
                 const oldPhotoRef = ref(storage, `profile_photos/${auth.currentUser.uid}`);
                 try {
@@ -75,7 +92,6 @@ export const userService = {
                 }
             }
 
-            // Subir nueva foto
             const photoRef = ref(storage, `profile_photos/${auth.currentUser.uid}`);
             const metadata = {
                 contentType: file.type,
@@ -88,7 +104,6 @@ export const userService = {
             await uploadBytes(photoRef, file, metadata);
             const photoURL = await getDownloadURL(photoRef);
 
-            // Actualizar perfil y Firestore
             await updateProfile(auth.currentUser, { photoURL });
             const userRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userRef, {
