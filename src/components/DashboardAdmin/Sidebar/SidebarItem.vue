@@ -1,28 +1,36 @@
 <script setup>
-import {useSidebarStore} from '@/stores/sidebar'
-import {useRoute} from 'vue-router'
-import SidebarDropdown from './SidebarDropdown.vue'
+import { useSidebarStore } from '@/stores/sidebar';
+import { useRoute } from 'vue-router';
+import SidebarDropdown from './SidebarDropdown.vue';
 
 const props = defineProps({
-  item: Object,
-  index: Number,
+  item: {
+    type: Object,
+    required: true
+  },
+  index: {
+    type: Number,
+    required: true
+  },
   icon: {
-    type: [ String],
-    default: 'hola',
+    type: Function,
+    required: false
   }
-})
+});
 
-const sidebarStore = useSidebarStore()
-const currentPage = useRoute().name
+const sidebarStore = useSidebarStore();
+const currentPage = useRoute().name;
 
 const handleItemClick = () => {
-  const pageName = sidebarStore.page === props.item.label ? '' : props.item.label
-  sidebarStore.page = pageName
+  const pageName = sidebarStore.page === props.item.label ? '' : props.item.label;
+  sidebarStore.page = pageName;
 
   if (props.item.children) {
-    return props.item.children.some((child) => sidebarStore.selected === child.label)
+    return props.item.children.some(
+        (child) => sidebarStore.selected === child.label
+    );
   }
-}
+};
 </script>
 
 <template>
@@ -36,12 +44,13 @@ const handleItemClick = () => {
       }"
     >
       <component
+          v-if="icon"
           :is="icon"
-          class="text-current"
+          class="text-current w-5 h-5"
           :class="{
-            'text-black': !sidebarStore.isDarkMode,
-            'text-white': sidebarStore.isDarkMode
-          }"
+          'text-black': !sidebarStore.isDarkMode,
+          'text-white': sidebarStore.isDarkMode
+        }"
       />
       {{ item.label }}
 
@@ -52,27 +61,29 @@ const handleItemClick = () => {
           width="20"
           height="20"
           viewBox="0 0 20 20"
-          fill="none"
           xmlns="http://www.w3.org/2000/svg"
       >
         <path
             fill-rule="evenodd"
             clip-rule="evenodd"
             d="M4.41107 6.9107C4.73651 6.58527 5.26414 6.58527 5.58958 6.9107L10.0003 11.3214L14.4111 6.91071C14.7365 6.58527 15.2641 6.58527 15.5896 6.91071C15.915 7.23614 15.915 7.76378 15.5896 8.08922L10.5896 13.0892C10.2641 13.4147 9.73651 13.4147 9.41107 13.0892L4.41107 8.08922C4.08563 7.76378 4.08563 7.23614 4.41107 6.9107Z"
-            fill=""
         />
       </svg>
     </router-link>
 
-    <!-- Dropdown Menu Start -->
-    <div class="translate transform overflow-hidden" v-show="sidebarStore.page === item.label">
+    <div
+        class="translate transform overflow-hidden"
+        v-show="sidebarStore.page === item.label"
+    >
       <SidebarDropdown
           v-if="item.children"
           :items="item.children"
           :currentPage="currentPage"
           :page="item.label"
       />
-      <!-- Dropdown Menu End -->
     </div>
   </li>
 </template>
+
+<style scoped>
+</style>

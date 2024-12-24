@@ -13,8 +13,8 @@ const props = defineProps({
     required: true,
   },
   icon: {
-    type: [ String],
-    default: 'hola',
+    type: Function,
+    required: false,
   },
 });
 
@@ -47,7 +47,7 @@ const handleItemClick = () => {
       <component
           :is="icon"
           v-if="icon"
-          class="text-current"
+          class="text-current w-5 h-5"
           :class="{
           'text-black': !sidebarStore.isDarkMode,
           'text-white': sidebarStore.isDarkMode
@@ -72,7 +72,6 @@ const handleItemClick = () => {
       </svg>
     </router-link>
 
-    <!-- Dropdown Menu Start -->
     <div
         class="translate transform overflow-hidden"
         v-show="sidebarStore.page === item.label"
@@ -84,6 +83,9 @@ const handleItemClick = () => {
           :page="item.label"
       />
     </div>
-    <!-- Dropdown Menu End -->
   </li>
 </template>
+
+<style scoped>
+
+</style>

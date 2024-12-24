@@ -1,64 +1,74 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import AddPlanModal from "@/dialogs/PlanDialog.vue";
 import CardPlan from "@/components/DashboardAdmin/Planes/CardPlan.vue";
-import { Plus } from "lucide-vue-next";
+import { Plus, Loader2 } from "lucide-vue-next";
+import { planService } from '@/services/plan_service';
+import { logError, logInfo } from '@/utils/logger.js';
 
-// Controlar la visibilidad del modal y el estado
 const isModalVisible = ref(false);
 const modalMode = ref("add");
+const selectedPlan = ref(null);
+const pricingPlans = ref([]);
+const isLoading = ref(true);
+let unsubscribe = null;
 
-// Función para abrir el modal en modo agregar
+const formatFeatures = (descripcion, interes) => {
+  return descripcion.split('\n')
+      .map(item => item.trim())
+      .filter(item => item !== '')
+      .map(item => {
+        if (item.startsWith('Crecimiento Diario:')) {
+          return `Crecimiento Diario: ${interes}%`;
+        }
+        return item;
+      });
+};
+
+const setupPlanesSubscription = () => {
+  try {
+    unsubscribe = planService.subscribeToPlanes((planes) => {
+      pricingPlans.value = planes;
+      isLoading.value = false;
+    });
+  } catch (error) {
+    logError('Error al suscribirse a planes:', error);
+    isLoading.value = false;
+  }
+};
+
 const openAddModal = () => {
+  selectedPlan.value = null;
   modalMode.value = "add";
   isModalVisible.value = true;
 };
 
-// Función para abrir el modal en modo actualizar
-const openUpdateModal = () => {
+const handleEdit = (plan) => {
+  selectedPlan.value = plan;
   modalMode.value = "update";
   isModalVisible.value = true;
 };
 
-// Lista de planes
-const pricingPlans = [
-  {
-    planName: "Plan Básico",
-    priceRange: "$1000 - $4999",
-    duration: "Por 6 meses",
-    features: [
-      "Crecimiento Diario: 0.3%",
-      "Retiro de Ganancias: Permitido después del 15% del tiempo del plan (aproximadamente a los 27 días)",
-      "Acceso a Soporte Básico: Atención al cliente para resolver dudas sobre el plan y la plataforma.",
-      "Actualizaciones Diarias de Rendimiento: Informe diario del crecimiento y rendimiento de tu inversión.",
-    ],
-    isMostPopular: true,
-  },
-  {
-    planName: "Plan Avanzado",
-    priceRange: "$5000 - $9999",
-    duration: "Por 12 meses",
-    features: [
-      "Crecimiento Diario: 0.5%",
-      "Retiro de Ganancias: Permitido después del 10% del tiempo del plan (aproximadamente a los 36 días)",
-      "Acceso a Soporte Premium: Atención dedicada 24/7.",
-      "Actualizaciones Diarias de Rendimiento: Informe diario con métricas avanzadas.",
-    ],
-    isMostPopular: false,
-  },
-  {
-    planName: "Plan Pro",
-    priceRange: "$10,000+",
-    duration: "Por 24 meses",
-    features: [
-      "Crecimiento Diario: 1.0%",
-      "Retiro de Ganancias: Permitido después del 5% del tiempo del plan (aproximadamente a los 36 días)",
-      "Acceso a Soporte VIP: Atención prioritaria 24/7.",
-      "Actualizaciones Detalladas de Rendimiento: Informe diario avanzado con asesoramiento personalizado.",
-    ],
-    isMostPopular: false,
-  },
-];
+const handleDelete = async (planId) => {
+  if (confirm('¿Estás seguro de que deseas eliminar este plan?')) {
+    try {
+      await planService.eliminarPlan(planId);
+      logInfo('Plan eliminado exitosamente');
+    } catch (error) {
+      logError('Error al eliminar el plan:', error);
+    }
+  }
+};
+
+onMounted(() => {
+  setupPlanesSubscription();
+});
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
+});
 </script>
 
 <template>
@@ -68,24 +78,38 @@ const pricingPlans = [
       <button
           type="button"
           @click="openAddModal"
-          class="gap-2.5 text-white inline-flex items-center bg-colorBgButton hover:bg-purple-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-colorBgButton dark:hover:bg-purple-500">
-        <Plus />
+          class="gap-2.5 text-white inline-flex items-center bg-colorBgButton hover:bg-purple-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-colorBgButton dark:hover:bg-purple-500"
+          :disabled="isLoading"
+      >
+        <Loader2 v-if="isLoading" class="animate-spin" />
+        <Plus v-else />
         Agregar Plan
       </button>
-      <AddPlanModal v-model="isModalVisible" :mode="modalMode" />
     </div>
-    <div class="mt-10 flex flex-col md:flex-row gap-5 md:gap-10 pb-10 md:p-0">
+
+    <div v-if="isLoading" class="flex justify-center items-center mt-10">
+      <Loader2 class="animate-spin w-8 h-8 text-colorBgButton" />
+    </div>
+
+    <div v-else class="mt-10 flex flex-col md:flex-row gap-5 md:gap-10 pb-10 md:p-0">
       <CardPlan
-          v-for="(plan, index) in pricingPlans"
-          :key="index"
-          :planName="plan.planName"
-          :priceRange="plan.priceRange"
-          :duration="plan.duration"
-          :features="plan.features"
-          :isMostPopular="plan.isMostPopular"
-          :onChoosePlan="openUpdateModal"
+          v-for="plan in pricingPlans"
+          :key="plan.id"
+          :planName="plan.nombrePlan"
+          :priceRange="`$${plan.capitalMinimo} - $${plan.capitalMaximo}`"
+          :duration="`Por ${plan.tiempoMes} meses`"
+          :features="formatFeatures(plan.descripcion, plan.interes)"
+          :isMostPopular="false"
+          @edit="() => handleEdit(plan)"
+          @delete="() => handleDelete(plan.id)"
       />
     </div>
+
+    <AddPlanModal
+        v-model="isModalVisible"
+        :mode="modalMode"
+        :plan="selectedPlan"
+    />
   </section>
 </template>
 

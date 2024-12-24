@@ -9,7 +9,6 @@ import DarkModeSwitcher from "./DarkModeSwitcher.vue"
 const target = ref(null)
 const sidebarStore = useSidebarStore()
 
-// Cerrar el sidebar al hacer clic fuera de él
 onClickOutside(target, () => {
   sidebarStore.isSidebarOpen = false
 })
@@ -72,3 +71,7 @@ const menuGroups = ref([
     </div>
   </aside>
 </template>
+
+<style scoped>
+
+</style>

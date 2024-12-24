@@ -1,8 +1,8 @@
 <script setup>
 import { ref, watch } from 'vue';
-import CardFormadePago from "@/components/Dashboard/Shared/CardFormadePago.vue";
-import imgVoucher from '@/assets/img/imgview.png';
-import { Equal } from 'lucide-vue-next';
+import { Loader2 } from 'lucide-vue-next';
+import { planService } from '@/services/plan_service';
+import { logError, logInfo } from '@/utils/logger.js';
 
 const props = defineProps({
   modelValue: {
@@ -13,13 +13,15 @@ const props = defineProps({
     type: String,
     required: true,
     validator: (value) => ["add", "update"].includes(value)
+  },
+  plan: {
+    type: Object,
+    default: null
   }
 });
 
-const defaultImage = imgVoucher;
-
-// Emit event for two-way binding
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'plan-created', 'plan-updated']);
+const isLoading = ref(false);
 
 // Variables para cada input del formulario
 const formData = ref({
@@ -31,22 +33,10 @@ const formData = ref({
   descripcion: ''
 });
 
-// Ref para previsualización de la imagen
-const imagePreview = ref(defaultImage);
-
 // Función para cerrar el modal
 const closeModal = () => {
-  imagePreview.value = defaultImage; // Restablecer imagen a la predeterminada
   emit('update:modelValue', false);
   resetForm();
-};
-
-// Función para manejar la subida de imágenes
-const handleImageUpload = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    imagePreview.value = URL.createObjectURL(file);
-  }
 };
 
 // Función para restablecer el formulario
@@ -61,15 +51,74 @@ const resetForm = () => {
   };
 };
 
-// Observar cambios externos en modelValue
-watch(
-    () => props.modelValue,
-    (newValue) => {
-      if (!newValue) {
-        closeModal();
-      }
+// Función para manejar el envío del formulario
+const handleSubmit = async () => {
+  if (!validateForm()) return;
+
+  isLoading.value = true;
+  try {
+    const planData = {
+      ...formData.value,
+      capitalMinimo: Number(formData.value.capitalMinimo),
+      capitalMaximo: Number(formData.value.capitalMaximo),
+      tiempoMes: Number(formData.value.tiempoMes),
+      interes: Number(formData.value.interes)
+    };
+
+    if (props.mode === 'add') {
+      await planService.crearPlan(planData);
+      logInfo('Plan creado exitosamente');
+      emit('plan-created');
+    } else if (props.mode === 'update' && props.plan?.id) {
+      await planService.actualizarPlan(props.plan.id, planData);
+      logInfo('Plan actualizado exitosamente');
+      emit('plan-updated');
     }
-);
+    closeModal();
+  } catch (error) {
+    logError('Error al procesar el plan:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Función para validar el formulario
+const validateForm = () => {
+  const { nombrePlan, capitalMinimo, capitalMaximo, tiempoMes, interes, descripcion } = formData.value;
+
+  if (!nombrePlan || !capitalMinimo || !capitalMaximo || !tiempoMes || !interes || !descripcion) {
+    logError('Todos los campos son requeridos');
+    return false;
+  }
+
+  if (capitalMinimo >= capitalMaximo) {
+    logError('El capital mínimo debe ser menor que el capital máximo');
+    return false;
+  }
+
+  if (parseFloat(interes) <= 0) {
+    logError('El interés debe ser mayor a 0');
+    return false;
+  }
+
+  return true;
+};
+
+// Observar cambios en el plan seleccionado
+watch(() => props.plan, (newPlan) => {
+  if (newPlan) {
+    formData.value = { ...newPlan };
+  } else {
+    resetForm();
+  }
+}, { immediate: true });
+
+// Observar cambios en modelValue
+watch(() => props.modelValue, (newValue) => {
+  if (!newValue) {
+    closeModal();
+  }
+});
 </script>
 
 <template>
@@ -80,9 +129,7 @@ watch(
       aria-hidden="true"
       class="fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50">
     <div class="relative p-4 w-full max-w-full md:max-w-fit">
-      <!-- Modal content -->
-      <div class="relative w-full bg-white rounded-[20px] shadow dark:bg-bgModal ">
-        <!-- Modal header -->
+      <div class="relative w-full bg-white rounded-[20px] shadow dark:bg-bgModal">
         <div class="w-full flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
             {{ mode === 'add' ? 'Nuevo Plan' : 'Actualizar Plan' }}
@@ -97,9 +144,10 @@ watch(
             <span class="sr-only">Close modal</span>
           </button>
         </div>
-        <!-- Modal body -->
-        <form class="p-4 md:p-5 " @submit.prevent="">
+
+        <form class="p-4 md:p-5" @submit.prevent="handleSubmit">
           <div class="grid grid-cols-2 gap-6">
+            <!-- Los inputs se mantienen igual -->
             <div class="col-span-2 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Nombre del Plan</label>
               <input v-model="formData.nombrePlan" type="text" placeholder="Introduzca nombre del plan" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
@@ -118,17 +166,29 @@ watch(
             </div>
             <div class="col-span-1 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Interés</label>
-              <input v-model="formData.interes" type="number" placeholder="Interés" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
+              <input
+                  v-model="formData.interes"
+                  type="number"
+                  step="0.01"
+                  placeholder="Interés"
+                  class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
+              />
             </div>
             <div class="col-span-2 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Descripción</label>
-              <textarea v-model="formData.descripcion" type="text" placeholder="Introduzca la descripción" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"></textarea>
+              <textarea
+                  v-model="formData.descripcion"
+                  placeholder="Introduzca la descripción"
+                  class="pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal min-h-[100px]"
+              ></textarea>
             </div>
           </div>
 
           <button
               type="submit"
-              class="mt-6 border border-colorBgButton hover:bg-colorBgButton transition-colors duration-300 ease-in-out rounded-[10px] text-colorTextBlack dark:text-white font-bold py-[10px] w-full">
+              :disabled="isLoading"
+              class="mt-6 border border-colorBgButton hover:bg-colorBgButton transition-colors duration-300 ease-in-out rounded-[10px] text-colorTextBlack dark:text-white font-bold py-[10px] w-full inline-flex items-center justify-center">
+            <Loader2 v-if="isLoading" class="animate-spin mr-2" />
             {{ mode === 'add' ? 'Agregar Plan' : 'Actualizar Plan' }}
           </button>
         </form>
