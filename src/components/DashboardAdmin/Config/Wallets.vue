@@ -1,29 +1,17 @@
 <script setup>
-import { ref } from 'vue';
-import { Plus } from "lucide-vue-next";
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Plus, Loader2 } from "lucide-vue-next";
+import { walletService } from '@/services/wallet_service';
+import { logInfo, logError } from '@/utils/logger.js';
 import CardWallets from "@/components/DashboardAdmin/Config/CardWallets.vue";
 import AddWalletModal from "@/components/DashboardAdmin/Config/AddWalletModal.vue";
-import imgQr from '@/assets/img/qr.png';
 
-// Datos de las billeteras
-const wallets = ref([
-  {
-    paymentMethod: "bv",
-    network: "Wallet-Tron (TRC20)",
-    walletAddress: "12eb5cRuXFwaXwKFsqUFS7yYTFVXwsHak9",
-    qrImage: imgQr,
-  },
-  {
-    paymentMethod: "btc",
-    network: "Bitcoin",
-    walletAddress: "1FzWLkYgFi4QzxZ5kAB6rnn2R5h5KPd5zJ",
-    qrImage: imgQr,
-  },
-]);
-
+const wallets = ref([]);
 const isModalOpen = ref(false);
 const isEditMode = ref(false);
 const editData = ref(null);
+const isLoading = ref(false);
+let unsubscribe = null;
 
 const openModal = (wallet) => {
   if (wallet) {
@@ -36,18 +24,54 @@ const openModal = (wallet) => {
   isModalOpen.value = true;
 };
 
-const addWallet = (newWallet) => {
-  wallets.value.push(newWallet);
-};
-
-const updateWallet = (updatedWallet) => {
-  const index = wallets.value.findIndex(
-      (wallet) => wallet.walletAddress === updatedWallet.walletAddress
-  );
-  if (index !== -1) {
-    wallets.value[index] = { ...updatedWallet };
+const addWallet = async (walletData) => {
+  try {
+    isLoading.value = true;
+    await walletService.createWallet(walletData);
+    logInfo('Wallet agregada correctamente');
+  } catch (error) {
+    logError('Error al agregar wallet:', error);
+  } finally {
+    isLoading.value = false;
   }
 };
+
+const updateWallet = async (walletData) => {
+  try {
+    isLoading.value = true;
+    const id = editData.value.id;
+    await walletService.updateWallet(id, walletData);
+    logInfo('Wallet actualizada correctamente');
+  } catch (error) {
+    logError('Error al actualizar wallet:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const deleteWallet = async (id) => {
+  try {
+    isLoading.value = true;
+    await walletService.deleteWallet(id);
+    logInfo('Wallet eliminada correctamente');
+  } catch (error) {
+    logError('Error al eliminar wallet:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  unsubscribe = walletService.subscribeToWallets((updatedWallets) => {
+    wallets.value = updatedWallets;
+  });
+});
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+  }
+});
 </script>
 
 <template>
@@ -79,9 +103,13 @@ const updateWallet = (updatedWallet) => {
         :modelValue="isModalOpen"
         :isEditMode="isEditMode"
         :editData="editData"
+        :isLoading="isLoading"
         @update:modelValue="isModalOpen = $event"
         @add-wallet="addWallet"
         @update-wallet="updateWallet"
     />
   </section>
 </template>
+
+<style scoped>
+</style>

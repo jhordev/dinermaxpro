@@ -6,9 +6,18 @@ import { planService } from '@/services/plan_service';
 
 const isModalVisible = ref(false);
 const pricingPlans = ref([]);
+const selectedPlan = ref(null);
 let unsubscribe;
 
-const openModal = () => {
+const openModal = (plan) => {
+  selectedPlan.value = {
+    id: plan.id,
+    planName: plan.planName,
+    interes: plan.interes,
+    tiempoMes: plan.tiempoMes,
+    capitalMinimo: plan.capitalMinimo,
+    capitalMaximo: plan.capitalMaximo
+  };
   isModalVisible.value = true;
 };
 
@@ -44,8 +53,11 @@ onMounted(() => {
     pricingPlans.value = planes.map(plan => ({
       id: plan.id,
       planName: plan.nombrePlan,
+      capitalMinimo: plan.capitalMinimo,
+      capitalMaximo: plan.capitalMaximo,
       priceRange: `$${plan.capitalMinimo.toLocaleString()} - $${plan.capitalMaximo.toLocaleString()}`,
       duration: `Por ${plan.tiempoMes} meses`,
+      tiempoMes: plan.tiempoMes,
       features: formatFeatures(plan.descripcion, plan.interes),
       interes: plan.interes
     }));
@@ -69,10 +81,11 @@ onUnmounted(() => {
         :duration="plan.duration"
         :features="plan.features"
         :interes="plan.interes"
-        :onChoosePlan="openModal"
+        @choose-plan="() => openModal(plan)"
     />
     <AddPlanModal
         v-model="isModalVisible"
+        :selected-plan="selectedPlan"
         @submit="handleSubmit"
     />
   </section>

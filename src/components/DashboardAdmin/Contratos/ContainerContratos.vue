@@ -1,131 +1,92 @@
 <script setup>
 import CardLayout from "@/layouts/CardLayout.vue";
-import {ref, computed} from 'vue';
-import {Search, Eye, ChevronDown, Sheet, FileText, ChevronLeft, ChevronRight} from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import Contrato from "@/components/DashboardAdmin/Contratos/Contrato.vue";
+import { investmentService } from '@/services/investment_service';
+import imgProfile from '@/assets/img/capture.jpg';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase_config';
 
-import imgProfile from '@/assets/img/capture.jpg'
-
-
-
-// Controlar la visibilidad del modal
 const isModalVisible = ref(false);
-const selectedUser = ref(null); // Almacena los datos del usuario seleccionado
+const selectedUser = ref(null);
+const products = ref([]);
 
-// Función para abrir el modal
+// Estados según Firestore
+const colors = {
+  pending: '#DAAA39',
+  approved: '#03A66D',
+  rejected: '#DC2626'
+};
+
+const searchTerm = ref('');
+
+// Paginación
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
+const totalItems = computed(() => filteredProducts.value.length);
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
+
+onMounted(() => {
+  investmentService.subscribeToInvestments(async (investments) => {
+    const mappedInvestments = await Promise.all(investments.map(async (inv) => {
+      const userRef = doc(db, 'users', inv.userId);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.exists() ? userSnap.data() : null;
+
+      // Calcular la fecha de caducidad solo si está aprobado
+      let caducidad = 'Pendiente';
+      if (inv.status === 'approved' && inv.expirationDate) {
+        caducidad = inv.expirationDate.toDate().toLocaleDateString();
+      }
+
+      return {
+        id: inv.id,
+        userId: inv.userId,
+        usuario: userData?.nombre || 'Usuario no encontrado',
+        plan: inv.planName,
+        capital: inv.investment,
+        registro: inv.createdAt.toDate().toLocaleDateString(),
+        caducidad: caducidad,
+        estado: inv.status,
+        walletAddress: inv.walletAddress,
+        voucherUrl: inv.voucherUrl
+      };
+    }));
+
+    products.value = mappedInvestments;
+  });
+});
+
+// Funciones del modal
 const openModal = (user) => {
   selectedUser.value = user;
   isModalVisible.value = true;
 };
 
-// Data
-const products = ref([
-  {
-    usuario: "Juan Pérez",
-    plan: "Básico",
-    capital: 1000,
-    registro: "2024-12-01",
-    caducidad: "2025-12-01",
-    estado: "Pendiente"
-  },
-  {
-    usuario: "María López",
-    plan: "Premium",
-    capital: 5000,
-    registro: "2024-11-15",
-    caducidad: "2025-11-15",
-    estado: "Aprobado"
-  },
-  {
-    usuario: "Carlos García",
-    plan: "Estándar",
-    capital: 2000,
-    registro: "2024-12-05",
-    caducidad: "2025-12-05",
-    estado: "No aprobado"
-  },
-  {
-    usuario: "Ana Torres",
-    plan: "Básico",
-    capital: 1500,
-    registro: "2024-12-10",
-    caducidad: "2025-12-10",
-    estado: "Pendiente"
-  },
-  {
-    usuario: "Luis Martínez",
-    plan: "Premium",
-    capital: 8000,
-    registro: "2024-11-20",
-    caducidad: "2025-11-20",
-    estado: "Aprobado"
-  },
-  {
-    usuario: "Sofía Gómez",
-    plan: "Estándar",
-    capital: 3000,
-    registro: "2024-12-08",
-    caducidad: "2025-12-08",
-    estado: "Pendiente"
-  },
-  {
-    usuario: "Miguel Ramírez",
-    plan: "Básico",
-    capital: 1200,
-    registro: "2024-11-30",
-    caducidad: "2025-11-30",
-    estado: "No aprobado"
-  },
-  {
-    usuario: "Laura Sánchez",
-    plan: "Premium",
-    capital: 10000,
-    registro: "2024-11-01",
-    caducidad: "2025-11-01",
-    estado: "Aprobado"
-  },
-  {
-    usuario: "David Castillo",
-    plan: "Estándar",
-    capital: 2500,
-    registro: "2024-12-12",
-    caducidad: "2025-12-12",
-    estado: "Pendiente"
-  },
-  {
-    usuario: "Carmen Ruiz",
-    plan: "Básico",
-    capital: 800,
-    registro: "2024-12-14",
-    caducidad: "2025-12-14",
-    estado: "No aprobado"
-  }
-]);
+// Filtrado de productos
+const filteredProducts = computed(() => {
+  return products.value.filter(product => {
+    const searchLower = searchTerm.value.toLowerCase();
+    return (
+        product.usuario.toLowerCase().includes(searchLower) ||
+        product.plan.toLowerCase().includes(searchLower) ||
+        product.estado.toLowerCase().includes(searchLower)
+    );
+  });
+});
 
-// Colors for status
-const colors = {
-  Pendiente: '#DAAA39',
-  Aprobado: '#03A66D',
-  'No aprobado': '#DC2626'
-};
-
-// Pagination
-const currentPage = ref(1);
-const itemsPerPage = ref(5);
-const totalItems = computed(() => products.value.length);
-const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
-
-// Computed
+// Computed para paginación
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return products.value.slice(start, end);
+  return filteredProducts.value.slice(start, end);
 });
 
 const showingFrom = computed(() => ((currentPage.value - 1) * itemsPerPage.value) + 1);
 const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalItems.value));
 
-// Methods
+// Métodos de paginación
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
@@ -144,26 +105,20 @@ const nextPage = () => {
   }
 };
 
-// Pagination range logic
+// Lógica del rango de paginación
 const paginationRange = computed(() => {
   const range = [];
   const maxPages = totalPages.value;
-
-  // Start page
   let startPage = currentPage.value - 1;
-  // End page
   let endPage = currentPage.value + 1;
 
-  // Ensure range is within the page limits
   if (startPage < 1) startPage = 1;
   if (endPage > maxPages) endPage = maxPages;
 
-  // Add pages to range
   for (let i = startPage; i <= endPage; i++) {
     range.push(i);
   }
 
-  // Add dots if needed
   if (startPage > 2) range.unshift('...');
   if (endPage < maxPages - 1) range.push('...');
 
@@ -177,6 +132,7 @@ const paginationRange = computed(() => {
       <div class="w-full bg-colorInputClaro dark:bg-gray-800 rounded-[15px] flex gap-1.5 py-2.5 px-4">
         <Search class="text-gray-500"/>
         <input type="text"
+               v-model="searchTerm"
                class="text-[16px] font-normal bg-transparent w-full outline-none text-colorTextBlack dark:text-white"
                placeholder="Buscar...">
       </div>
@@ -234,8 +190,16 @@ const paginationRange = computed(() => {
     </div>
 
     <!-- Modal -->
-    <Contrato v-model="isModalVisible" :name="selectedUser?.usuario" :monto="selectedUser?.capital"
-              :wallet="selectedUser?.plan" :image="imgProfile" />
+    <Contrato
+        v-if="selectedUser"
+        v-model="isModalVisible"
+        :name="selectedUser.usuario"
+        :monto="selectedUser.capital"
+        :wallet-address="selectedUser.walletAddress"
+        :image="selectedUser.voucherUrl || imgProfile"
+        :investment-id="selectedUser.id"
+        :status="selectedUser.estado"
+    />
 
     <!-- Pagination -->
     <nav class="flex flex-row items-center gap-3 pt-4 md:justify-between" aria-label="Table navigation">
@@ -272,3 +236,6 @@ const paginationRange = computed(() => {
     </nav>
   </CardLayout>
 </template>
+
+<style scoped>
+</style>
