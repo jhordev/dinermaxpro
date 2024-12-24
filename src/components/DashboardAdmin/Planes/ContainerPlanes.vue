@@ -91,7 +91,7 @@ onUnmounted(() => {
       <Loader2 class="animate-spin w-8 h-8 text-colorBgButton" />
     </div>
 
-    <div v-else class="mt-10 flex flex-col md:flex-row gap-5 md:gap-10 pb-10 md:p-0">
+    <div v-else class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-16 pb-10 md:p-0">
       <CardPlan
           v-for="plan in pricingPlans"
           :key="plan.id"

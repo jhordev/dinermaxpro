@@ -60,7 +60,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="flex flex-col md:flex-row gap-5 md:gap-10 pb-10 md:p-0">
+  <section class="grid grid-cols-1 md:grid-cols-3  gap-5 md:gap-10 pb-10 md:p-0">
     <CardMembership
         v-for="plan in pricingPlans"
         :key="plan.id"

@@ -83,7 +83,7 @@ const routes = [
     path: '/admin',
     component: HomeViewAdmin,
     meta: {
-      requiresAuth: false,
+      requiresAuth: true,
       requiresAdmin: true
     },
     children: [
