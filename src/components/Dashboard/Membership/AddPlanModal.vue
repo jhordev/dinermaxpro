@@ -54,7 +54,12 @@ watch(investment, (newValue) => {
     } else {
       inputError.value = false;
       errorMessage.value = '';
-      earnings.value = (amount * (interestRate.value / 100)).toFixed(2);
+      // Cálculo considerando 22 días hábiles por mes
+      const diasHabilesPorMes = 22;
+      const meses = Number(props.selectedPlan.tiempoMes);
+      const diasTotales = diasHabilesPorMes * meses;
+      const gananciasDiarias = amount * (interestRate.value / 100);
+      earnings.value = (gananciasDiarias * diasTotales).toFixed(2);
     }
   } else {
     earnings.value = '0';
@@ -139,9 +144,8 @@ const handleSubmit = async () => {
       planId: props.selectedPlan.id,
       planName: props.selectedPlan.planName,
       investment: amount,
-      earnings: 0,
       interestRate: interestRate.value,
-      duration: props.selectedPlan.duration,
+      duration: Number(props.selectedPlan.tiempoMes),
       paymentMethod: activeWallet.value.paymentMethod,
       walletAddress: activeWallet.value.walletAddress,
       network: activeWallet.value.network
@@ -265,7 +269,7 @@ onMounted(() => {
                 </div>
                 <div class="w-[80px] md:w-auto absolute top-0 right-0 md:relative">
                   <img v-if="activeWallet.qrImage" :src="activeWallet.qrImage" alt="QR Code"
-                       class="w-full h-full object-cover"/>
+                       class="max-w-[140px] max-h-[140px] object-contain"/>
                   <WalletIcon v-else class="w-20 h-20 text-gray-400"/>
                 </div>
               </div>
