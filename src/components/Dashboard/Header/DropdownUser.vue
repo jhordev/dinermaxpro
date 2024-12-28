@@ -114,7 +114,7 @@ const handleImageError = () => {
         <li>
           <router-link
               @click="dropdownOpen = false"
-              to="/dashboard/profile"
+              to="/dashboard/profileuser"
               class="text-colorTextBlack dark:text-white flex px-2 py-4 md:px-6 items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base hover:bg-bghoverligth dark:hover:bg-colorTextBlack"
           >
             <CircleUserRound />

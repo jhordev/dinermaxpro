@@ -2,7 +2,7 @@ import { ref, onMounted } from 'vue';
 import { defineStore } from 'pinia';
 
 export const useDarkModeStore = defineStore('darkMode', () => {
-  const darkMode = ref(false); // Estado inicial del modo oscuro
+  const darkMode = ref(false); // Estado inicial del modo claro
 
   // Inicializar el modo oscuro al cargar la aplicación
   const initializeDarkMode = () => {
@@ -11,9 +11,8 @@ export const useDarkModeStore = defineStore('darkMode', () => {
       // Si hay un modo guardado, úsalo
       darkMode.value = savedMode === 'true';
     } else {
-      // Si no hay preferencia guardada, usar la preferencia del sistema
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      darkMode.value = prefersDarkMode;
+      // Si no hay preferencia guardada, por defecto usar modo claro
+      darkMode.value = false;
     }
 
     // Aplicar la clase al <html>

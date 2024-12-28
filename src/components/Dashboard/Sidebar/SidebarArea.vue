@@ -66,7 +66,6 @@ const menuGroups = ref([
             </ul>
           </div>
         </template>
-        <DarkModeSwitcher />
       </nav>
     </div>
   </aside>

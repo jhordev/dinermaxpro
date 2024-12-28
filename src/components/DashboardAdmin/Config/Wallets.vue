@@ -77,16 +77,16 @@ onUnmounted(() => {
 <template>
   <section class="mt-[30px]">
     <header class="flex items-center justify-between">
-      <h2 class="text-colorTextBlack dark:text-white font-semibold text-[30px]">Formas de pago</h2>
+      <h2 class="text-colorTextBlack dark:text-white font-semibold text-[20px] md:text-[30px]">Formas de pago</h2>
       <button
           type="button"
           @click="openModal(null)"
           class="gap-2.5 text-white inline-flex items-center bg-colorBgButton hover:bg-purple-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-colorBgButton dark:hover:bg-purple-500">
         <Plus />
-        Agregar Billetera
+        <span class="hidden md:block">Agregar Billetera</span>
       </button>
     </header>
-    <main class="grid grid-cols-2 mt-[30px] gap-[30px]">
+    <main class="grid grid-cols-1 lg:grid-cols-2 mt-[30px] gap-[30px]">
       <CardWallets
           v-for="(wallet, index) in wallets"
           :key="index"

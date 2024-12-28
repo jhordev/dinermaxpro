@@ -73,8 +73,8 @@ const routes = [
         component: ContainerReferences,
       },
       {
-        path: 'profile',
-        name: 'profile',
+        path: 'profileuser',
+        name: 'profileuser',
         component: ContainerProfile,
       }
     ],
@@ -83,7 +83,7 @@ const routes = [
     path: '/admin',
     component: HomeViewAdmin,
     meta: {
-      requiresAuth: true,
+      requiresAuth: false,
       requiresAdmin: true
     },
     children: [

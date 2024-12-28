@@ -278,7 +278,7 @@ onMounted(() => {
 
           <div class="mt-5 flex items-center gap-5">
             <div>
-              <img :src="imagePreview" alt="visualización de voucher" class="w-[100px] h-[100px] object-cover">
+              <img :src="imagePreview" alt="visualización de voucher" class="w-[100px] h-[100px] object-contain">
             </div>
             <div>
               <label class="mb-3 block text-sm font-medium text-colorTextBlack dark:text-white">
