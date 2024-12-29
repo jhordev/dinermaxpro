@@ -1,7 +1,7 @@
 <script setup>
 import { useSidebarStore } from '@/stores/sidebar'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronsLeft, LayoutDashboard, MonitorCog , MessageCircleQuestion, Users, BookUser  } from 'lucide-vue-next'
+import { ChevronsLeft, TrendingUpDown, LayoutDashboard, MonitorCog, MessageCircleQuestion, Users, BookUser } from 'lucide-vue-next'
 import { ref } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import DarkModeSwitcher from "./DarkModeSwitcher.vue"
@@ -19,21 +19,30 @@ const menuGroups = ref([
     menuItems: [
       { icon: LayoutDashboard, label: 'Dashboard', route: '/admin' },
       { icon: Users, label: 'Usuarios', route: '/admin/user' },
-      { icon: BookUser , label: 'Contratos', route: '/admin/contracts' },
+      { icon: BookUser, label: 'Contratos', route: '/admin/contracts' },
+      { icon: TrendingUpDown , label: 'Operaciones', route: '/admin/operation' },
       {
-        icon: MonitorCog ,
+        icon: MonitorCog,
         label: 'Sistema',
         route: '#',
         children: [
           { label: 'Planes', route: '/admin/plans' },
           { label: 'Configuración', route: '/admin/configurations' },
-          { label: 'Asistentea', route: '/admin/asistentials' }
+          { label: 'Asistentes', route: '/admin/asistentials' }
         ]
       },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
     ]
   }
 ])
+
+function handleClick(item) {
+  if (item.children) {
+    // No cerrar la barra lateral si tiene hijos
+    return
+  }
+  sidebarStore.isSidebarOpen = false
+}
 </script>
 
 <template>
@@ -71,7 +80,7 @@ const menuGroups = ref([
                   :key="index"
                   :index="index"
                   :icon="menuItem.icon"
-                  @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen"
+                  @click="handleClick(menuItem)"
               />
             </ul>
           </div>

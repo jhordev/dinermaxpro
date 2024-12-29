@@ -1,17 +1,31 @@
 <script setup>
+import { useRoute } from 'vue-router';
 
-import Wallets from "@/components/DashboardAdmin/Config/Wallets.vue";
+const route = useRoute();
+
+const isActive = (path) => route.path === path ? 'bg-white dark:bg-colorInput' : 'bg-transparent';
 </script>
 
 <template>
   <nav class="bg-[#EAE8F4] dark:bg-black p-[5px] gap-[10px] flex flex-row items-center rounded-[8px] w-fit">
-    <RouterLink to="/admin/configurations/wallets" class="p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white bg-transparent hover:bg-white dark:bg-transparent dark:hover:bg-colorInput "> Billeteras </RouterLink>
-    <RouterLink to="/admin/configurations/recompensas" class="p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white bg-transparent hover:bg-white dark:bg-transparent dark:hover:bg-colorInput "> Recompensas </RouterLink>
-    <RouterLink to="/admin/configurations/profile" class="p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white bg-transparent hover:bg-white dark:bg-transparent dark:hover:bg-colorInput "> Perfil </RouterLink>
+    <RouterLink
+        to="/admin/configurations/wallets"
+        :class="[isActive('/admin/configurations/wallets'), 'p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white hover:bg-white dark:hover:bg-colorInput']">
+      Billeteras
+    </RouterLink>
+    <RouterLink
+        to="/admin/configurations/recompensas"
+        :class="[isActive('/admin/configurations/recompensas'), 'p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white hover:bg-white dark:hover:bg-colorInput']">
+      Porcentajes
+    </RouterLink>
+    <RouterLink
+        to="/admin/configurations/profile"
+        :class="[isActive('/admin/configurations/profile'), 'p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white hover:bg-white dark:hover:bg-colorInput']">
+      Perfil
+    </RouterLink>
   </nav>
   <RouterView/>
 </template>
 
 <style scoped>
-
 </style>

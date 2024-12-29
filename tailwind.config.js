@@ -57,7 +57,8 @@ export default {
       boxShadow: {
         'custom-inset-black': 'inset 0 0 30px 0 rgba(10, 124, 255, 0.8)',
         'custom-inset-blue': '0px 1.344px 4.154px rgba(210, 208, 225, 0.07), 0px 3.23px 9.98px rgba(210, 208, 225, 0.1), 0px 6.08px 18.8px rgba(210, 208, 225, 0.12), 0px 10.85px 33.53px rgba(210, 208, 225, 0.14), 0px 20.3px 62.72px rgba(210, 208, 225, 0.17)',
-        'custom-purple': '0px 4px 10px 0px rgba(140, 119, 237, 0.30)', // New box shadow
+        'custom-purple': '0px 4px 10px 0px rgba(140, 119, 237, 0.30)',
+        'custom-card-info': '0px 0px 14.7px 0px rgba(122, 86, 86, 0.30)',
       },
     },
   },

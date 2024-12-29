@@ -147,6 +147,7 @@ onUnmounted(() => {
 
       <div class="flex flex-col md:flex-row items-center gap-10 md:gap-[100px] mt-8">
         <div class="flex md:flex-col gap-8">
+
           <div class="bg-colorGraySecundary rounded-[20px] py-4 px-4 flex-1 flex flex-col md:flex-row items-start md:items-center gap-4">
             <img :src="dateIcon" alt="Icono de fecha" class="w-10 md:w-auto" />
             <div class="flex flex-col gap-2.5">

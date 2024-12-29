@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Plus, Loader2 } from "lucide-vue-next";
-import { walletService } from '@/services/wallet_service';
+import { walletService } from '@/services/wallet_service.js';
 import { logInfo, logError } from '@/utils/logger.js';
-import CardWallets from "@/components/DashboardAdmin/Config/CardWallets.vue";
-import AddWalletModal from "@/components/DashboardAdmin/Config/AddWalletModal.vue";
+import CardWallets from "@/components/DashboardAdmin/Config/Wallets/CardWallets.vue";
+import AddWalletModal from "@/components/DashboardAdmin/Config/Wallets/AddWalletModal.vue";
+import CardLayout from "@/layouts/CardLayout.vue";
 
 const wallets = ref([]);
 const isModalOpen = ref(false);
@@ -75,7 +76,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="mt-[30px]">
+  <CardLayout class="mt-[30px]">
     <header class="flex items-center justify-between">
       <h2 class="text-colorTextBlack dark:text-white font-semibold text-[20px] md:text-[30px]">Formas de pago</h2>
       <button
@@ -108,7 +109,7 @@ onUnmounted(() => {
         @add-wallet="addWallet"
         @update-wallet="updateWallet"
     />
-  </section>
+  </CardLayout>
 </template>
 
 <style scoped>

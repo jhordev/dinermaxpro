@@ -47,7 +47,7 @@ const copyToClipboard = (text) => {
 </script>
 
 <template>
-  <section class="rounded-[15px] bg-colorInputClaro p-2.5 shadow-default dark:bg-bgDashboardDark w-full">
+  <section class="rounded-[15px] bg-colorInputClaro p-2.5 shadow-default dark:bg-bginputDark w-full">
     <div class="flex relative flex-row-reverse gap-2 md:gap-2.5 items-center pt-10 md:pt-0">
       <div class="flex flex-col gap-1.5 md:gap-2.5 w-full">
         <div class=" absolute md:right-0 top-0 flex gap-2">
