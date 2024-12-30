@@ -51,7 +51,7 @@ const routes = [
   {
     path: '/dashboard',
     component: HomeScreen,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: false },
     children: [
       {
         path: '',
@@ -84,7 +84,7 @@ const routes = [
     path: '/admin',
     component: HomeViewAdmin,
     meta: {
-      requiresAuth: true,
+      requiresAuth: false,
       requiresAdmin: true
     },
     children: [

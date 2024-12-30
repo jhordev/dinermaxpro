@@ -17,7 +17,7 @@ const pageTitle = computed(() => {
     case '/':
       return 'Dashboard'
     case '/dashboard/membership':
-      return 'Menbresía'
+      return 'Membresía'
     case '/dashboard/wallet':
       return 'Billetera'
     case '/dashboard/profile':

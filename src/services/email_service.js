@@ -25,7 +25,7 @@ export const emailService = {
         const requestBody = {
             sender: {
                 name: "DinerMax | Inversión",
-                email: "jhordymondragon4@gmail.com"
+                email: "support@dinnersmax.com"
             },
             to: [{ email: to }],
             subject,
