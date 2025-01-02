@@ -1,4 +1,4 @@
-<script setup>
+  <script setup>
 import { useSidebarStore } from '@/stores/sidebar'
 import DarkModeSwitcher from './DarkModeSwitcher.vue'
 import { Menu } from 'lucide-vue-next'
@@ -16,14 +16,22 @@ const pageTitle = computed(() => {
   switch (routePath) {
     case '/':
       return 'Dashboard'
-    case '/dashboard/membership':
-      return 'Menbresía'
-    case '/dashboard/wallet':
-      return 'Billetera'
-    case '/dashboard/profile':
+    case '/admin/user':
+      return 'Usuarios'
+    case '/admin/contracts':
+      return 'Contratos'
+    case '/admin/operation':
+      return 'Operaciones'
+    case '/admin/plans':
+      return 'Sistema: Planes'
+    case '/admin/configurations/wallets':
+      return 'Sistema: Billeteras'
+    case '/admin/configurations/recompensas':
+      return 'Sistema: Pocentajes'
+    case '/admin/asistentials':
+      return 'Sistema: Socios'
+    case '/admin/profile':
       return 'Perfil'
-    case '/transactions':
-      return 'Transacciones'
     default:
       return 'Dashboard'
   }
@@ -48,7 +56,7 @@ const pageTitle = computed(() => {
         <router-link class="block flex-shrink-0 lg:hidden" to="/">
           <img src="@/assets/img/isotipo.png" alt="Logo" class="w-10" />
         </router-link>
-        <h1 class="font-bold text-12px] md:text-[24px] text-colorTextBlack dark:text-white tracking-[2.4px]">
+        <h1 class="truncate max-w-36 font-bold text-[12px] md:text-[24px] text-colorTextBlack dark:text-white tracking-[2.4px]">
           {{ pageTitle }}
         </h1>
       </div>

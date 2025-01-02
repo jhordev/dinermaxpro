@@ -121,14 +121,14 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
 <template>
   <section>
     <header class="flex justify-between items-center">
-      <h2 class="text-[28px] text-colorTextBlack dark:text-white font-bold">Asistentes</h2>
+      <h2 class="text-[28px] text-colorTextBlack dark:text-white font-bold">Lista de Socios</h2>
       <button
           type="button"
           @click="openAddModal"
           class="gap-2.5 text-white inline-flex items-center bg-colorBgButton hover:bg-purple-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-colorBgButton dark:hover:bg-purple-500"
       >
         <Plus />
-        <span class="hidden lg:block">Agregar Asistente</span>
+        <span class="hidden lg:block">Agregar Socio</span>
       </button>
     </header>
     <main class="mt-[30px]">

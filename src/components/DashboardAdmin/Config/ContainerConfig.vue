@@ -18,11 +18,6 @@ const isActive = (path) => route.path === path ? 'bg-white dark:bg-colorInput' :
         :class="[isActive('/admin/configurations/recompensas'), 'p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white hover:bg-white dark:hover:bg-colorInput']">
       Porcentajes
     </RouterLink>
-    <RouterLink
-        to="/admin/configurations/profile"
-        :class="[isActive('/admin/configurations/profile'), 'p-2.5 rounded-[5px] font-medium text-colorTextBlack dark:text-white hover:bg-white dark:hover:bg-colorInput']">
-      Perfil
-    </RouterLink>
   </nav>
   <RouterView/>
 </template>

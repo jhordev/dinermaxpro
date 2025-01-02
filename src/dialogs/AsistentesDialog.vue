@@ -56,16 +56,16 @@ const handleSubmit = async () => {
 
     if (props.mode === 'add') {
       // Simula una creación (reemplazar con llamada al servicio real si aplica)
-      logInfo('Asistente agregado exitosamente');
+      logInfo('Socio agregado exitosamente');
       emit('assistant-added', assistantData);
     } else if (props.mode === 'update' && props.assistant) {
       // Simula una actualización (reemplazar con llamada al servicio real si aplica)
-      logInfo('Asistente actualizado exitosamente');
+      logInfo('Socio actualizado exitosamente');
       emit('assistant-updated', assistantData);
     }
     closeModal();
   } catch (error) {
-    logError('Error al procesar el asistente:', error);
+    logError('Error al procesar el socio:', error);
   } finally {
     isLoading.value = false;
   }
@@ -121,7 +121,7 @@ watch(
       <div class="relative w-full bg-white rounded-[20px] shadow dark:bg-bgModal">
         <div class="w-full flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ mode === 'add' ? 'Agregar Asistente' : 'Actualizar Asistente' }}
+            {{ mode === 'add' ? 'Agregar Socio' : 'Actualizar Socio' }}
           </h3>
           <button
               type="button"
@@ -204,7 +204,7 @@ watch(
               class="mt-6 border border-colorBgButton hover:bg-colorBgButton transition-colors duration-300 ease-in-out rounded-[10px] text-colorTextBlack dark:text-white font-bold py-[10px] w-full inline-flex items-center justify-center"
           >
             <Loader2 v-if="isLoading" class="animate-spin mr-2" />
-            {{ mode === 'add' ? 'Agregar Asistente' : 'Actualizar Asistente' }}
+            {{ mode === 'add' ? 'Agregar Socio' : 'Actualizar Socio' }}
           </button>
         </form>
       </div>

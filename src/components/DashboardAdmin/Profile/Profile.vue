@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 import {Camera, ChevronDown, Loader2, MoveRight, UserCircle2} from "lucide-vue-next";
-import TelegraIcon from "@/components/DashboardAdmin/Config/Profile/TelegraIcon.vue";
-import WhatsAppIcon from "@/components/DashboardAdmin/Config/Profile/WhatsAppIcon.vue";
+import TelegraIcon from "@/components/DashboardAdmin/Profile/TelegraIcon.vue";
+import WhatsAppIcon from "@/components/DashboardAdmin/Profile/WhatsAppIcon.vue";
 import CardLayout from "@/layouts/CardLayout.vue";
-import XIcon from "@/components/DashboardAdmin/Config/Profile/XIcon.vue";
-import InstagramIcon from "@/components/DashboardAdmin/Config/Profile/InstagramIcon.vue";
+import XIcon from "@/components/DashboardAdmin/Profile/XIcon.vue";
+import InstagramIcon from "@/components/DashboardAdmin/Profile/InstagramIcon.vue";
 
 const isEditable = ref(false);
 const photoLoading = ref(false);
@@ -41,7 +41,7 @@ const handlePasswordReset = () => {
 </script>
 
 <template>
-<CardLayout class="mt-[30px]">
+<section class="rounded-[15px] bg-bgCardLigth p-5 md:p-[50px] shadow-default dark:bg-bgDashboardDark w-full">
   <header class="flex justify-between items-center ">
     <div class="flex items-center gap-3 md:gap-5">
       <div class="w-[60px] md:w-[100px]">
@@ -267,7 +267,7 @@ const handlePasswordReset = () => {
 
     </div>
   </div>
-</CardLayout>
+</section>
 </template>
 
 <style scoped>
