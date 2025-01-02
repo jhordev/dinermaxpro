@@ -1,8 +1,8 @@
 <script setup>
 
-import dateIcon from "@/assets/img/date.svg";
-import dateFalIcon from "@/assets/img/datefal.svg";
 import inteIcon from '@/assets/img/interes.svg';
+import refIcon from '@/assets/img/item1.png';
+import refDinnerIcon from '@/assets/img/item2.png';
 import {Pie} from "vue-chartjs";
 import {
   Chart as ChartJS,
@@ -56,14 +56,32 @@ const options = {
         <span class="text-[10px] font-normal">Rango: 2024-06-13 a 2024-09-13</span>
       </div>
     </header>
-    <main class="flex mt-5 gap-6 items-center">
-      <div class="flex-1 flex flex-col gap-5">
-        <div class=" bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+    <main class="flex flex-col lg:flex-row mt-5 gap-6 items-center">
+      <div class="flex-1 grid grid-cols-4  w-full gap-5">
+        <div class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
           <img :src="inteIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Interés</h3>
             <strong class="text-[14px] font-black">
               $ 2000
+            </strong>
+          </div>
+        </div>
+        <div class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+          <img :src="refIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
+          <div class="flex flex-col gap-1.5">
+            <h3 class="text-[12px] font-medium">Referidos</h3>
+            <strong class="text-[14px] font-black">
+              50
+            </strong>
+          </div>
+        </div>
+        <div class=" col-span-4  bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+          <img :src="refDinnerIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
+          <div class="flex flex-col gap-1.5">
+            <h3 class="text-[12px] font-medium">Ganancias x referidos</h3>
+            <strong class="text-[14px] font-black">
+              $ 50
             </strong>
           </div>
         </div>

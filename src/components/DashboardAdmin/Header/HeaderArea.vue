@@ -32,6 +32,8 @@ const pageTitle = computed(() => {
       return 'Sistema: Socios'
     case '/admin/profile':
       return 'Perfil'
+    case '/admin/referidosadmin':
+      return 'Red de Referidos'
     default:
       return 'Dashboard'
   }
@@ -56,7 +58,7 @@ const pageTitle = computed(() => {
         <router-link class="block flex-shrink-0 lg:hidden" to="/">
           <img src="@/assets/img/isotipo.png" alt="Logo" class="w-10" />
         </router-link>
-        <h1 class="truncate max-w-36 font-bold text-[12px] md:text-[24px] text-colorTextBlack dark:text-white tracking-[2.4px]">
+        <h1 class="truncate max-w-36 lg:max-w-full font-bold text-[12px] md:text-[24px] text-colorTextBlack dark:text-white tracking-[2.4px]">
           {{ pageTitle }}
         </h1>
       </div>

@@ -1,7 +1,7 @@
 <script setup>
 import { useSidebarStore } from '@/stores/sidebar'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronsLeft, TrendingUpDown, LayoutDashboard, MonitorCog, MessageCircleQuestion, Users, BookUser } from 'lucide-vue-next'
+import { ChevronsLeft, Network, TrendingUpDown, LayoutDashboard, MonitorCog, MessageCircleQuestion, Users, BookUser } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import DarkModeSwitcher from "./DarkModeSwitcher.vue"
@@ -35,6 +35,7 @@ const menuGroups = ref([
           { label: 'Asistentes', route: '/admin/asistentials' }
         ]
       },
+      { icon: Network, label: 'Red de referidos', route: '/admin/referidosadmin' },
       { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
     ]
   }

@@ -14,7 +14,7 @@ import ContainerProfile from "@/components/Dashboard/Profile/ContainerProfile.vu
 import HomeViewAdmin from "@/views/HomeAdminView.vue";
 import ContainerUsers from "@/components/DashboardAdmin/User/ContainerUsers.vue";
 import ContainerContratos from "@/components/DashboardAdmin/Contratos/ContainerContratos.vue";
-import ContainerReferences from "@/components/Dashboard/References/ContainerReferences.vue";
+import ContainerReferences from "@/components/DashboardAdmin/ReferencesSocios/ContainerReferences.vue";
 import ContainerPlanes from "@/components/DashboardAdmin/Planes/ContainerPlanes.vue";
 import ContainerConfig from "@/components/DashboardAdmin/Config/ContainerConfig.vue";
 import ContainerAsistens from "@/components/DashboardAdmin/Asistentes/ContainerAsistens.vue";
@@ -83,7 +83,7 @@ const routes = [
     component: HomeViewAdmin,
     meta: {
       requiresAuth: false,
-      requiresAdmin: true
+      requiresAdmin: false
     },
     children: [
       {
@@ -141,6 +141,11 @@ const routes = [
         path: 'profile',
         name: 'profileAdmin',
         component: Profile,
+      },
+      {
+        path: 'referidosadmin',
+        name: 'referidosadmin',
+        component: ContainerReferences,
       },
     ]
   },

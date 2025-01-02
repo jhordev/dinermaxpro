@@ -4,6 +4,7 @@ import ContainerCards from "@/components/DashboardAdmin/Home/CardsResumen/Contai
 import ContainerStatusMemberships from "@/components/DashboardAdmin/Home/StatusMemberships.vue";
 import Activos from "@/components/DashboardAdmin/Home/Activos.vue";
 import SubscribersPlan from "@/components/DashboardAdmin/Home/SubscribersPlan.vue";
+import ReferidosComponent from "@/components/DashboardAdmin/Home/ReferidosComponent.vue";
 </script>
 
 <template>
@@ -13,6 +14,7 @@ import SubscribersPlan from "@/components/DashboardAdmin/Home/SubscribersPlan.vu
   <ContainerStatusMemberships class="col-span-6 lg:col-span-4" />
   <Activos class="hidden md:block col-span-6 lg:col-span-2" />
   <SubscribersPlan class="col-span-6 lg:lg:col-span-4"/>
+  <ReferidosComponent class="col-span-6 lg:col-span-2" />
 </main>
 </template>
 <style scoped>
