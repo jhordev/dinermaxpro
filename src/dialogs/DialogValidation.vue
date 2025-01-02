@@ -66,6 +66,9 @@ const handleValidate = async () => {
       throw new Error(verificationResult.error);
     }
 
+    // Guardar el rol en localStorage
+    ls.set('user_role', verificationResult.role);
+
     // Si es un nuevo registro (no login)
     if (!props.isLogin) {
       const tempUserData = ls.get(TEMP_USER_KEY);
@@ -74,7 +77,6 @@ const handleValidate = async () => {
         if (!registrationResult.success) {
           throw new Error(registrationResult.error);
         }
-        // Nuevo usuario registrado, siempre va al dashboard
         successMessage.value = 'Registro completado exitosamente';
         setTimeout(() => router.push('/dashboard'), 1000);
       }
@@ -82,7 +84,7 @@ const handleValidate = async () => {
       // Es un login existente, redirigir según el rol
       successMessage.value = 'Validación exitosa';
       setTimeout(() => {
-        if (verificationResult.role === 'admin') {
+        if (verificationResult.role === 'admin' || verificationResult.role === 'socio') {
           router.push('/admin');
         } else {
           router.push('/dashboard');

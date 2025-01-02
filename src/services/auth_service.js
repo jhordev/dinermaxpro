@@ -8,6 +8,7 @@ import SecureLS from 'secure-ls';
 const ls = new SecureLS({ encodingType: 'aes' });
 const SESSION_KEY = 'auth_validated';
 const TEMP_USER_KEY = 'temp_user_data';
+const USER_ROLE = 'user_role';
 
 export const authService = {
     async initializeRegistration(email, password, nombre) {
@@ -249,6 +250,7 @@ export const authService = {
         try {
             ls.remove(SESSION_KEY);
             ls.remove(TEMP_USER_KEY);
+            ls.remove(USER_ROLE);
             await signOut(auth);
             logInfo('Sesión cerrada exitosamente');
             return {

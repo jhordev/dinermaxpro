@@ -2,14 +2,17 @@
 import { useSidebarStore } from '@/stores/sidebar'
 import { onClickOutside } from '@vueuse/core'
 import { ChevronsLeft, TrendingUpDown, LayoutDashboard, MonitorCog, MessageCircleQuestion, Users, BookUser } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import DarkModeSwitcher from "./DarkModeSwitcher.vue"
+import SecureLS from 'secure-ls';
 
+const ls = new SecureLS({ encodingType: 'aes' });
 const target = ref(null)
 const sidebarStore = useSidebarStore()
 
-// Cerrar el sidebar al hacer clic fuera de él
+const userRole = computed(() => ls.get('user_role') || '');
+
 onClickOutside(target, () => {
   sidebarStore.isSidebarOpen = false
 })
@@ -25,6 +28,7 @@ const menuGroups = ref([
         icon: MonitorCog,
         label: 'Sistema',
         route: '#',
+        adminOnly: true,
         children: [
           { label: 'Planes', route: '/admin/plans' },
           { label: 'Configuración', route: '/admin/configurations' },
@@ -38,7 +42,6 @@ const menuGroups = ref([
 
 function handleClick(item) {
   if (item.children) {
-    // No cerrar la barra lateral si tiene hijos
     return
   }
   sidebarStore.isSidebarOpen = false
@@ -51,11 +54,10 @@ function handleClick(item) {
       :class="{
       'translate-x-0': sidebarStore.isSidebarOpen,
       '-translate-x-full': !sidebarStore.isSidebarOpen,
-      'lg:translate-x-0': sidebarStore.isSidebarOpen  // Aseguramos que en pantallas grandes esté siempre visible
+      'lg:translate-x-0': sidebarStore.isSidebarOpen
     }"
       ref="target"
   >
-    <!-- SIDEBAR HEADER -->
     <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
       <router-link to="/" class="flex items-center">
         <img src="@/assets/img/isotipo.png" alt="Logo" class="w-12" />
@@ -66,22 +68,21 @@ function handleClick(item) {
         <ChevronsLeft />
       </button>
     </div>
-    <!-- SIDEBAR HEADER -->
 
     <div class="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
-      <!-- Sidebar Menu -->
       <nav class="mt-5 py-4 px-4 lg:mt-9 lg:px-6">
         <template v-for="menuGroup in menuGroups" :key="menuGroup.name">
           <div>
             <ul class="mb-6 flex flex-col gap-[22px]">
-              <SidebarItem
-                  v-for="(menuItem, index) in menuGroup.menuItems"
-                  :item="menuItem"
-                  :key="index"
-                  :index="index"
-                  :icon="menuItem.icon"
-                  @click="handleClick(menuItem)"
-              />
+              <template v-for="(menuItem, index) in menuGroup.menuItems" :key="index">
+                <SidebarItem
+                    v-if="!menuItem.adminOnly || userRole === 'admin'"
+                    :item="menuItem"
+                    :index="index"
+                    :icon="menuItem.icon"
+                    @click="handleClick(menuItem)"
+                />
+              </template>
             </ul>
           </div>
         </template>
@@ -89,3 +90,6 @@ function handleClick(item) {
     </div>
   </aside>
 </template>
+
+<style scoped>
+</style>

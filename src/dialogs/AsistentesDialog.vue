@@ -2,6 +2,8 @@
 import { ref, watch } from 'vue';
 import { Loader2, Eye, EyeOff } from 'lucide-vue-next';
 import { logError, logInfo } from '@/utils/logger.js';
+import { createSocioUser, updateSocioUser } from '@/services/socio_service';
+
 const showPassword = ref(false);
 const props = defineProps({
   modelValue: {
@@ -26,7 +28,7 @@ const formData = ref({
   email: '',
   nombre: '',
   pais: '',
-  registro: '',
+  registro: new Date().toISOString().split('T')[0],
   password: '',
   estado: 'Activo'
 });
@@ -41,7 +43,7 @@ const resetForm = () => {
     email: '',
     nombre: '',
     pais: '',
-    registro: '',
+    registro: new Date().toISOString().split('T')[0],
     password: '',
     estado: 'Activo'
   };
@@ -52,27 +54,36 @@ const handleSubmit = async () => {
 
   isLoading.value = true;
   try {
-    const assistantData = { ...formData.value };
+    const userData = { ...formData.value };
 
     if (props.mode === 'add') {
-      // Simula una creación (reemplazar con llamada al servicio real si aplica)
+      const result = await createSocioUser(userData);
       logInfo('Socio agregado exitosamente');
-      emit('assistant-added', assistantData);
+      emit('assistant-added', result.userData);
     } else if (props.mode === 'update' && props.assistant) {
-      // Simula una actualización (reemplazar con llamada al servicio real si aplica)
+
+      userData.docId = props.assistant.id;
+
+      if (!userData.password || !userData.password.trim()) {
+        logError('La contraseña es requerida');
+        return;
+      }
+
+      const result = await updateSocioUser(userData);
       logInfo('Socio actualizado exitosamente');
-      emit('assistant-updated', assistantData);
+      emit('assistant-updated', result.userData);
     }
     closeModal();
   } catch (error) {
-    logError('Error al procesar el socio:', error);
+    logError('Error al procesar el socio:', error.message);
+    throw error;
   } finally {
     isLoading.value = false;
   }
 };
 
 const validateForm = () => {
-  const { email, nombre, pais, registro, password, estado } = formData.value;
+  const {email, nombre, pais, registro, password, estado} = formData.value;
 
   if (!email || !nombre || !pais || !registro || !password || !estado) {
     logError('Todos los campos son requeridos');
@@ -91,19 +102,19 @@ watch(
     () => props.assistant,
     (newAssistant) => {
       if (newAssistant) {
-        formData.value = { ...newAssistant };
+        formData.value = {...newAssistant};
       } else {
         resetForm();
       }
     },
-    { immediate: true }
+    {immediate: true}
 );
 
 watch(
     () => props.modelValue,
     (newValue) => {
       if (!newValue) {
-        closeModal();
+        resetForm();
       }
     }
 );
@@ -113,15 +124,19 @@ watch(
   <div
       v-if="modelValue"
       id="crud-modal"
-      tabindex="-1"
-      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
       class="fixed inset-0 z-50 flex items-center justify-center w-full h-full bg-black bg-opacity-50"
   >
     <div class="relative p-4 w-full max-w-full md:max-w-fit">
       <div class="relative w-full bg-white rounded-[20px] shadow dark:bg-bgModal">
         <div class="w-full flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {{ mode === 'add' ? 'Agregar Socio' : 'Actualizar Socio' }}
+          <h3
+              id="modal-title"
+              class="text-lg font-semibold text-gray-900 dark:text-white"
+          >
+            {{ mode === 'add' ? 'Agregar Asistente' : 'Actualizar Asistente' }}
           </h3>
           <button
               type="button"
@@ -130,7 +145,6 @@ watch(
           >
             <svg
                 class="w-3 h-3"
-                aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 14 14"
@@ -150,8 +164,9 @@ watch(
         <form class="p-4 md:p-5" @submit.prevent="handleSubmit">
           <div class="grid grid-cols-10 gap-6">
             <div class="col-span-10 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Email</label>
+              <label for="email" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Email</label>
               <input
+                  id="email"
                   v-model="formData.email"
                   type="email"
                   placeholder="Correo electrónico"
@@ -159,8 +174,9 @@ watch(
               />
             </div>
             <div class="col-span-10 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Nombre</label>
+              <label for="nombre" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Nombre</label>
               <input
+                  id="nombre"
                   v-model="formData.nombre"
                   type="text"
                   placeholder="Nombre completo"
@@ -168,8 +184,9 @@ watch(
               />
             </div>
             <div class="col-span-10 lg:col-span-5 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">País</label>
+              <label for="pais" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">País</label>
               <input
+                  id="pais"
                   v-model="formData.pais"
                   type="text"
                   placeholder="País"
@@ -177,22 +194,23 @@ watch(
               />
             </div>
             <div class="col-span-10 lg:col-span-5 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Password</label>
+              <label for="password" class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Password</label>
               <div class="flex border rounded-[6px] pr-3">
                 <input
+                    id="password"
                     v-model="formData.password"
                     :type="showPassword ? 'text' : 'password'"
                     placeholder="Contraseña"
-                    class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white  text-[16px] font-normal w-full"
+                    class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white text-[16px] font-normal w-full"
                 />
                 <button
                     type="button"
                     @click="showPassword = !showPassword"
-                    class=" inset-y-0 right-3 flex items-center text-colorTextBlack dark:text-white"
-                    aria-label="Toggle password visibility"
+                    class="inset-y-0 right-3 flex items-center text-colorTextBlack dark:text-white"
+                    :aria-label="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                 >
-                  <Eye v-if="!showPassword" />
-                  <EyeOff v-else />
+                  <Eye v-if="!showPassword"/>
+                  <EyeOff v-else/>
                 </button>
               </div>
             </div>
@@ -203,8 +221,8 @@ watch(
               :disabled="isLoading"
               class="mt-6 border border-colorBgButton hover:bg-colorBgButton transition-colors duration-300 ease-in-out rounded-[10px] text-colorTextBlack dark:text-white font-bold py-[10px] w-full inline-flex items-center justify-center"
           >
-            <Loader2 v-if="isLoading" class="animate-spin mr-2" />
-            {{ mode === 'add' ? 'Agregar Socio' : 'Actualizar Socio' }}
+            <Loader2 v-if="isLoading" class="animate-spin mr-2"/>
+            {{ mode === 'add' ? 'Agregar Asistente' : 'Actualizar Asistente' }}
           </button>
         </form>
       </div>

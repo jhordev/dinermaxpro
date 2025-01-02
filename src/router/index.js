@@ -23,7 +23,6 @@ import Recompensas from "@/components/DashboardAdmin/Config/Pocentaje.vue";
 import Profile from "@/components/DashboardAdmin/Profile/Profile.vue";
 import ContainerOperations from "@/components/DashboardAdmin/Operations/ContainerOperations.vue";
 
-// Vistas con lazy loading
 const Inicio = () => import("@/views/InicioView.vue");
 const LoginScreen = () => import("@/views/LoginView.vue");
 const CreateAccountScreen = () => import("@/views/CreateAccountView.vue");
@@ -116,18 +115,20 @@ const routes = [
         path: 'configurations',
         name: 'configurations',
         component: ContainerConfig,
-        meta: { requiresAdmin: true },
+        meta: { requiresAdmin: true, adminOnly: true },
         redirect: { name: 'wallets' },
         children:[
           {
             path: 'wallets',
             name: 'wallets',
             component: Wallets,
+            meta: { adminOnly: true }
           },
           {
             path: 'recompensas',
             name: 'recompensas',
             component: Recompensas,
+            meta: { adminOnly: true }
           }
         ]
       },
@@ -167,6 +168,7 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
   const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+  const adminOnly = to.matched.some(record => record.meta.adminOnly);
 
   try {
     if (!authInitialized) {
@@ -182,8 +184,7 @@ router.beforeEach(async (to, from, next) => {
     const currentUser = auth.currentUser;
     const isSessionValidated = authService.isSessionValidated();
 
-    // Verificar autenticación básica
-    if (requiresAuth) {
+    if (requiresAuth || requiresAdmin) {
       if (!currentUser) {
         logInfo('Acceso denegado: se requiere autenticación');
         next('/login');
@@ -197,14 +198,19 @@ router.beforeEach(async (to, from, next) => {
         return;
       }
 
-      // Verificar rol de admin si es necesario
       if (requiresAdmin) {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         const userRole = userDoc.data().role;
 
-        if (userRole !== 'admin') {
-          logInfo('Acceso denegado: se requiere rol de administrador');
+        if (userRole !== 'admin' && userRole !== 'socio') {
+          logInfo('Acceso denegado: se requiere rol de administrador o socio');
           next('/dashboard');
+          return;
+        }
+
+        if (adminOnly && userRole !== 'admin') {
+          logInfo('Acceso denegado: ruta exclusiva para administradores');
+          next('/admin');
           return;
         }
       }
@@ -213,14 +219,17 @@ router.beforeEach(async (to, from, next) => {
       return;
     }
 
-    // Verificar rutas de invitados
     if (requiresGuest) {
       if (currentUser && isSessionValidated) {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         const userRole = userDoc.data().role;
 
         logInfo('Usuario autenticado y validado, redirigiendo');
-        next(userRole === 'admin' ? '/admin' : '/dashboard');
+        if (userRole === 'admin' || userRole === 'socio') {
+          next('/admin');
+        } else {
+          next('/dashboard');
+        }
         return;
       }
 

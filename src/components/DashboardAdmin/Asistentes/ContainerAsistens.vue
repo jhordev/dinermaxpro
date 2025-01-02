@@ -1,40 +1,46 @@
 <script setup>
 import { Loader2, Plus, UserPen, Search, ChevronLeft, ChevronRight } from "lucide-vue-next";
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import CardLayout from '@/layouts/CardLayout.vue';
-import ContainerAsistens from "@/dialogs/AsistentesDialog.vue";
+import { logError, logInfo } from "@/utils/logger.js";
+import { subscribeToSocios, updateSocioStatus} from '@/services/socio_service';
+import AsistentesDialog from "@/dialogs/AsistentesDialog.vue";
 
 // Variables reactivas
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
-const searchTerm = ref(''); // Término de búsqueda
-const dropdownOpen = ref(false); // Estado del dropdown
+const searchTerm = ref('');
+const dropdownOpen = ref(false);
+const asistentes = ref([]);
+const loading = ref(true);
+let unsubscribe = null;
+
+// Suscripción a datos en tiempo real
+onMounted(() => {
+  unsubscribe = subscribeToSocios((socios) => {
+    asistentes.value = socios;
+    loading.value = false;
+    logInfo('Lista de socios actualizada');
+  });
+});
+
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+    logInfo('Suscripción cancelada');
+  }
+});
 
 // Función para toggle del dropdown
 const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value;
 };
 
-// Datos simulados (puedes reemplazarlos por tu lista real)
-const asistentes = ref([
-  { email: 'juan.perez@example.com', nombre: 'Juan Pérez', pais: 'México', registro: '2022-12-31', password: 'pass1234', estado: 'Activo' },
-  { email: 'luis.rodriguez@example.com', nombre: 'Luis Rodríguez', pais: 'Argentina', registro: '2023-01-02', password: 'mypassword', estado: 'Activo' },
-  { email: 'maria.lopez@example.com', nombre: 'María López', pais: 'Colombia', registro: '2023-01-03', password: 'qwerty789', estado: 'Inactivo' },
-  { email: 'carlos.sanchez@example.com', nombre: 'Carlos Sánchez', pais: 'Chile', registro: '2023-01-04', password: 'abc12345', estado: 'Activo' },
-  { email: 'laura.garcia@example.com', nombre: 'Laura García', pais: 'Perú', registro: '2023-01-05', password: 'password456', estado: 'Activo' },
-  { email: 'paula.martinez@example.com', nombre: 'Paula Martínez', pais: 'Bolivia', registro: '2023-01-07', password: 'paula1234', estado: 'Activo' },
-  { email: 'felipe.ramirez@example.com', nombre: 'Felipe Ramírez', pais: 'Paraguay', registro: '2023-01-08', password: 'felipepass', estado: 'Inactivo' },
-  { email: 'sofia.diaz@example.com', nombre: 'Sofía Díaz', pais: 'Costa Rica', registro: '2023-01-09', password: 'sofiapass', estado: 'Activo' },
-  { email: 'martin.morales@example.com', nombre: 'Martín Morales', pais: 'Ecuador', registro: '2023-01-10', password: 'martin123', estado: 'Inactivo' }
-]);
-
 // Modal
-// Estado y datos del modal
 const isModalOpen = ref(false);
 const modalMode = ref("add");
 const selectedAssistant = ref(null);
 
-// Abrir el modal para agregar o actualizar
 const openAddModal = () => {
   modalMode.value = "add";
   selectedAssistant.value = null;
@@ -47,9 +53,29 @@ const openEditModal = (assistant) => {
   isModalOpen.value = true;
 };
 
-// Método para manejar la respuesta del modal
+const handleAssistantAdded = () => {
+  isModalOpen.value = false;
+  logInfo('Socio agregado correctamente');
+};
+
+const handleAssistantUpdated = (updatedAssistant) => {
+  isModalOpen.value = false;
+  logInfo('Socio actualizado correctamente');
+};
+
 const handleModalClose = () => {
   isModalOpen.value = false;
+};
+
+// Manejar cambio de estado
+const handleStatusChange = async (socio) => {
+  try {
+    const newStatus = socio.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    await updateSocioStatus(socio.id, newStatus);
+    logInfo(`Estado del socio ${socio.email} actualizado a ${newStatus}`);
+  } catch (error) {
+    logError('Error al actualizar estado:', error);
+  }
 };
 
 // Filtro de búsqueda
@@ -57,15 +83,15 @@ const filteredasistentes = computed(() => {
   return asistentes.value.filter((transaction) => {
     const search = searchTerm.value.toLowerCase();
     return (
-        transaction.email.toLowerCase().includes(search) ||
-        transaction.nombre.toLowerCase().includes(search) ||
-        transaction.pais.toLowerCase().includes(search) ||
-        transaction.estado.toLowerCase().includes(search)
+        transaction.email?.toLowerCase().includes(search) ||
+        transaction.nombre?.toLowerCase().includes(search) ||
+        transaction.pais?.toLowerCase().includes(search) ||
+        transaction.estado?.toLowerCase().includes(search)
     );
   });
 });
 
-// Cálculos relacionados con la paginación
+// Cálculos de paginación
 const totalItems = computed(() => filteredasistentes.value.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
 const paginatedasistentes = computed(() => {
@@ -74,7 +100,7 @@ const paginatedasistentes = computed(() => {
   return filteredasistentes.value.slice(start, end);
 });
 
-// Métodos para la paginación
+// Métodos de paginación
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
@@ -93,7 +119,6 @@ const nextPage = () => {
   }
 };
 
-// Rango de páginas para mostrar en el paginador
 const paginationRange = computed(() => {
   const range = [];
   const maxPages = totalPages.value;
@@ -113,7 +138,6 @@ const paginationRange = computed(() => {
   return range;
 });
 
-// Rango de elementos visibles
 const showingFrom = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
 const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalItems.value));
 </script>
@@ -131,6 +155,7 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
         <span class="hidden lg:block">Agregar Socio</span>
       </button>
     </header>
+
     <main class="mt-[30px]">
       <CardLayout>
         <header class="flex gap-2.5 md:gap-5 md:justify-between items-center mb-4">
@@ -145,9 +170,13 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
           </div>
         </header>
 
-        <!-- Tabla -->
+        <!-- Tabla con loader -->
         <div class="overflow-x-auto mt-5">
-          <table class="w-full table-auto border-collapse text-left">
+          <div v-if="loading" class="flex justify-center items-center py-8">
+            <Loader2 class="animate-spin" />
+          </div>
+
+          <table v-else class="w-full table-auto border-collapse text-left">
             <thead>
             <tr class="bg-transparent">
               <th class="p-4 text-sm font-medium uppercase text-colorTextBlack dark:text-white">Email</th>
@@ -160,9 +189,14 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
             </tr>
             </thead>
             <tbody>
+            <tr v-if="paginatedasistentes.length === 0">
+              <td colspan="7" class="text-center p-4 text-colorTextBlack dark:text-white">
+                No se encontraron socios
+              </td>
+            </tr>
             <tr
                 v-for="(transaction, index) in paginatedasistentes"
-                :key="index"
+                :key="transaction.id"
                 :class="index % 2 === 0 ? 'bg-transparent' : 'bg-bgf3 dark:bg-colorfila'"
             >
               <td class="p-4 text-[14px] font-normal text-colorTextBlack dark:text-white">
@@ -184,17 +218,22 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
                   <span
                       class="p-1 flex justify-center font-bold rounded-[5px]"
                       :class="{
-                      'bg-[#03A66D]': transaction.estado === 'Activo',
-                      'bg-[#DC2626]': transaction.estado === 'Inactivo',
-                    }"
+                        'bg-[#03A66D]': transaction.estado === 'Activo',
+                        'bg-[#DC2626]': transaction.estado === 'Inactivo',
+                      }"
                   >
                     {{ transaction.estado }}
                   </span>
               </td>
               <td class="p-4 text-[14px] flex justify-center font-normal text-center text-colorTextBlack dark:text-white">
                 <div class="flex items-center gap-3">
-                  <label class="inline-flex items-center   cursor-pointer">
-                    <input type="checkbox" value="" class="sr-only peer">
+                  <label class="inline-flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        :checked="transaction.estado === 'Activo'"
+                        @change="handleStatusChange(transaction)"
+                        class="sr-only peer"
+                    >
                     <div class="relative w-9 h-5 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                   </label>
                   <button
@@ -211,13 +250,15 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
           </table>
         </div>
 
-        <ContainerAsistens
-            :modelValue="isModalOpen"
+        <!-- Modal -->
+        <AsistentesDialog
+            v-if="isModalOpen"
+            v-model="isModalOpen"
             :mode="modalMode"
             :assistant="selectedAssistant"
-            @update:modelValue="handleModalClose"
-            @assistant-added="asistentes.value.push($event)"
-            @assistant-updated="handleModalClose"
+            @assistant-added="handleAssistantAdded"
+            @assistant-updated="handleAssistantUpdated"
+            @close="handleModalClose"
         />
 
         <!-- Paginación -->
@@ -251,12 +292,12 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
                   @click.prevent="page !== '...' && changePage(page)"
                   class="flex items-center justify-center px-3 h-8 leading-tight"
                   :class="[
-                  page === '...'
-                    ? 'text-gray-500 dark:bg-gray-800'
-                    : currentPage === page
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white'
-                    : 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white',
-                ]"
+                    page === '...'
+                      ? 'text-gray-500 dark:bg-gray-800'
+                      : currentPage === page
+                      ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white'
+                      : 'text-gray-500 bg-white hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white',
+                  ]"
               >
                 {{ page }}
               </a>
