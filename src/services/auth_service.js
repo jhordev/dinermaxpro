@@ -3,6 +3,7 @@ import { doc, setDoc, getDoc, deleteDoc, getDocs, collection, query, where } fro
 import { auth, db } from './firebase_config';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 import { emailService } from './email_service';
+import { referralService } from './referral_service';
 import SecureLS from 'secure-ls';
 
 const ls = new SecureLS({ encodingType: 'aes' });
@@ -11,7 +12,8 @@ const TEMP_USER_KEY = 'temp_user_data';
 const USER_ROLE = 'user_role';
 
 export const authService = {
-    async initializeRegistration(email, password, nombre) {
+
+    async initializeRegistration(email, password, nombre, referralCode, socioId) {
         try {
             // Verificar si el correo ya está registrado
             const userDocs = await getDocs(
@@ -25,8 +27,14 @@ export const authService = {
                 };
             }
 
-            // Guardar datos temporalmente
-            ls.set(TEMP_USER_KEY, { email, password, nombre });
+            // Guardar datos temporalmente incluyendo referralCode y socioId
+            ls.set(TEMP_USER_KEY, {
+                email,
+                password,
+                nombre,
+                referralCode,
+                socioId
+            });
 
             // Enviar código de verificación
             const verificationResult = await this.sendVerificationCode(email);
@@ -55,7 +63,7 @@ export const authService = {
                 throw new Error('No hay datos de registro temporales');
             }
 
-            const { email, password, nombre } = userData;
+            const { email, password, nombre, referralCode, socioId } = userData;
 
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -63,12 +71,26 @@ export const authService = {
                 displayName: nombre
             });
 
-            await setDoc(doc(db, 'users', userCredential.user.uid), {
+            // Crear objeto base de datos de usuario
+            const userDataToSave = {
                 nombre,
                 email,
                 createdAt: new Date(),
                 role: 'user'
-            });
+            };
+
+            // Agregar socioId si existe
+            if (socioId) {
+                userDataToSave.socioId = socioId;
+            }
+
+            // Guardar datos del usuario
+            await setDoc(doc(db, 'users', userCredential.user.uid), userDataToSave);
+
+            // Procesar el referido si existe
+            if (referralCode) {
+                await referralService.processReferral(referralCode, userCredential.user.uid);
+            }
 
             ls.remove(TEMP_USER_KEY);
             logInfo(`Usuario registrado exitosamente: ${email}`);

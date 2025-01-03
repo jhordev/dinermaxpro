@@ -20,12 +20,24 @@ const loading = ref(false);
 const errorMessage = ref('');
 const showValidationDialog = ref(false);
 const referralCode = ref(null);
+const socioId = ref(null);
 
-onMounted(() => {
+onMounted(async () => {
   const refCode = route.query.ref;
   if (refCode) {
     referralCode.value = refCode;
-    logInfo(`Código de referido detectado: ${refCode}`);
+    try {
+      // Obtener el socioId del código de referido
+      const retrievedSocioId = await referralService.getSocioIdFromReferralCode(refCode);
+      if (retrievedSocioId) {
+        socioId.value = retrievedSocioId;
+        logInfo(`Código de referido detectado: ${refCode}, SocioId: ${retrievedSocioId}`);
+      } else {
+        logInfo(`Código de referido detectado: ${refCode}, sin socio asociado`);
+      }
+    } catch (error) {
+      logError(`Error al obtener socioId: ${error.message}`);
+    }
   }
 });
 
@@ -58,11 +70,13 @@ const handleSubmit = async (e) => {
   errorMessage.value = '';
 
   try {
-    // Iniciar proceso de registro
+    // Iniciar proceso de registro incluyendo código de referido y socioId
     const result = await authService.initializeRegistration(
         email.value,
         password.value,
-        nombre.value
+        nombre.value,
+        referralCode.value,
+        socioId.value
     );
 
     if (result.success) {

@@ -1,11 +1,10 @@
-import { db, auth } from '@/services/firebase_config';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/services/firebase_config';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { logError, logInfo } from '@/utils/logger';
 
 export const referralService = {
-    async createReferralCode(userId) {
+    async createReferralCode(userId, role = 'user') {
         try {
-            // Verificar si el usuario ya tiene un código
             const existingCodeQuery = query(
                 collection(db, 'referralCodes'),
                 where('userId', '==', userId)
@@ -16,18 +15,20 @@ export const referralService = {
                 return existingCodeSnap.docs[0].data().code;
             }
 
-            // Crear nuevo código
-            const code = `REF${userId.slice(0, 4).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+            const prefix = role === 'socio' ? 'SOC' : 'REF';
+            const code = `${prefix}${userId.slice(0, 4).toUpperCase()}${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+
             await addDoc(collection(db, 'referralCodes'), {
                 userId,
                 code,
+                role,
                 createdAt: new Date(),
                 usedCount: 0,
                 earnings: 0,
                 referredUsers: []
             });
 
-            logInfo(`Nuevo código de referido creado: ${code}`);
+            logInfo(`Nuevo código de referido creado: ${code} para rol: ${role}`);
             return code;
         } catch (error) {
             logError('Error al crear código de referido:', error);
@@ -35,31 +36,36 @@ export const referralService = {
         }
     },
 
-    async getReferralStats(userId) {
+    async getSocioIdFromReferralCode(referralCode) {
         try {
-            const userRef = query(
+            const q = query(
                 collection(db, 'referralCodes'),
-                where('userId', '==', userId)
+                where('code', '==', referralCode)
             );
-            const snapshot = await getDocs(userRef);
+            const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
-                return {
-                    code: null,
-                    totalReferrals: 0,
-                    earnings: 0
-                };
+                return null;
             }
 
-            const data = snapshot.docs[0].data();
-            return {
-                code: data.code,
-                totalReferrals: data.usedCount,
-                earnings: data.earnings
-            };
+            const referralData = snapshot.docs[0].data();
+
+            // Si el referidor es socio, devolver su ID
+            if (referralData.role === 'socio') {
+                return referralData.userId;
+            }
+
+            // Si no es socio, buscar en users para encontrar el socioId
+            const userRef = await getDoc(doc(db, 'users', referralData.userId));
+            if (userRef.exists()) {
+                const userData = userRef.data();
+                return userData.socioId || null;
+            }
+
+            return null;
         } catch (error) {
-            logError('Error al obtener estadísticas:', error);
-            throw error;
+            logError('Error al obtener socioId desde código de referido:', error);
+            return null;
         }
     },
 
@@ -72,63 +78,159 @@ export const referralService = {
             const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
-                logError('Código de referido inválido');
+                logError(`Código de referido inválido: ${referralCode}`);
                 return false;
             }
 
             const referralDoc = snapshot.docs[0];
             const referralData = referralDoc.data();
+            const bonus = referralData.role === 'socio' ? 20 : 10;
 
-            // Actualizar estadísticas del referidor
+            // Obtener información del usuario que refiere
+            const referrerDoc = await getDoc(doc(db, 'users', referralData.userId));
+            let socioIdToAssign = null;
+
+            if (referrerDoc.exists()) {
+                const referrerData = referrerDoc.data();
+                // Verificar si el usuario que refiere tiene socioId
+                if (referrerData.socioId) {
+                    socioIdToAssign = referrerData.socioId;
+                    // Actualizar el documento del nuevo usuario con el socioId heredado
+                    await updateDoc(doc(db, 'users', newUserId), {
+                        socioId: socioIdToAssign
+                    });
+                    logInfo(`SocioId heredado: ${socioIdToAssign} para usuario ${newUserId}`);
+                }
+            }
+
+            // Actualizar el documento de referralCodes
             await updateDoc(doc(db, 'referralCodes', referralDoc.id), {
-                usedCount: referralData.usedCount + 1,
-                earnings: referralData.earnings + 10,
-                referredUsers: [...referralData.referredUsers, newUserId]
+                usedCount: (referralData.usedCount || 0) + 1,
+                earnings: (referralData.earnings || 0) + bonus,
+                referredUsers: [...(referralData.referredUsers || []), newUserId]
             });
 
-            // Registrar la relación de referido
+            // Crear registro en userReferrals
             await addDoc(collection(db, 'userReferrals'), {
                 referredUserId: newUserId,
                 referrerId: referralData.userId,
                 referralCode: referralCode,
+                referrerRole: referralData.role,
                 date: new Date(),
-                status: 'active'
+                status: 'active',
+                bonus,
+                socioId: socioIdToAssign
             });
 
-            logInfo(`Referido procesado exitosamente: ${newUserId}`);
+            logInfo(`Referido procesado exitosamente: Usuario ${newUserId} con código ${referralCode}`);
             return true;
         } catch (error) {
-            logError('Error al procesar referido:', error);
+            logError(`Error al procesar referido: ${error.message}`);
             throw error;
         }
     },
 
-    async getReferrerInfo(userId) {
+    getReferralStats(userId, callback) {
         try {
-            const userReferralsQuery = query(
-                collection(db, 'userReferrals'),
-                where('referredUserId', '==', userId)
+            const referredQuery = query(
+                collection(db, 'referralCodes'),
+                where('referredUsers', 'array-contains', userId)
             );
 
-            const referralSnapshot = await getDocs(userReferralsQuery);
+            const userQuery = query(
+                collection(db, 'referralCodes'),
+                where('userId', '==', userId)
+            );
 
-            if (referralSnapshot.empty) {
-                return { nombre: 'DinnerMax' };
-            }
+            const unsubscribe = onSnapshot(referredQuery, async (referredSnapshot) => {
+                try {
+                    let referrerData = {
+                        userId: null,
+                        nombre: 'DinnerMax',
+                        photoURL: null
+                    };
+                    let ownReferralData = null;
 
-            const referralData = referralSnapshot.docs[0].data();
-            const referrerDoc = await getDoc(doc(db, 'users', referralData.referrerId));
+                    if (!referredSnapshot.empty) {
+                        const referralDoc = referredSnapshot.docs[0];
+                        const referrerUserId = referralDoc.data().userId;
 
-            if (referrerDoc.exists()) {
-                return {
-                    nombre: referrerDoc.data().nombre,
-                    id: referralData.referrerId
-                };
-            }
-            return { nombre: 'DinnerMax' };
+                        const referrerDoc = await getDoc(doc(db, 'users', referrerUserId));
+                        if (referrerDoc.exists()) {
+                            referrerData = {
+                                userId: referrerUserId,
+                                nombre: referrerDoc.data().nombre || 'DinnerMax',
+                                photoURL: referrerDoc.data().photoURL || null
+                            };
+                        }
+                    }
+
+                    const ownReferralSnapshot = await getDocs(userQuery);
+                    if (!ownReferralSnapshot.empty) {
+                        const data = ownReferralSnapshot.docs[0].data();
+
+                        const referredUsersInfo = [];
+                        if (data.referredUsers && data.referredUsers.length > 0) {
+                            for (const referredUserId of data.referredUsers) {
+                                const userDoc = await getDoc(doc(db, 'users', referredUserId));
+                                if (userDoc.exists()) {
+                                    const userData = userDoc.data();
+                                    referredUsersInfo.push({
+                                        userId: referredUserId,
+                                        nombre: userData.nombre || 'Usuario Desconocido',
+                                        photoURL: userData.photoURL || null,
+                                        fechaRegistro: userData.created_at || null
+                                    });
+                                }
+                            }
+                        }
+
+                        ownReferralData = {
+                            code: data.code,
+                            totalReferrals: data.usedCount || 0,
+                            earnings: data.earnings || 0,
+                            role: data.role || 'user',
+                            referredUsers: referredUsersInfo
+                        };
+                    }
+
+                    callback({
+                        referrer: referrerData,
+                        ownReferral: ownReferralData || {
+                            code: null,
+                            totalReferrals: 0,
+                            earnings: 0,
+                            role: 'user',
+                            referredUsers: []
+                        }
+                    });
+
+                    logInfo('Datos de referidos actualizados en tiempo real');
+                } catch (error) {
+                    logError('Error procesando datos de referidos:', error);
+                    callback({
+                        referrer: {
+                            userId: null,
+                            nombre: 'DinnerMax',
+                            photoURL: null
+                        },
+                        ownReferral: {
+                            code: null,
+                            totalReferrals: 0,
+                            earnings: 0,
+                            role: 'user',
+                            referredUsers: []
+                        }
+                    });
+                }
+            }, (error) => {
+                logError('Error en la suscripción de referidos:', error);
+            });
+
+            return unsubscribe;
         } catch (error) {
-            logError('Error al obtener información del referidor:', error);
-            return { nombre: 'DinnerMax' };
+            logError('Error al configurar la suscripción de referidos:', error);
+            throw error;
         }
     }
 };

@@ -1,7 +1,6 @@
 <script setup>
-
-import ReferencesDate from "@/components/Dashboard/References/ReferencesDate.vue";
-import TableReferences from "@/components/Dashboard/References/TableReferences.vue";
+import ReferidosComponent from "@/components/DashboardAdmin/Home/ReferidosComponent.vue";
+import TableReferences from "@/components/DashboardAdmin/ReferencesSocios/TableReferences.vue";
 
 const movimientos = [
   {
@@ -69,15 +68,10 @@ const movimientos = [
 
 <template>
   <section class="grid grid-cols-1 md:grid-cols-3 gap-[24px]">
-    <ReferencesDate  class="h-fit"
-                     referralLink="https://dinnermax.com/crear_cuenta.php?referidos=User123"
-                     :totalReferrals="30"
-                     :totalEarnings="1520.75"
-    />
-    <TableReferences :datos="movimientos" class=" col-span-1 md:col-span-2 " />
+    <ReferidosComponent class="h-fit" />
+    <TableReferences :datos="movimientos" class="col-span-1 md:col-span-2" />
   </section>
 </template>
 
 <style scoped>
-
 </style>

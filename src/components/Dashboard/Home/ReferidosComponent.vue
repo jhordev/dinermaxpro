@@ -1,66 +1,55 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useClipboard } from '@vueuse/core';
 import { auth } from '@/services/firebase_config';
 import { referralService } from '@/services/referral_service';
-import { userService } from '@/services/user_service';
 import CardLayout from "@/layouts/CardLayout.vue";
-import { Copy, Loader, User } from 'lucide-vue-next';
+import { Copy } from 'lucide-vue-next';
 import { logInfo, logError } from '@/utils/logger';
 
 const referralCode = ref('');
 const referralLink = ref('');
 const stats = ref({
-  totalReferrals: 0,
-  earnings: 0
+  ownReferral: {
+    totalReferrals: 0,
+    earnings: 0
+  }
 });
-const loading = ref(false);
-const imageLoading = ref(true);
-const imageError = ref(false);
-const userData = ref(null);
 const { copy, copied } = useClipboard();
-
-const handleImageError = () => {
-  imageError.value = true;
-  imageLoading.value = false;
-};
-
-const handleImageLoad = () => {
-  imageLoading.value = false;
-  imageError.value = false;
-};
+let unsubscribe = null;
 
 onMounted(async () => {
   if (auth.currentUser) {
-    loading.value = true;
     try {
-      // Cargar datos del usuario
-      const userDataResult = await userService.getUserData();
-      if (userDataResult.success) {
-        userData.value = userDataResult.data;
-      }
-
-      // Obtener o crear código de referido
       const code = await referralService.createReferralCode(auth.currentUser.uid);
       referralCode.value = code;
       referralLink.value = `${window.location.origin}/register?ref=${code}`;
 
-      // Cargar estadísticas
-      const userStats = await referralService.getReferralStats(auth.currentUser.uid);
-      stats.value = userStats;
+      unsubscribe = referralService.getReferralStats(auth.currentUser.uid, (newStats) => {
+        stats.value = newStats;
+      });
 
-      logInfo('Datos de referidos cargados exitosamente');
+      logInfo('Suscripción a datos de referidos iniciada');
     } catch (error) {
       logError('Error al cargar datos de referidos:', error);
-    } finally {
-      loading.value = false;
     }
   }
 });
 
+onUnmounted(() => {
+  if (unsubscribe) {
+    unsubscribe();
+    logInfo('Suscripción a datos de referidos cancelada');
+  }
+});
+
 const handleCopy = async () => {
-  await copy(referralLink.value);
-  logInfo('Link de referido copiado');
+  try {
+    await copy(referralLink.value);
+    logInfo('Link de referido copiado');
+  } catch (error) {
+    logError('Error al copiar el enlace:', error);
+  }
 };
 </script>
 
@@ -78,76 +67,45 @@ const handleCopy = async () => {
         <button
             @click="handleCopy"
             class="flex items-center gap-2 cursor-pointer text-[12px] text-colorTextBlack font-bold border border-colorBorder md:border-transparent md:hover:border-colorBorder p-1 rounded-[5px] transition-all duration-300 ease-in-out"
-            :disabled="loading"
         >
-          <Loader v-if="loading" class="animate-spin h-4 w-4" />
-          <template v-else>
-            <Copy class="h-4 w-4" />
-            {{ copied ? 'Copiado!' : 'Copiar' }}
-          </template>
+          <Copy class="h-4 w-4" />
+          {{ copied ? 'Copiado!' : 'Copiar' }}
         </button>
       </div>
     </div>
 
     <div class="mt-5 p-5 bg-bgf3 rounded-[10px] flex gap-[30px] items-center">
       <div class="relative w-[80px] h-[80px]">
-        <!-- Loader mientras carga la imagen -->
-        <div v-if="imageLoading" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
-          <Loader class="animate-spin h-6 w-6 text-gray-500" />
-        </div>
-
-        <!-- Imagen del usuario -->
-        <template v-if="userData?.photoURL && !imageError">
-          <img
-              :src="userData.photoURL"
-              class="rounded-full w-[80px] h-[80px] object-cover"
-              @load="handleImageLoad"
-              @error="handleImageError"
-              alt="Perfil"
-          />
-        </template>
-
-        <!-- Icono por defecto -->
-        <div v-if="imageError || !userData?.photoURL" class="w-[80px] h-[80px] rounded-full bg-gray-200 flex items-center justify-center">
-          <User class="h-8 w-8 text-gray-500" />
-        </div>
+        <img
+            src="@/assets/img/item1.png"
+            class="rounded-full w-[80px] h-[80px] object-cover"
+            alt="Imagen de referidos"
+        />
       </div>
       <div class="flex flex-col gap-[10px]">
         <h3 class="text-gray-500 font-bold text-[16px]">Total de referidos</h3>
-        <strong class="font-bold text-[23px]">{{ stats.totalReferrals }}</strong>
+        <strong class="font-bold text-[23px]">{{ stats.ownReferral?.totalReferrals || 0 }}</strong>
       </div>
     </div>
 
     <div class="mt-5 p-5 bg-bgf3 rounded-[10px] flex gap-[30px] items-center">
       <div class="relative w-[80px] h-[80px]">
-        <!-- Loader mientras carga la imagen -->
-        <div v-if="imageLoading" class="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-full">
-          <Loader class="animate-spin h-6 w-6 text-gray-500" />
-        </div>
-
-        <!-- Imagen del usuario -->
-        <template v-if="userData?.photoURL && !imageError">
-          <img
-              :src="userData.photoURL"
-              class="rounded-full w-[80px] h-[80px] object-cover"
-              @load="handleImageLoad"
-              @error="handleImageError"
-              alt="Perfil"
-          />
-        </template>
-
-        <!-- Icono por defecto -->
-        <div v-if="imageError || !userData?.photoURL" class="w-[80px] h-[80px] rounded-full bg-gray-200 flex items-center justify-center">
-          <User class="h-8 w-8 text-gray-500" />
-        </div>
+        <img
+            src="@/assets/img/item2.png"
+            class="rounded-full w-[80px] h-[80px] object-cover"
+            alt="Imagen de dinero"
+        />
       </div>
       <div class="flex flex-col gap-[10px]">
         <h3 class="text-gray-500 font-bold text-[16px]">Ganancia Total</h3>
-        <strong class="font-bold text-[23px]">${{ stats.earnings.toFixed(2) }}</strong>
+        <strong class="font-bold text-[23px]">${{ stats.ownReferral?.earnings?.toFixed(2) || '0.00' }}</strong>
       </div>
     </div>
   </CardLayout>
 </template>
 
 <style scoped>
+.bg-bgf3 {
+  background-color: #f3f4f6;
+}
 </style>

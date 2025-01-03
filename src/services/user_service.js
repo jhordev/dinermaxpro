@@ -136,13 +136,20 @@ export const userService = {
         }
     },
 
-    async getReferrerName() {
-        try {
-            const referrerInfo = await referralService.getReferrerInfo(auth.currentUser.uid);
-            return referrerInfo.nombre;
-        } catch (error) {
-            logError('Error al obtener nombre del referidor:', error);
-            return 'DinnerMax';
-        }
+    getReferrerName() {
+        return new Promise((resolve, reject) => {
+            try {
+                const unsubscribe = referralService.getReferralStats(
+                    auth.currentUser.uid,
+                    (referralInfo) => {
+                        unsubscribe();
+                        resolve(referralInfo.referrer?.nombre || 'DinnerMax');
+                    }
+                );
+            } catch (error) {
+                logError('Error al obtener nombre del referidor:', error);
+                resolve('DinnerMax');
+            }
+        });
     }
 };
