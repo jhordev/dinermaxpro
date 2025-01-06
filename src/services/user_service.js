@@ -63,28 +63,36 @@ export const userService = {
     async updateUserProfile(userData) {
         try {
             const userRef = doc(db, 'users', auth.currentUser.uid);
-            const updateData = {
-                // Campos users
-                nombre: userData.nombre,
-                wallet: userData.wallet,
-                sexo: userData.sexo,
-                telefono: userData.telefono,
-                pais: userData.pais,
-                // Campos de administrador
-                telegram: userData.telegram,
-                whatsapp: userData.whatsapp,
-                instagram: userData.instagram,
-                xsocial: userData.xsocial,
-                updated_at: new Date().toISOString()
-            };
+            const updateData = {};
 
-            await updateDoc(userRef, updateData);
-            await updateProfile(auth.currentUser, {
-                displayName: userData.nombre
-            });
+            // Solo agregar campos que no sean null
+            if (userData.nombre) updateData.nombre = userData.nombre;
+            if (userData.wallet) updateData.wallet = userData.wallet;
+            if (userData.sexo) updateData.sexo = userData.sexo;
+            if (userData.telefono) updateData.telefono = userData.telefono;
+            if (userData.pais) updateData.pais = userData.pais;
+            if (userData.telegram) updateData.telegram = userData.telegram;
+            if (userData.whatsapp) updateData.whatsapp = userData.whatsapp;
+            if (userData.instagram) updateData.instagram = userData.instagram;
+            if (userData.xsocial) updateData.xsocial = userData.xsocial;
 
-            logInfo('Perfil de usuario actualizado exitosamente');
-            return { success: true, message: 'Perfil actualizado correctamente' };
+            // Agregar timestamp solo si hay campos para actualizar
+            if (Object.keys(updateData).length > 0) {
+                updateData.updated_at = new Date().toISOString();
+
+                await updateDoc(userRef, updateData);
+
+                if (userData.nombre) {
+                    await updateProfile(auth.currentUser, {
+                        displayName: userData.nombre
+                    });
+                }
+
+                logInfo('Perfil de usuario actualizado exitosamente');
+                return { success: true, message: 'Perfil actualizado correctamente' };
+            }
+
+            return { success: true, message: 'No hay cambios para actualizar' };
         } catch (error) {
             logError(`Error al actualizar perfil: ${error.message}`);
             return { success: false, error: 'Error al actualizar el perfil' };

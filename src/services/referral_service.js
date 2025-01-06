@@ -120,18 +120,20 @@ export const referralService = {
             const referralDoc = snapshot.docs[0];
             const referralData = referralDoc.data();
 
-            // Obtener información del usuario que refiere
-            const referrerDoc = await getDoc(doc(db, 'users', referralData.userId));
-            let socioIdToAssign = null;
-
-            if (referrerDoc.exists()) {
-                const referrerData = referrerDoc.data();
-                if (referrerData.socioId) {
-                    socioIdToAssign = referrerData.socioId;
+            // Si el código comienza con SOC, asignar el userId del referente como socioId
+            if (referralCode.startsWith('SOC')) {
+                await updateDoc(doc(db, 'users', newUserId), {
+                    socioId: referralData.userId
+                });
+                logInfo(`SocioId asignado directamente del socio: ${referralData.userId} para usuario ${newUserId}`);
+            } else {
+                // Si no es un código de socio, verificar si el referente tiene socioId
+                const referrerDoc = await getDoc(doc(db, 'users', referralData.userId));
+                if (referrerDoc.exists() && referrerDoc.data().socioId) {
                     await updateDoc(doc(db, 'users', newUserId), {
-                        socioId: socioIdToAssign
+                        socioId: referrerDoc.data().socioId
                     });
-                    logInfo(`SocioId heredado: ${socioIdToAssign} para usuario ${newUserId}`);
+                    logInfo(`SocioId heredado: ${referrerDoc.data().socioId} para usuario ${newUserId}`);
                 }
             }
 
