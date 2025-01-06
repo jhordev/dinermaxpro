@@ -94,3 +94,6 @@ const pageTitle = computed(() => {
     </div>
   </header>
 </template>
+
+<style scoped>
+</style>

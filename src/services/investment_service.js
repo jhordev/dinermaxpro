@@ -1,17 +1,6 @@
 import { db, storage } from '@/services/firebase_config';
-import {
-    collection,
-    addDoc,
-    serverTimestamp,
-    onSnapshot,
-    query,
-    orderBy,
-    doc,
-    updateDoc,
-    getDoc,
-    where,
-    getDocs
-} from 'firebase/firestore';
+import {collection, addDoc, serverTimestamp, onSnapshot, query,
+    orderBy, doc, updateDoc, getDoc, where, getDocs, increment} from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
@@ -46,14 +35,44 @@ export const investmentService = {
         }
     },
 
-    subscribeToInvestments(callback) {
+    async getUserDataForInvestment(userId) {
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            return userSnap.exists() ? userSnap.data() : null;
+        } catch (error) {
+            logError('Error al obtener datos del usuario:', error);
+            throw error;
+        }
+    },
+
+    subscribeToInvestments(callback, userRole, socioId = null) {
         const q = query(collection(db, 'investments'), orderBy('createdAt', 'desc'));
-        return onSnapshot(q, (snapshot) => {
-            const investments = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            callback(investments);
+
+        return onSnapshot(q, async (snapshot) => {
+            try {
+                const investments = await Promise.all(
+                    snapshot.docs.map(async (doc) => {
+                        const investment = { id: doc.id, ...doc.data() };
+                        const userData = await this.getUserDataForInvestment(investment.userId);
+
+                        // Filtrar según el rol
+                        if (userRole === 'socio' && userData?.socioId !== socioId) {
+                            return null;
+                        }
+                        if (userRole === 'admin' && userData?.socioId) {
+                            return null;
+                        }
+
+                        return investment;
+                    })
+                );
+
+                // Filtrar los nulos y enviar solo las inversiones válidas
+                callback(investments.filter(inv => inv !== null));
+            } catch (error) {
+                logError('Error al procesar inversiones:', error);
+            }
         });
     },
 
@@ -61,7 +80,7 @@ export const investmentService = {
         try {
             const investmentRef = doc(db, 'investments', investmentId);
             const investmentDoc = await getDoc(investmentRef);
-            const investmentData = investmentDoc.data();
+            const investmentData = { ...investmentDoc.data(), id: investmentId };
 
             const updateData = {
                 status: newStatus,
@@ -78,6 +97,8 @@ export const investmentService = {
                 updateData.expirationDate = expirationDate;
                 updateData.activationDate = today;
                 updateData.earnings = 0;
+
+                await this.processReferralBonus(investmentData);
             }
 
             await updateDoc(investmentRef, updateData);
@@ -88,6 +109,51 @@ export const investmentService = {
             }
         } catch (error) {
             logError('Error al actualizar estado de inversión:', error);
+            throw error;
+        }
+    },
+
+    async processReferralBonus(investmentData) {
+        try {
+            const referralCodesRef = collection(db, 'referralCodes');
+            const q = query(referralCodesRef,
+                where('referredUsers', 'array-contains', investmentData.userId)
+            );
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                logDebug('Usuario no fue referido');
+                return;
+            }
+
+            const settingsRef = doc(db, 'system/settings');
+            const settingsDoc = await getDoc(settingsRef);
+            const referralPercentage = settingsDoc.data().referral;
+
+            const referralDoc = querySnapshot.docs[0];
+            const bonus = (investmentData.investment * referralPercentage) / 100;
+
+            // Actualizar directamente earnings en referralCodes
+            await updateDoc(doc(db, 'referralCodes', referralDoc.id), {
+                earnings: increment(bonus),
+                updatedAt: serverTimestamp()
+            });
+
+            await addDoc(collection(db, 'referralHistory'), {
+                referralCodeId: referralDoc.id,
+                referrerId: referralDoc.data().userId,
+                referredUserId: investmentData.userId,
+                investmentId: investmentData.id,
+                planName: investmentData.planName,
+                investmentAmount: investmentData.investment,
+                percentage: referralPercentage,
+                earnedAmount: bonus,
+                createdAt: serverTimestamp()
+            });
+
+            logInfo(`Bono de referido procesado: ${bonus} para código ${referralDoc.id}`);
+        } catch (error) {
+            logError('Error al procesar bono de referido:', error);
             throw error;
         }
     },
@@ -119,14 +185,12 @@ export const investmentService = {
                 return;
             }
 
-            // Verificar si ya pasó la fecha de expiración
             const expirationDate = investment.expirationDate.toDate();
             if (now > expirationDate) {
                 logDebug(`Inversión ${investmentId} ha expirado`);
                 return;
             }
 
-            // Calcular días hábiles
             let businessDays = 0;
             const current = new Date(startDate);
 
@@ -138,12 +202,10 @@ export const investmentService = {
                 current.setDate(current.getDate() + 1);
             }
 
-            // Calcular ganancias
             const dailyRate = investment.interestRate / 100;
             const dailyEarnings = investment.investment * dailyRate;
             const totalEarnings = Number((dailyEarnings * businessDays).toFixed(2));
 
-            // Actualizar solo si las ganancias han cambiado
             if (totalEarnings !== investment.earnings) {
                 await updateDoc(investmentRef, {
                     earnings: totalEarnings,
@@ -157,25 +219,17 @@ export const investmentService = {
             logError('Error al actualizar ganancias:', error);
             throw error;
         }
-    },
+    }
+};
 
-    async updateAllActiveInvestments() {
-        try {
-            const q = query(
-                collection(db, 'investments'),
-                where('status', '==', 'approved')
-            );
+const calculateProgress = (activationDate, expirationDate) => {
+    const start = new Date(activationDate.seconds * 1000);
+    const end = new Date(expirationDate.seconds * 1000);
+    const now = new Date();
 
-            const snapshot = await getDocs(q);
-            const updatePromises = snapshot.docs.map(doc =>
-                this.updateEarnings(doc.id)
-            );
+    const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+    const daysElapsed = (now - start) / (1000 * 60 * 60 * 24);
 
-            await Promise.all(updatePromises);
-            logInfo('Todas las inversiones activas han sido actualizadas');
-        } catch (error) {
-            logError('Error al actualizar todas las inversiones:', error);
-            throw error;
-        }
-    },
+    const progress = Math.round((daysElapsed / totalDays) * 100);
+    return Math.min(Math.max(progress, 0), 100);
 };

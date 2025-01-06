@@ -143,6 +143,7 @@ const handleSubmit = async () => {
       userId: auth.currentUser.uid,
       planId: props.selectedPlan.id,
       planName: props.selectedPlan.planName,
+      porcentajeMinRetiro: props.selectedPlan.porcentajeMinRetiro,
       investment: amount,
       interestRate: interestRate.value,
       duration: Number(props.selectedPlan.tiempoMes),
@@ -153,8 +154,8 @@ const handleSubmit = async () => {
 
     await investmentService.createInvestment(investmentData, voucherFile.value);
     logInfo('Inversión registrada exitosamente');
+    emit('submit'); // Modificar para no enviar datos
     closeModal();
-    emit('submit', investmentData);
   } catch (error) {
     logError('Error al procesar la inversión:', error);
   } finally {

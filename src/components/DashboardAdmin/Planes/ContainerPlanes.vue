@@ -16,18 +16,16 @@ let unsubscribe = null;
 const formatFeatures = (descripcion, interes) => {
   return descripcion.split('\n')
       .map(item => item.trim())
-      .filter(item => item !== '')
-      .map(item => {
-        if (item.startsWith('Crecimiento Diario:')) {
-          return `Crecimiento Diario: ${interes}%`;
-        }
-        return item;
-      });
+      .filter(Boolean)
+      .map(item => item.startsWith('Crecimiento Diario:')
+          ? `Crecimiento Diario: ${interes}%`
+          : item
+      );
 };
 
 const setupPlanesSubscription = () => {
   try {
-    unsubscribe = planService.subscribeToPlanes((planes) => {
+    unsubscribe = planService.subscribeToPlanes(planes => {
       pricingPlans.value = planes;
       isLoading.value = false;
     });
@@ -37,38 +35,30 @@ const setupPlanesSubscription = () => {
   }
 };
 
-const openAddModal = () => {
-  selectedPlan.value = null;
-  modalMode.value = "add";
-  isModalVisible.value = true;
-};
-
-const handleEdit = (plan) => {
-  selectedPlan.value = plan;
-  modalMode.value = "update";
+const handleModal = (mode, plan = null) => {
+  selectedPlan.value = plan ? JSON.parse(JSON.stringify(plan)) : null;
+  modalMode.value = mode;
   isModalVisible.value = true;
 };
 
 const handleDelete = async (planId) => {
-  if (confirm('¿Estás seguro de que deseas eliminar este plan?')) {
-    try {
-      await planService.eliminarPlan(planId);
-      logInfo('Plan eliminado exitosamente');
-    } catch (error) {
-      logError('Error al eliminar el plan:', error);
-    }
+  if (!confirm('¿Estás seguro de que deseas eliminar este plan?')) return;
+
+  try {
+    await planService.eliminarPlan(planId);
+    logInfo('Plan eliminado exitosamente');
+  } catch (error) {
+    logError('Error al eliminar el plan:', error);
   }
 };
 
-onMounted(() => {
-  setupPlanesSubscription();
-});
+const handleModalClose = () => {
+  isModalVisible.value = false;
+  selectedPlan.value = null;
+};
 
-onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
-});
+onMounted(setupPlanesSubscription);
+onUnmounted(() => unsubscribe?.());
 </script>
 
 <template>
@@ -77,7 +67,7 @@ onUnmounted(() => {
       <h2 class="text-[28px] text-colorTextBlack dark:text-white font-bold">Planes</h2>
       <button
           type="button"
-          @click="openAddModal"
+          @click="() => handleModal('add')"
           class="gap-2.5 text-white inline-flex items-center bg-colorBgButton hover:bg-purple-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-colorBgButton dark:hover:bg-purple-500"
           :disabled="isLoading"
       >
@@ -100,7 +90,7 @@ onUnmounted(() => {
           :duration="`Por ${plan.tiempoMes} meses`"
           :features="formatFeatures(plan.descripcion, plan.interes)"
           :isMostPopular="false"
-          @edit="() => handleEdit(plan)"
+          @edit="() => handleModal('update', plan)"
           @delete="() => handleDelete(plan.id)"
       />
     </div>
@@ -109,6 +99,7 @@ onUnmounted(() => {
         v-model="isModalVisible"
         :mode="modalMode"
         :plan="selectedPlan"
+        @update:model-value="handleModalClose"
     />
   </section>
 </template>

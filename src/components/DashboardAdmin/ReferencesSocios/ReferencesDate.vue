@@ -1,7 +1,7 @@
 <script setup>
 import CardLayout from "@/layouts/CardLayout.vue";
 import { defineProps, ref } from "vue";
-// Props para recibir los datos dinámicos
+
 const props = defineProps({
   referralLink: {
     type: String,

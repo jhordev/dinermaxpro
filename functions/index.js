@@ -1,6 +1,6 @@
 const { onCall } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
-const logger = require("firebase-functions/logger");
 
 admin.initializeApp();
 
@@ -11,8 +11,6 @@ exports.createSocioUser = onCall(async (request) => {
         }
 
         const data = request.data;
-        logger.info("Iniciando creación de usuario socio", { email: data.email });
-
         const callerUid = request.auth.uid;
         const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
 
@@ -51,7 +49,6 @@ exports.createSocioUser = onCall(async (request) => {
             }
         };
     } catch (error) {
-        logger.error("Error al crear usuario socio", { error: error.message });
         throw new Error(error.message);
     }
 });
@@ -63,8 +60,6 @@ exports.updateSocioUser = onCall(async (request) => {
         }
 
         const data = request.data;
-        logger.info("Iniciando actualización de usuario socio", { email: data.email });
-
         const callerUid = request.auth.uid;
         const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
 
@@ -72,35 +67,27 @@ exports.updateSocioUser = onCall(async (request) => {
             throw new Error('No tienes permisos para actualizar usuarios socios');
         }
 
-        // Obtener el documento actual para preservar los campos existentes
         const currentDoc = await admin.firestore().collection('users').doc(data.docId).get();
         if (!currentDoc.exists) {
             throw new Error('Usuario no encontrado');
         }
 
-        // Preparar datos para actualización en Firestore
         const updates = {
             email: data.email,
             nombre: data.nombre,
             pais: data.pais,
-            password: data.password, // Mantener la contraseña en Firestore
+            password: data.password,
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
         };
 
-        // Actualizar en Authentication
         const authUpdates = {
             email: data.email,
             displayName: data.nombre,
             password: data.password
         };
 
-        // Actualizar en Authentication
         await admin.auth().updateUser(data.docId, authUpdates);
-
-        // Actualizar en Firestore
         await admin.firestore().collection('users').doc(data.docId).update(updates);
-
-        // Obtener el documento actualizado
         const updatedDoc = await admin.firestore().collection('users').doc(data.docId).get();
 
         return {
@@ -111,7 +98,71 @@ exports.updateSocioUser = onCall(async (request) => {
             }
         };
     } catch (error) {
-        logger.error("Error al actualizar usuario socio", { error: error.message });
         throw new Error(error.message);
+    }
+});
+
+exports.processInvestmentEarnings = onSchedule("0 5 * * *", async (event) => {
+    try {
+        const now = new Date();
+        const currentDay = now.getDay();
+
+        // No procesar pagos los domingos (0) y lunes (1)
+        if (currentDay === 0 || currentDay === 1) {
+            return null;
+        }
+
+        const investmentsRef = admin.firestore().collection('investments');
+        const activeInvestments = await investmentsRef
+            .where('status', '==', 'approved')
+            .get();
+
+        const batch = admin.firestore().batch();
+        let updatesCount = 0;
+
+        for (const doc of activeInvestments.docs) {
+            const investment = doc.data();
+
+            const activationDate = investment.activationDate.toDate();
+            const expirationDate = investment.expirationDate.toDate();
+
+            if (now > expirationDate) {
+                continue;
+            }
+
+            // Calcular el día de pago según el día de activación
+            const startDate = new Date(activationDate);
+            const activationDay = startDate.getDay();
+
+            // Casos especiales para viernes y sábado
+            if (activationDay === 5) { // Viernes
+                startDate.setDate(startDate.getDate() + 4); // Pago el martes
+            } else if (activationDay === 6) { // Sábado
+                startDate.setDate(startDate.getDate() + 3); // Pago el martes
+            } else {
+                // Para todos los demás días (domingo a jueves)
+                startDate.setDate(startDate.getDate() + 2); // Pago dos días después
+            }
+
+            if (now >= startDate) {
+                const dailyEarning = investment.investment * (investment.interestRate / 100);
+                const newEarnings = investment.earnings + dailyEarning;
+
+                batch.update(doc.ref, {
+                    earnings: newEarnings,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                updatesCount++;
+            }
+        }
+
+        if (updatesCount > 0) {
+            await batch.commit();
+        }
+
+        return null;
+    } catch (error) {
+        throw error;
     }
 });

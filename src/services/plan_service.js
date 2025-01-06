@@ -35,6 +35,7 @@ export const planService = {
         try {
             const docRef = await addDoc(collection(db, COLLECTION_NAME), {
                 ...planData,
+                porcentajeMinRetiro: Number(planData.porcentajeMinRetiro),
                 createdAt: new Date()
             });
             logInfo('Plan creado exitosamente');
@@ -53,6 +54,7 @@ export const planService = {
             const planRef = doc(db, COLLECTION_NAME, id);
             await updateDoc(planRef, {
                 ...planData,
+                porcentajeMinRetiro: Number(planData.porcentajeMinRetiro),
                 updatedAt: new Date()
             });
             logInfo('Plan actualizado exitosamente');

@@ -43,15 +43,38 @@ export const userService = {
         }
     },
 
+    async getUserById(userId) {
+        try {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                logDebug('Datos de usuario específico obtenidos correctamente');
+                return { success: true, data: userSnap.data() };
+            }
+
+            throw new Error('No se encontró el usuario');
+        } catch (error) {
+            logError(`Error al obtener datos del usuario: ${error.message}`);
+            return { success: false, error: 'Error al obtener datos del usuario' };
+        }
+    },
+
     async updateUserProfile(userData) {
         try {
             const userRef = doc(db, 'users', auth.currentUser.uid);
             const updateData = {
+                // Campos users
                 nombre: userData.nombre,
                 wallet: userData.wallet,
                 sexo: userData.sexo,
                 telefono: userData.telefono,
                 pais: userData.pais,
+                // Campos de administrador
+                telegram: userData.telegram,
+                whatsapp: userData.whatsapp,
+                instagram: userData.instagram,
+                xsocial: userData.xsocial,
                 updated_at: new Date().toISOString()
             };
 
@@ -136,11 +159,19 @@ export const userService = {
         }
     },
 
-    getReferrerName() {
+    getReferrerName(userId = null) {
         return new Promise((resolve, reject) => {
             try {
+                const userIdToUse = userId || auth.currentUser?.uid;
+
+                if (!userIdToUse) {
+                    logError('No se proporcionó ID de usuario ni hay usuario autenticado');
+                    resolve('DinnerMax');
+                    return;
+                }
+
                 const unsubscribe = referralService.getReferralStats(
-                    auth.currentUser.uid,
+                    userIdToUse,
                     (referralInfo) => {
                         unsubscribe();
                         resolve(referralInfo.referrer?.nombre || 'DinnerMax');

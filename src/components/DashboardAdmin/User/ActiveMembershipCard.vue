@@ -1,69 +1,132 @@
 <script setup>
+import { ref, computed, watch } from 'vue'
+import { subscribeToUserInvestment } from '@/services/users_list_service'
+import { referralService } from '@/services/referral_service'
+import { Loader2 } from "lucide-vue-next"
+import inteIcon from '@/assets/img/interes.svg'
+import refIcon from '@/assets/img/item1.png'
+import refDinnerIcon from '@/assets/img/item2.png'
+import { Pie } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
 
-import inteIcon from '@/assets/img/interes.svg';
-import refIcon from '@/assets/img/item1.png';
-import refDinnerIcon from '@/assets/img/item2.png';
-import {Pie} from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
+const props = defineProps({
+  userId: {
+    type: String,
+    required: true
+  }
+})
 
-// Registra los componentes necesarios de Chart.js
-ChartJS.register(Title, Tooltip, Legend, ArcElement);
+ChartJS.register(Title, Tooltip, Legend, ArcElement)
 
-const data = {
+const investment = ref(null)
+const progress = ref(0)
+const referralData = ref(null)
+const isLoading = ref(true)
+
+function subscribeToUserInvestmentPromise(id) {
+  return new Promise((resolve, reject) => {
+    subscribeToUserInvestment(id, data => resolve(data), err => reject(err))
+  })
+}
+
+function getReferralStatsPromise(id) {
+  return new Promise((resolve, reject) => {
+    referralService.getReferralStats(id, data => resolve(data), err => reject(err))
+  })
+}
+
+const formatDate = t => {
+  if (!t) return ''
+  return new Date(t.seconds * 1000).toLocaleDateString()
+}
+
+const formatCurrency = v => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
+  }).format(v || 0)
+}
+
+const data = computed(() => ({
   labels: ['Transcurridos', 'Faltantes'],
   datasets: [
     {
       label: 'Días',
-      data: [70, 30], // Ejemplo de datos: 70 activas, 30 no activas
+      data: [progress.value || 0, 100 - (progress.value || 0)],
       backgroundColor: ['#7586FF', '#FF49A0'],
       borderWidth: 0,
-      cutout: '60%', // Crea el hueco en el medio
-    },
-  ],
-};
+      cutout: '60%'
+    }
+  ]
+}))
 
 const options = {
   responsive: true,
   plugins: {
     legend: {
       display: false,
-      position: 'top',
+      position: 'top'
     },
     title: {
       display: false,
-      text: 'Distribución de Membresías',
-    },
-  },
-};
+      text: 'Distribución de Membresías'
+    }
+  }
+}
 
+watch(
+    () => props.userId,
+    async newId => {
+      if (newId) {
+        isLoading.value = true
+        try {
+          const [investmentData, referralStatsData] = await Promise.all([
+            subscribeToUserInvestmentPromise(newId),
+            getReferralStatsPromise(newId)
+          ])
+          investment.value = investmentData
+          progress.value = investmentData?.progress || 0
+          referralData.value = referralStatsData
+        } catch (e) {
+          console.error(e)
+        } finally {
+          isLoading.value = false
+        }
+      }
+    },
+    { immediate: true }
+)
 </script>
 
 <template>
-  <section class="p-5 shadow-custom-card-info rounded-[14px]">
+  <section class="p-5 shadow-custom-card-info rounded-[14px] relative">
+    <div v-if="isLoading"
+         class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-800/50 z-10">
+      <Loader2 class="w-8 h-8 animate-spin text-blue-500"/>
+    </div>
+
     <header class="border-b border-gray-600 pb-2.5">
       <div class="flex items-center justify-between text-colorTextBlack dark:text-white">
-        <h3 class="text-[16px] font-bold tracking-[1.6px]">Menbresía activa</h3>
-        <span class="text-[12px] font-bold tracking-[1.6px]">Plan Básico</span>
+        <h3 class="text-[16px] font-bold tracking-[1.6px]">Membresía activa</h3>
+        <span class="text-[12px] font-bold tracking-[1.6px]">{{ investment?.planName || 'Ninguno' }}</span>
       </div>
       <div class="flex items-center justify-between text-colorTextBlack dark:text-white mt-1.5">
-        <span class="text-[10px] font-normal">Capital: 70000</span>
-        <span class="text-[10px] font-normal">Rango: 2024-06-13 a 2024-09-13</span>
+        <span class="text-[10px] font-normal">Capital: {{ formatCurrency(investment?.investment || 0) }}</span>
+        <span class="text-[10px] font-normal">
+          Rango: {{ investment ? `${formatDate(investment.activationDate)} a ${formatDate(investment.expirationDate)}` : 'Sin plan activo' }}
+        </span>
       </div>
     </header>
+
     <main class="flex flex-col lg:flex-row mt-5 gap-6 items-center">
-      <div class="flex-1 grid grid-cols-4  w-full gap-5">
+      <div class="flex-1 grid grid-cols-4 w-full gap-5">
         <div class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
           <img :src="inteIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Interés</h3>
             <strong class="text-[14px] font-black">
-              $ 2000
+              {{ formatCurrency(investment?.earnings || 0) }}
             </strong>
           </div>
         </div>
@@ -72,24 +135,26 @@ const options = {
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Referidos</h3>
             <strong class="text-[14px] font-black">
-              50
+              {{ referralData?.ownReferral?.totalReferrals || 0 }}
             </strong>
           </div>
         </div>
-        <div class=" col-span-4  bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+        <div class="col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
           <img :src="refDinnerIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Ganancias x referidos</h3>
             <strong class="text-[14px] font-black">
-              $ 50
+              {{ formatCurrency(referralData?.ownReferral?.earnings || 0) }}
             </strong>
           </div>
         </div>
       </div>
       <div class="relative flex-1 justify-center w-[140px] lg:w-[180px]">
-        <Pie  :data="data" :options="options" />
+        <Pie :data="data" :options="options" />
         <div class="absolute top-[58px] left-[53px] lg:top-[40%] lg:left-[36%]">
-          <span class="text-[18px] lg:text-[25px] font-bold text-colorTextBlack dark:text-white">30%</span>
+          <span class="text-[18px] lg:text-[25px] font-bold text-colorTextBlack dark:text-white">
+            {{ progress }}%
+          </span>
         </div>
       </div>
     </main>
@@ -97,5 +162,4 @@ const options = {
 </template>
 
 <style scoped>
-
 </style>

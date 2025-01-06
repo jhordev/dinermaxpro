@@ -23,23 +23,21 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'plan-created', 'plan-updated']);
 const isLoading = ref(false);
 
-// Variables para cada input del formulario
 const formData = ref({
   nombrePlan: '',
   capitalMinimo: null,
   capitalMaximo: null,
   tiempoMes: null,
   interes: null,
+  porcentajeMinRetiro: null,
   descripcion: ''
 });
 
-// Función para cerrar el modal
 const closeModal = () => {
   emit('update:modelValue', false);
   resetForm();
 };
 
-// Función para restablecer el formulario
 const resetForm = () => {
   formData.value = {
     nombrePlan: '',
@@ -47,11 +45,11 @@ const resetForm = () => {
     capitalMaximo: null,
     tiempoMes: null,
     interes: null,
+    porcentajeMinRetiro: null,
     descripcion: ''
   };
 };
 
-// Función para manejar el envío del formulario
 const handleSubmit = async () => {
   if (!validateForm()) return;
 
@@ -62,7 +60,8 @@ const handleSubmit = async () => {
       capitalMinimo: Number(formData.value.capitalMinimo),
       capitalMaximo: Number(formData.value.capitalMaximo),
       tiempoMes: Number(formData.value.tiempoMes),
-      interes: Number(formData.value.interes)
+      interes: Number(formData.value.interes),
+      porcentajeMinRetiro: Number(formData.value.porcentajeMinRetiro)
     };
 
     if (props.mode === 'add') {
@@ -82,11 +81,10 @@ const handleSubmit = async () => {
   }
 };
 
-// Función para validar el formulario
 const validateForm = () => {
-  const { nombrePlan, capitalMinimo, capitalMaximo, tiempoMes, interes, descripcion } = formData.value;
+  const { nombrePlan, capitalMinimo, capitalMaximo, tiempoMes, interes, porcentajeMinRetiro, descripcion } = formData.value;
 
-  if (!nombrePlan || !capitalMinimo || !capitalMaximo || !tiempoMes || !interes || !descripcion) {
+  if (!nombrePlan || !capitalMinimo || !capitalMaximo || !tiempoMes || !interes || !porcentajeMinRetiro || !descripcion) {
     logError('Todos los campos son requeridos');
     return false;
   }
@@ -101,10 +99,14 @@ const validateForm = () => {
     return false;
   }
 
+  if (parseFloat(porcentajeMinRetiro) < 0 || parseFloat(porcentajeMinRetiro) > 100) {
+    logError('El porcentaje mínimo de retiro debe estar entre 0 y 100');
+    return false;
+  }
+
   return true;
 };
 
-// Observar cambios en el plan seleccionado
 watch(() => props.plan, (newPlan) => {
   if (newPlan) {
     formData.value = { ...newPlan };
@@ -113,7 +115,6 @@ watch(() => props.plan, (newPlan) => {
   }
 }, { immediate: true });
 
-// Observar cambios en modelValue
 watch(() => props.modelValue, (newValue) => {
   if (!newValue) {
     closeModal();
@@ -147,33 +148,59 @@ watch(() => props.modelValue, (newValue) => {
 
         <form class="p-4 md:p-5" @submit.prevent="handleSubmit">
           <div class="grid grid-cols-2 gap-6">
-            <!-- Los inputs se mantienen igual -->
             <div class="col-span-2 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Nombre del Plan</label>
               <input v-model="formData.nombrePlan" type="text" placeholder="Introduzca nombre del plan" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
             </div>
+
             <div class="col-span-1 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Capital mínimo</label>
               <input v-model="formData.capitalMinimo" type="number" placeholder="Capital mínimo" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
             </div>
+
             <div class="col-span-1 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Capital máximo</label>
               <input v-model="formData.capitalMaximo" type="number" placeholder="Capital máximo" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
             </div>
-            <div class="col-span-1 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Tiempo (mes)</label>
-              <input v-model="formData.tiempoMes" type="number" placeholder="Tiempo (mes)" class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal" />
+
+            <div class="col-span-2">
+              <div class="grid grid-cols-3 gap-4 max-w-[500px]">
+                <div class="col-span-1 flex flex-col gap-2.5">
+                  <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Tiempo (mes)</label>
+                  <input
+                      v-model="formData.tiempoMes"
+                      type="number"
+                      placeholder="Tiempo (mes)"
+                      class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
+                  />
+                </div>
+
+                <div class="col-span-1 flex flex-col gap-2.5">
+                  <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Interés</label>
+                  <input
+                      v-model="formData.interes"
+                      type="number"
+                      step="0.01"
+                      placeholder="Interés"
+                      class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
+                  />
+                </div>
+
+                <div class="col-span-1 flex flex-col gap-2.5">
+                  <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">% Mín. Retiro (días)</label>
+                  <input
+                      v-model="formData.porcentajeMinRetiro"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      placeholder="% mínimo retiro"
+                      class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
+                  />
+                </div>
+              </div>
             </div>
-            <div class="col-span-1 flex flex-col gap-2.5">
-              <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Interés</label>
-              <input
-                  v-model="formData.interes"
-                  type="number"
-                  step="0.01"
-                  placeholder="Interés"
-                  class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
-              />
-            </div>
+
             <div class="col-span-2 flex flex-col gap-2.5">
               <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">Descripción</label>
               <textarea

@@ -4,15 +4,17 @@ import { ref, computed, onMounted } from 'vue';
 import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import Contrato from "@/components/DashboardAdmin/Contratos/Contrato.vue";
 import { investmentService } from '@/services/investment_service';
-import imgProfile from '@/assets/img/capture.jpg';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase_config';
+import { logError } from '@/utils/logger';
+import SecureLS from 'secure-ls';
+import { auth } from '@/services/firebase_config';
+
+const ls = new SecureLS({ encodingType: 'aes' });
+const userRole = computed(() => ls.get('user_role') || '');
 
 const isModalVisible = ref(false);
 const selectedUser = ref(null);
 const products = ref([]);
 
-// Estados según Firestore
 const colors = {
   pending: '#DAAA39',
   approved: '#03A66D',
@@ -20,51 +22,64 @@ const colors = {
 };
 
 const searchTerm = ref('');
-
-// Paginación
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const totalItems = computed(() => filteredProducts.value.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
 
 onMounted(() => {
-  investmentService.subscribeToInvestments(async (investments) => {
-    const mappedInvestments = await Promise.all(investments.map(async (inv) => {
-      const userRef = doc(db, 'users', inv.userId);
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.exists() ? userSnap.data() : null;
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    logError('Usuario no autenticado');
+    return;
+  }
 
-      // Calcular la fecha de caducidad solo si está aprobado
-      let caducidad = 'Pendiente';
-      if (inv.status === 'approved' && inv.expirationDate) {
-        caducidad = inv.expirationDate.toDate().toLocaleDateString();
+  investmentService.subscribeToInvestments(
+      async (investments) => {
+        try {
+          const mappedInvestments = await Promise.all(investments.map(async (inv) => {
+            const userData = await investmentService.getUserDataForInvestment(inv.userId);
+
+            // Filtrar según el rol
+            if (userRole.value === 'socio' && userData?.socioId !== currentUser.uid) {
+              return null;
+            }
+            if (userRole.value === 'admin' && userData?.socioId) {
+              return null;
+            }
+
+            let caducidad = 'Pendiente';
+            if (inv.status === 'approved' && inv.expirationDate) {
+              caducidad = inv.expirationDate.toDate().toLocaleDateString();
+            }
+
+            return {
+              id: inv.id,
+              userId: inv.userId,
+              usuario: userData?.nombre || 'Usuario no encontrado',
+              plan: inv.planName,
+              capital: inv.investment,
+              registro: inv.createdAt.toDate().toLocaleDateString(),
+              caducidad: caducidad,
+              estado: inv.status,
+              walletAddress: inv.walletAddress,
+              voucherUrl: inv.voucherUrl
+            };
+          }));
+
+          products.value = mappedInvestments.filter(inv => inv !== null);
+        } catch (error) {
+          logError('Error al cargar las inversiones:', error);
+        }
       }
-
-      return {
-        id: inv.id,
-        userId: inv.userId,
-        usuario: userData?.nombre || 'Usuario no encontrado',
-        plan: inv.planName,
-        capital: inv.investment,
-        registro: inv.createdAt.toDate().toLocaleDateString(),
-        caducidad: caducidad,
-        estado: inv.status,
-        walletAddress: inv.walletAddress,
-        voucherUrl: inv.voucherUrl
-      };
-    }));
-
-    products.value = mappedInvestments;
-  });
+  );
 });
 
-// Funciones del modal
 const openModal = (user) => {
   selectedUser.value = user;
   isModalVisible.value = true;
 };
 
-// Filtrado de productos
 const filteredProducts = computed(() => {
   return products.value.filter(product => {
     const searchLower = searchTerm.value.toLowerCase();
@@ -76,7 +91,6 @@ const filteredProducts = computed(() => {
   });
 });
 
-// Computed para paginación
 const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
@@ -86,7 +100,6 @@ const paginatedProducts = computed(() => {
 const showingFrom = computed(() => ((currentPage.value - 1) * itemsPerPage.value) + 1);
 const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalItems.value));
 
-// Métodos de paginación
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
@@ -105,7 +118,6 @@ const nextPage = () => {
   }
 };
 
-// Lógica del rango de paginación
 const paginationRange = computed(() => {
   const range = [];
   const maxPages = totalPages.value;

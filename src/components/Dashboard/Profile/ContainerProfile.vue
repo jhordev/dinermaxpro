@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { ChevronDown, MoveRight, Camera, UserCircle2, Loader2 } from 'lucide-vue-next';
 import { userService } from '@/services/user_service';
-import { logError, logInfo, logDebug } from '@/utils/logger.js';
+import { logError, logInfo } from '@/utils/logger.js';
 import { useToast } from 'vue-toastification';
 
 const toast = useToast();

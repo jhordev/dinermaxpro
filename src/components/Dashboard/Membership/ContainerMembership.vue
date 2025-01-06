@@ -13,6 +13,7 @@ const openModal = (plan) => {
   selectedPlan.value = {
     id: plan.id,
     planName: plan.planName,
+    porcentajeMinRetiro: plan.porcentajeMinRetiro,
     interes: plan.interes,
     tiempoMes: plan.tiempoMes,
     capitalMinimo: plan.capitalMinimo,
@@ -21,13 +22,8 @@ const openModal = (plan) => {
   isModalVisible.value = true;
 };
 
-const handleSubmit = async (planData) => {
-  try {
-    await planService.crearPlan(planData);
-    isModalVisible.value = false;
-  } catch (error) {
-    console.error('Error al crear plan:', error);
-  }
+const handleSubmit = (planData) => {
+  isModalVisible.value = false;
 };
 
 const formatFeatures = (descripcion, interes) => {
@@ -53,6 +49,7 @@ onMounted(() => {
     pricingPlans.value = planes.map(plan => ({
       id: plan.id,
       planName: plan.nombrePlan,
+      porcentajeMinRetiro: plan.porcentajeMinRetiro,
       capitalMinimo: plan.capitalMinimo,
       capitalMaximo: plan.capitalMaximo,
       priceRange: `$${plan.capitalMinimo.toLocaleString()} - $${plan.capitalMaximo.toLocaleString()}`,

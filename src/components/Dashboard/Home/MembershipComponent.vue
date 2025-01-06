@@ -17,14 +17,15 @@ const activeInvestment = ref(null);
 const isLoading = ref(true);
 let unsubscribe = null;
 
-const getBusinessDaysDifference = (startDate, endDate) => {
+const getPaymentDays = (startDate, endDate) => {
   let count = 0;
   const curDate = new Date(startDate);
   const end = new Date(endDate);
 
   while (curDate <= end) {
     const dayOfWeek = curDate.getDay();
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+    // Solo contar martes(2) a sábado(6)
+    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
       count++;
     }
     curDate.setDate(curDate.getDate() + 1);
@@ -32,11 +33,25 @@ const getBusinessDaysDifference = (startDate, endDate) => {
   return count;
 };
 
+const getFirstPaymentDate = (activationDate) => {
+  const date = new Date(activationDate);
+  const dayOfWeek = date.getDay();
+
+  if (dayOfWeek === 5) { // Viernes
+    date.setDate(date.getDate() + 4); // Pago el martes
+  } else if (dayOfWeek === 6) { // Sábado
+    date.setDate(date.getDate() + 3); // Pago el martes
+  } else {
+    date.setDate(date.getDate() + 2); // Para el resto de días, pago dos días después
+  }
+  return date;
+};
+
 const investmentMetrics = computed(() => {
   if (!activeInvestment.value || activeInvestment.value.status !== 'approved') {
     return {
       daysElapsed: 0,
-      totalBusinessDays: 0,
+      totalPaymentDays: 0,
       percentage: 0,
       earnings: 0
     };
@@ -45,14 +60,25 @@ const investmentMetrics = computed(() => {
   const now = new Date();
   const activationDate = activeInvestment.value.activationDate.toDate();
   const expirationDate = activeInvestment.value.expirationDate.toDate();
+  const firstPaymentDate = getFirstPaymentDate(activationDate);
 
-  const daysElapsed = getBusinessDaysDifference(activationDate, now);
-  const totalBusinessDays = getBusinessDaysDifference(activationDate, expirationDate);
-  const percentage = Math.min(Math.round((daysElapsed / totalBusinessDays) * 100), 100);
+  // Si aún no llega el primer día de pago
+  if (now < firstPaymentDate) {
+    return {
+      daysElapsed: 0,
+      totalPaymentDays: getPaymentDays(firstPaymentDate, expirationDate),
+      percentage: 0,
+      earnings: activeInvestment.value.earnings || 0
+    };
+  }
+
+  const daysElapsed = getPaymentDays(firstPaymentDate, now);
+  const totalPaymentDays = getPaymentDays(firstPaymentDate, expirationDate);
+  const percentage = Math.min(Math.round((daysElapsed / totalPaymentDays) * 100), 100);
 
   return {
     daysElapsed,
-    totalBusinessDays,
+    totalPaymentDays,
     percentage,
     earnings: activeInvestment.value.earnings || 0
   };
@@ -61,7 +87,7 @@ const investmentMetrics = computed(() => {
 const chartData = computed(() => ({
   series: [
     investmentMetrics.value.daysElapsed,
-    investmentMetrics.value.totalBusinessDays - investmentMetrics.value.daysElapsed
+    investmentMetrics.value.totalPaymentDays - investmentMetrics.value.daysElapsed
   ],
   labels: ['Días Recorrido', 'Días Faltantes']
 }));

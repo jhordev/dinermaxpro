@@ -4,7 +4,6 @@ import { onClickOutside } from '@vueuse/core'
 import { ChevronsLeft, Network, TrendingUpDown, LayoutDashboard, MonitorCog, MessageCircleQuestion, Users, BookUser } from 'lucide-vue-next'
 import { ref, computed } from 'vue'
 import SidebarItem from './SidebarItem.vue'
-import DarkModeSwitcher from "./DarkModeSwitcher.vue"
 import SecureLS from 'secure-ls';
 
 const ls = new SecureLS({ encodingType: 'aes' });
@@ -23,20 +22,20 @@ const menuGroups = ref([
       { icon: LayoutDashboard, label: 'Dashboard', route: '/admin' },
       { icon: Users, label: 'Usuarios', route: '/admin/user' },
       { icon: BookUser, label: 'Contratos', route: '/admin/contracts' },
-      { icon: TrendingUpDown , label: 'Operaciones', route: '/admin/operation' },
+      { icon: TrendingUpDown , label: 'Retiros', route: '/admin/operation' },
       {
         icon: MonitorCog,
         label: 'Sistema',
         route: '#',
         adminOnly: true,
         children: [
-          { label: 'Planes', route: '/admin/plans' },
-          { label: 'Configuración', route: '/admin/configurations' },
-          { label: 'Asistentes', route: '/admin/asistentials' }
+          {label: 'Planes', route: '/admin/plans'},
+          {label: 'Configuración', route: '/admin/configurations'},
+          {label: 'Asistentes', route: '/admin/asistentials'}
         ]
       },
-      { icon: Network, label: 'Red de referidos', route: '/admin/referidosadmin' },
-      { icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte' }
+      {icon: Network, label: 'Red de referidos', route: '/admin/referidosadmin', hideFromAdmin: true},
+      {icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte'}
     ]
   }
 ])
@@ -61,12 +60,13 @@ function handleClick(item) {
   >
     <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
       <router-link to="/" class="flex items-center">
-        <img src="@/assets/img/isotipo.png" alt="Logo" class="w-12" />
+        <img src="@/assets/img/isotipo.png" alt="Logo" class="w-12"/>
         <span class="md:text-[24px] font-bold text-colorTextBlack dark:text-white">DinnerMax</span>
       </router-link>
 
-      <button class="block lg:hidden text-colorTextBlack dark:text-white" @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen">
-        <ChevronsLeft />
+      <button class="block lg:hidden text-colorTextBlack dark:text-white"
+              @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen">
+        <ChevronsLeft/>
       </button>
     </div>
 
@@ -77,7 +77,7 @@ function handleClick(item) {
             <ul class="mb-6 flex flex-col gap-[22px]">
               <template v-for="(menuItem, index) in menuGroup.menuItems" :key="index">
                 <SidebarItem
-                    v-if="!menuItem.adminOnly || userRole === 'admin'"
+                    v-if="(!menuItem.adminOnly || userRole === 'admin') && (!menuItem.hideFromAdmin || userRole !== 'admin')"
                     :item="menuItem"
                     :index="index"
                     :icon="menuItem.icon"
