@@ -3,11 +3,17 @@ import CardMembership from "@/components/Dashboard/Membership/CardMembership.vue
 import { ref, onMounted, onUnmounted } from 'vue';
 import AddPlanModal from "@/components/Dashboard/Membership/AddPlanModal.vue";
 import { planService } from '@/services/plan_service';
+import { investmentService } from '@/services/investment_service';
+import { auth } from '@/services/firebase_config';
+import { logInfo } from '@/utils/logger.js';
 
 const isModalVisible = ref(false);
 const pricingPlans = ref([]);
 const selectedPlan = ref(null);
-let unsubscribe;
+const isLoading = ref(true);
+const activeInvestment = ref(null);
+let unsubscribePlans;
+let unsubscribeInvestments;
 
 const openModal = (plan) => {
   selectedPlan.value = {
@@ -24,28 +30,25 @@ const openModal = (plan) => {
 
 const handleSubmit = (planData) => {
   isModalVisible.value = false;
+  logInfo('Plan seleccionado:', planData);
 };
 
 const formatFeatures = (descripcion, interes) => {
   const features = [];
-
-  // Agregar crecimiento diario con el interés real
   features.push(`Crecimiento Diario: ${interes}%`);
-
-  // Procesar el resto de características
   const lines = descripcion.split('\n').map(line => line.trim());
-
   lines.forEach(line => {
     if (!line.startsWith('Crecimiento Diario:') && line) {
       features.push(line);
     }
   });
-
   return features;
 };
 
 onMounted(() => {
-  unsubscribe = planService.subscribeToPlanes((planes) => {
+  isLoading.value = true;
+
+  unsubscribePlans = planService.subscribeToPlanes((planes) => {
     pricingPlans.value = planes.map(plan => ({
       id: plan.id,
       planName: plan.nombrePlan,
@@ -59,17 +62,27 @@ onMounted(() => {
       interes: plan.interes
     }));
   });
+
+  if (auth.currentUser) {
+    unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
+      const activeInv = investments.find(inv =>
+          inv.userId === auth.currentUser.uid &&
+          inv.status === 'approved'
+      );
+      activeInvestment.value = activeInv;
+      isLoading.value = false;
+    }, 'user', auth.currentUser.uid);
+  }
 });
 
 onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
+  if (unsubscribePlans) unsubscribePlans();
+  if (unsubscribeInvestments) unsubscribeInvestments();
 });
 </script>
 
 <template>
-  <section class="grid grid-cols-1 md:grid-cols-3  gap-5 md:gap-10 pb-10 md:p-0">
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-10 pb-10 md:p-0">
     <CardMembership
         v-for="plan in pricingPlans"
         :key="plan.id"
@@ -78,6 +91,9 @@ onUnmounted(() => {
         :duration="plan.duration"
         :features="plan.features"
         :interes="plan.interes"
+        :is-active="activeInvestment?.planId === plan.id"
+        :disabled="!!activeInvestment"
+        :is-loading="isLoading"
         @choose-plan="() => openModal(plan)"
     />
     <AddPlanModal

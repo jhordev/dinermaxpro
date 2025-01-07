@@ -3,16 +3,18 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import FormRetirar from "@/components/Dashboard/Wallet/FormRetirar.vue";
 import TableMovimientos from "@/components/Dashboard/Wallet/TableMovimientos.vue";
 import { investmentService } from '@/services/investment_service';
+import { subscribeToUserWithdrawals } from '@/services/withdrawal_service';
 import { auth } from '@/services/firebase_config';
 import { logError, logInfo } from '@/utils/logger';
 
 const movimientos = ref([]);
 const isLoading = ref(true);
-let unsubscribe = null;
+let unsubscribeInvestments = null;
+let unsubscribeWithdrawals = null;
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
-  const date = timestamp.toDate();
+  const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp);
   return new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
     month: '2-digit',
@@ -24,8 +26,9 @@ onMounted(async () => {
   try {
     const userId = auth.currentUser?.uid;
     if (userId) {
-      unsubscribe = investmentService.subscribeToInvestments((investments) => {
-        const userMovements = investments
+      // Suscripción a depósitos
+      unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
+        const depositMovements = investments
             .filter(inv => inv.userId === userId)
             .map(inv => ({
               fecha: formatDate(inv.createdAt),
@@ -35,13 +38,46 @@ onMounted(async () => {
               status: inv.status,
               network: inv.network,
               paymentMethod: inv.paymentMethod,
-              voucherUrl: inv.voucherUrl
-            }))
-            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+              voucherUrl: inv.voucherUrl,
+              timestamp: inv.createdAt
+            }));
 
-        movimientos.value = userMovements;
+        // Actualizar solo los depósitos manteniendo los retiros existentes
+        movimientos.value = movimientos.value
+            .filter(m => m.operacion === 'Retiro')
+            .concat(depositMovements);
+
+        ordenarMovimientos();
         isLoading.value = false;
-        logInfo('Movimientos cargados:', userMovements.length);
+        logInfo('Depósitos cargados:', depositMovements.length);
+      });
+
+      // Suscripción a retiros
+      unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
+        const withdrawalMovements = withdrawals
+            .filter(w => w.userId === userId)
+            .map(w => ({
+              fecha: formatDate(w.createdAt),
+              transaccion: w.id.slice(0, 8).toUpperCase(),
+              operacion: 'Retiro',
+              monto: w.netAmount,
+              status: w.status,
+              network: w.network || '',
+              paymentMethod: 'Wallet',
+              voucherUrl: '',
+              comision: w.withdrawalFee,
+              billetera: w.walletAddress,
+              timestamp: w.createdAt
+            }));
+
+        // Actualizar solo los retiros manteniendo los depósitos existentes
+        movimientos.value = movimientos.value
+            .filter(m => m.operacion === 'Depósito')
+            .concat(withdrawalMovements);
+
+        ordenarMovimientos();
+        isLoading.value = false;
+        logInfo('Retiros cargados:', withdrawalMovements.length);
       });
     }
   } catch (error) {
@@ -50,10 +86,17 @@ onMounted(async () => {
   }
 });
 
+const ordenarMovimientos = () => {
+  movimientos.value.sort((a, b) => {
+    const dateA = a.timestamp instanceof Date ? a.timestamp : a.timestamp.toDate();
+    const dateB = b.timestamp instanceof Date ? b.timestamp : b.timestamp.toDate();
+    return dateB - dateA;
+  });
+};
+
 onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
+  if (unsubscribeInvestments) unsubscribeInvestments();
+  if (unsubscribeWithdrawals) unsubscribeWithdrawals();
 });
 </script>
 

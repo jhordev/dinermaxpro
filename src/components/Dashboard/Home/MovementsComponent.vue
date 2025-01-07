@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import CardLayout from "@/layouts/CardLayout.vue";
 import { investmentService } from '@/services/investment_service';
+import { subscribeToUserWithdrawals } from '@/services/withdrawal_service';
 import { logError, logInfo } from '@/utils/logger';
 
 const props = defineProps({
@@ -11,13 +12,14 @@ const props = defineProps({
   }
 });
 
-const deposits = ref([]);
+const transactions = ref([]);
 const isLoading = ref(true);
-let unsubscribe = null;
+let unsubscribeInvestments = null;
+let unsubscribeWithdrawals = null;
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
-  const date = timestamp.toDate();
+  const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp);
   return new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
     month: '2-digit',
@@ -33,34 +35,67 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+const updateTransactions = () => {
+  transactions.value.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+};
+
 onMounted(async () => {
   try {
-    unsubscribe = investmentService.subscribeToInvestments((investments) => {
-      const userDeposits = investments
+    // Suscripción a depósitos
+    unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
+      const depositTransactions = investments
           .filter(inv => inv.userId === props.userId)
           .map(inv => ({
             fecha: formatDate(inv.createdAt),
             transaccion: inv.id.slice(0, 8).toUpperCase(),
             operacion: 'Depósito',
             monto: inv.investment,
-            status: inv.status
-          }))
-          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            status: inv.status,
+            timestamp: inv.createdAt
+          }));
 
-      deposits.value = userDeposits;
+      // Actualizar solo los depósitos
+      transactions.value = transactions.value
+          .filter(t => t.operacion === 'Retiro')
+          .concat(depositTransactions);
+
+      updateTransactions();
       isLoading.value = false;
-      logInfo('Depósitos cargados:', userDeposits.length);
+      logInfo('Depósitos cargados:', depositTransactions.length);
     });
+
+    // Suscripción a retiros
+    unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
+      const withdrawalTransactions = withdrawals
+          .filter(w => w.userId === props.userId)
+          .map(w => ({
+            fecha: formatDate(w.createdAt),
+            transaccion: w.id.slice(0, 8).toUpperCase(),
+            operacion: 'Retiro',
+            monto: w.netAmount,
+            status: w.status,
+            timestamp: w.createdAt
+          }));
+
+      // Actualizar solo los retiros
+      transactions.value = transactions.value
+          .filter(t => t.operacion === 'Depósito')
+          .concat(withdrawalTransactions);
+
+      updateTransactions();
+      isLoading.value = false;
+      logInfo('Retiros cargados:', withdrawalTransactions.length);
+    });
+
   } catch (error) {
-    logError('Error al cargar los depósitos:', error);
+    logError('Error al cargar las transacciones:', error);
     isLoading.value = false;
   }
 });
 
 onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
+  if (unsubscribeInvestments) unsubscribeInvestments();
+  if (unsubscribeWithdrawals) unsubscribeWithdrawals();
 });
 </script>
 
@@ -82,7 +117,7 @@ onUnmounted(() => {
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
 
-    <div v-else-if="deposits.length > 0" class="overflow-x-auto mt-5">
+    <div v-else-if="transactions.length > 0" class="overflow-x-auto mt-5">
       <table class="w-full table-auto border-collapse text-left">
         <thead>
         <tr class="bg-transparent">
@@ -95,33 +130,35 @@ onUnmounted(() => {
         </thead>
         <tbody>
         <tr
-            v-for="(deposit, index) in deposits"
-            :key="deposit.transaccion"
+            v-for="(transaction, index) in transactions"
+            :key="transaction.transaccion"
             :class="index % 2 === 0 ? 'bg-transparent' : 'bg-bgf3 dark:bg-colorfila'"
         >
           <td class="p-4 text-[14px] font-normal text-colorTextBlack dark:text-white">
-            {{ deposit.fecha }}
+            {{ transaction.fecha }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
-            {{ deposit.transaccion }}
+            {{ transaction.transaccion }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
-            {{ deposit.operacion }}
+            {{ transaction.operacion }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
-            {{ formatCurrency(deposit.monto) }}
+            {{ formatCurrency(transaction.monto) }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center">
               <span
                   :class="{
                   'px-2 py-1 rounded-full text-xs font-semibold': true,
-                  'bg-green-100 text-green-800': deposit.status === 'approved',
-                  'bg-yellow-100 text-yellow-800': deposit.status === 'pending',
-                  'bg-red-100 text-red-800': deposit.status === 'rejected'
+                  'bg-green-100 text-green-800': transaction.status === 'approved' || transaction.status === 'completed',
+                  'bg-yellow-100 text-yellow-800': transaction.status === 'pending',
+                  'bg-red-100 text-red-800': transaction.status === 'rejected'
                 }"
               >
-                {{ deposit.status === 'approved' ? 'Aprobado' :
-                  deposit.status === 'pending' ? 'Pendiente' : 'Rechazado' }}
+                {{
+                  transaction.status === 'approved' || transaction.status === 'completed' ? 'Aprobado' :
+                      transaction.status === 'pending' ? 'Pendiente' : 'Rechazado'
+                }}
               </span>
           </td>
         </tr>

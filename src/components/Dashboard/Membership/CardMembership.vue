@@ -1,5 +1,5 @@
 <script setup>
-import { CircleCheck } from "lucide-vue-next";
+import { CircleCheck, Loader2 } from "lucide-vue-next";
 
 const props = defineProps({
   planName: {
@@ -22,6 +22,18 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  isActive: {
+    type: Boolean,
+    default: false,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  isLoading: {
+    type: Boolean,
+    default: false,
+  },
   onChoosePlan: {
     type: Function,
     required: true,
@@ -29,21 +41,31 @@ const props = defineProps({
 });
 
 const handleButtonClick = () => {
-  props.onChoosePlan();
+  if (!props.disabled && !props.isLoading && !props.isActive) {
+    props.onChoosePlan();
+  }
 };
 </script>
 
 <template>
   <article
       :class="[
-      'flex flex-col dark:bg-black border-[8px] border-colorPurpleCard rounded-[32px] py-8 px-6',
-      { 'bg-colorBgPopular dark:bg-colorBgPopular': isMostPopular },
+      'flex flex-col dark:bg-black border-[8px] rounded-[32px] py-8 px-6',
+      {
+        'bg-colorBgPopular dark:bg-colorBgPopular': isMostPopular,
+        'border-green-500': isActive,
+        'border-colorPurpleCard': !isActive,
+        'opacity-50': disabled && !isActive,
+      },
     ]"
   >
     <header class="relative">
+      <div v-if="isActive" class="absolute -top-6 -right-4 py-1 px-3 bg-green-500 text-white rounded-full text-sm">
+        Plan Activo
+      </div>
       <span :class="[
-          'font-bold text-colorTextBlack dark:text-white text-[16px]',
-          {'text-white dark:text-white': isMostPopular },
+        'font-bold text-colorTextBlack dark:text-white text-[16px]',
+        {'text-white dark:text-white': isMostPopular },
       ]">
         {{ planName }}
       </span>
@@ -84,9 +106,18 @@ const handleButtonClick = () => {
     </ul>
     <button
         @click="handleButtonClick"
-        class="rounded-[8px] mt-7 bg-colorBgButton w-full text-center py-3 text-[16px] text-white font-semibold"
+        :disabled="disabled || isLoading || isActive"
+        :class="[
+        'rounded-[8px] mt-7 w-full text-center py-3 text-[16px] font-semibold transition-all duration-200',
+        {
+          'bg-colorBgButton text-white hover:bg-opacity-90': !disabled && !isActive,
+          'bg-gray-400 text-gray-200 cursor-not-allowed': disabled && !isActive,
+          'bg-green-500 text-white cursor-default': isActive,
+        }
+      ]"
     >
-      Elegir plan
+      <Loader2 v-if="isLoading" class="inline-block w-5 h-5 mr-2 animate-spin" />
+      <span>{{ isActive ? 'Plan Actual' : 'Elegir plan' }}</span>
     </button>
   </article>
 </template>

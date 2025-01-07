@@ -221,15 +221,3 @@ export const investmentService = {
         }
     }
 };
-
-const calculateProgress = (activationDate, expirationDate) => {
-    const start = new Date(activationDate.seconds * 1000);
-    const end = new Date(expirationDate.seconds * 1000);
-    const now = new Date();
-
-    const totalDays = (end - start) / (1000 * 60 * 60 * 24);
-    const daysElapsed = (now - start) / (1000 * 60 * 60 * 24);
-
-    const progress = Math.round((daysElapsed / totalDays) * 100);
-    return Math.min(Math.max(progress, 0), 100);
-};

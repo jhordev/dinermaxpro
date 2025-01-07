@@ -107,6 +107,54 @@ export const subscribeToUserInvestment = (userId, callback) => {
     }
 };
 
+export const subscribeToTotalInvestments = (callback) => {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('No hay usuario autenticado');
+
+        const userRole = ls.get('user_role');
+        logInfo('Iniciando suscripción a inversiones totales para rol:', userRole);
+
+        const investmentsRef = collection(db, 'investments');
+        const usersRef = collection(db, 'users');
+
+        const unsubscribe = onSnapshot(query(investmentsRef), async (investmentsSnapshot) => {
+            const usersSnapshot = await getDocs(query(usersRef));
+            const validUserIds = new Set();
+
+            // Primero, obtener los IDs de usuarios válidos según el rol
+            usersSnapshot.forEach((userDoc) => {
+                const userData = userDoc.data();
+                if (userRole === 'socio' && userData.socioId === currentUser.uid) {
+                    validUserIds.add(userDoc.id);
+                } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
+                    validUserIds.add(userDoc.id);
+                }
+            });
+
+            // Calcular el total de inversiones solo para usuarios válidos
+            let totalInvestments = 0;
+            investmentsSnapshot.forEach(doc => {
+                const investment = doc.data();
+                if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
+                    totalInvestments += Number(investment.investment || 0);
+                }
+            });
+
+            const roundedTotal = Number(totalInvestments.toFixed(2));
+            logInfo('Total de inversiones calculado:', roundedTotal);
+            callback(roundedTotal);
+        }, (error) => {
+            logError('Error en la suscripción de inversiones totales:', error);
+        });
+
+        return unsubscribe;
+    } catch (error) {
+        logError('Error al crear suscripción de inversiones totales:', error);
+        throw error;
+    }
+};
+
 const calculateProgress = (activationDate, expirationDate) => {
     const start = new Date(activationDate.seconds * 1000);
     const end = new Date(expirationDate.seconds * 1000);
