@@ -22,7 +22,6 @@ import Wallets from "@/components/DashboardAdmin/Config/Wallets/Wallets.vue";
 import Recompensas from "@/components/DashboardAdmin/Config/Pocentaje.vue";
 import Profile from "@/components/DashboardAdmin/Profile/Profile.vue";
 import ContainerOperations from "@/components/DashboardAdmin/Operations/ContainerOperations.vue";
-import PdfPreview from "@/components/DashboardAdmin/Shared/PdfPreview.vue";
 
 const Inicio = () => import("@/views/InicioView.vue");
 const LoginScreen = () => import("@/views/LoginView.vue");
@@ -148,12 +147,6 @@ const routes = [
         name: 'referidosadmin',
         component: ContainerReferences,
       },
-      {
-        path: '/preview-pdf',
-        name: 'PdfPreview',
-        component: PdfPreview,
-        props: (route) => ({ transactions: route.query.transactions ? JSON.parse(route.query.transactions) : [] })
-      }
     ]
   },
   {
