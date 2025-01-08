@@ -44,16 +44,17 @@ const formattedValue = computed(() => {
 <template>
   <CardLayout class="text-colorTextBlack dark:text-white relative">
     <div class="flex gap-2 items-center">
-      <img :src="icon" alt="icon users" class="w-6 relative lg:absolute lg:w-auto lg:top-4 lg:right-4" />
+      <img :src="icon" alt="icon users" class="w-6 relative lg:absolute lg:w-12 lg:top-4 lg:right-4" />
       <span class="font-medium text-[12px] lg:text-[16px]">{{ title }}</span>
     </div>
     <h3 class="font-bold text-[20px] lg:text-[26px] mt-3 lg:mt-3 tracking-[1px]">{{ formattedValue }}</h3>
-    <p class="font-normal text-[10px] lg:text-[12px] mt-3 lg:mt-8 inline-flex items-center gap-2">
+
+    <!--<p class="font-normal text-[10px] lg:text-[12px] mt-3 lg:mt-8 inline-flex items-center gap-2">
       <component :is="trendIcon" :class="trendColor" />
       <span :class="trendColor">{{ Math.abs(percentage) }}% </span>
       <span v-if="isTrendingUp">Más que el mes pasado</span>
       <span v-else>Menos que el mes pasado</span>
-    </p>
+    </p>-->
   </CardLayout>
 </template>
 

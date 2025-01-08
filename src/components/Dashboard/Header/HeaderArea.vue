@@ -87,7 +87,6 @@ const pageTitle = computed(() => {
           <li class="flex items-center">
             <DarkModeSwitcher />
           </li>
-          <DropdownNotification />
         </ul>
         <DropdownUser />
       </div>

@@ -5,9 +5,11 @@ import { ChevronsLeft, LayoutDashboard, Gem, Wallet, Network, MessageCircleQuest
 import { ref } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import DarkModeSwitcher from "./DarkModeSwitcher.vue"
+import { useRoute } from 'vue-router';
 
 const target = ref(null)
 const sidebarStore = useSidebarStore()
+const route = useRoute();
 
 onClickOutside(target, () => {
   sidebarStore.isSidebarOpen = false
@@ -24,6 +26,10 @@ const menuGroups = ref([
     ]
   }
 ])
+
+function isActive(routePath) {
+  return route.path === routePath;
+}
 </script>
 
 <template>
@@ -61,6 +67,7 @@ const menuGroups = ref([
                   :key="index"
                   :index="index"
                   :icon="menuItem.icon"
+                  :class="isActive(menuItem.route) ? 'bg-gray-200 dark:bg-colorTextBlack' : ''"
                   @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen"
               />
             </ul>

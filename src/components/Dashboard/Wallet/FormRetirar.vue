@@ -152,8 +152,10 @@ onUnmounted(() => {
 
     <div v-if="userStatus.message"
          :class="[
-           'mt-4 p-3 rounded-lg text-center',
-           userStatus.canWithdraw ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+           'mt-4 p-3 rounded-lg text-center ',
+           userStatus.message === 'Necesitas adquirir un plan para realizar retiros' ? 'p-4 mb-4 rounded-lg  text-yellow-800 border  border-yellow-300 bg-yellow-50 dark:bg-transparent dark:text-yellow-300 dark:border-yellow-800' :
+           userStatus.canWithdraw ? 'p-4 mb-4 text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800' :
+           'p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800'
          ]">
       {{ userStatus.message }}
     </div>
@@ -218,7 +220,7 @@ onUnmounted(() => {
         :class="isButtonDisabled ? 'bg-gray-400' : 'bg-colorBgButton'"
         class="font-semibold text-[18px] w-full mt-[26px] py-[18px] rounded-[10px] text-white tracking-[1.8px] flex items-center justify-center gap-2"
     >
-      <Loader2 v-if="loading" class="animate-spin" size="20" />
+      <Loader2 v-if="loading" class="animate-spin" size="20"/>
       <span>Retirar</span>
     </button>
   </CardLayout>

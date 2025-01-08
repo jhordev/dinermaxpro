@@ -5,10 +5,12 @@ import { ChevronsLeft, Network, TrendingUpDown, LayoutDashboard, MonitorCog, Mes
 import { ref, computed } from 'vue'
 import SidebarItem from './SidebarItem.vue'
 import SecureLS from 'secure-ls';
+import { useRoute } from 'vue-router';
 
 const ls = new SecureLS({ encodingType: 'aes' });
 const target = ref(null)
 const sidebarStore = useSidebarStore()
+const route = useRoute();
 
 const userRole = computed(() => ls.get('user_role') || '');
 
@@ -46,6 +48,10 @@ function handleClick(item) {
   }
   sidebarStore.isSidebarOpen = false
 }
+
+function isActive(routePath) {
+  return route.path === routePath;
+}
 </script>
 
 <template>
@@ -81,6 +87,7 @@ function handleClick(item) {
                     :item="menuItem"
                     :index="index"
                     :icon="menuItem.icon"
+                    :class="isActive(menuItem.route) ? 'bg-gray-200 dark:bg-colorTextBlack' : ''"
                     @click="handleClick(menuItem)"
                 />
               </template>

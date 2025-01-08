@@ -32,19 +32,22 @@ defineProps({
 
 <template>
   <article
-      class="flex flex-row md:flex-col gap-2 md:gap-4 rounded-[8px] bg-bgCardLigth py-4 px-5 shadow-default dark:bg-bgDashboardDark"
+      class="flex flex-col gap-2 md:gap-4 rounded-[8px] bg-bgCardLigth py-4 px-5 shadow-default dark:bg-bgDashboardDark"
   >
-    <header class="flex items-center gap-2 md:gap-3">
-      <div class="w-5">
-        <img :src="imageSrc" alt="Crypto Image" class="w-5 md:w-[32px]" />
-      </div>
-      <h3 class="hidden md:block text-[14px] md:text-[18px] font-semibold text-colorTextBlack dark:text-white">
-        {{ name }}
-      </h3>
-    </header>
-    <strong class="text-[14px] md:text-[18px] tracking-[1px] md:tracking-[1.8px] text-colorTextBlack dark:text-white">
-      {{ amount }}
-    </strong>
+   <div class="flex flex-row md:flex-col  gap-2 md:gap-4">
+     <header class="flex items-center gap-2 md:gap-3">
+       <div class="w-5">
+         <img :src="imageSrc" alt="Crypto Image" class="w-5 md:w-[32px]" />
+       </div>
+       <h3 class="hidden md:block text-[14px] md:text-[18px] font-semibold text-colorTextBlack dark:text-white">
+         {{ name }}
+       </h3>
+     </header>
+     <strong class="text-[14px] md:text-[18px] tracking-[1px] md:tracking-[1.8px] text-colorTextBlack dark:text-white">
+       {{ amount }}
+     </strong>
+   </div>
+
     <footer class="flex items-center gap-1.5" :class="textColor">
       <component
           :is="isPositive ? ChevronUp : ChevronDown"

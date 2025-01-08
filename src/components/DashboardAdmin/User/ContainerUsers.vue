@@ -96,35 +96,33 @@ watch(filterPlan, async (newValue) => {
 <template>
   <main class="grid grid-cols-10 gap-[15px] lg:gap-[22px]">
     <CardLayout class="col-span-10 lg:col-span-3 h-[100%]">
-      <header class="flex flex-col gap-2.5 md:gap-5 md:justify-between items-center mb-4">
-        <div class="flex w-full gap-2.5">
-          <!-- Buscador -->
-          <div class="w-full bg-colorInputClaro dark:bg-gray-800 rounded-[15px] flex gap-1.5 py-2.5 px-4">
-            <Search class="text-gray-500" />
-            <input
-                v-model="searchTerm"
-                type="text"
-                class="text-[16px] font-normal bg-transparent w-full outline-none text-colorTextBlack dark:text-white"
-                placeholder="Buscar usuario..."
-            />
-          </div>
-
-          <!-- Dropdown -->
-          <select
-              v-model="filterPlan"
-              class="bg-colorInputClaro dark:bg-gray-800 rounded-[15px] py-2.5 px-4 text-colorTextBlack dark:text-white outline-none cursor-pointer min-w-[120px]"
-          >
-            <option value="all">Todos</option>
-            <option value="with-plan">Con plan</option>
-            <option value="without-plan">Sin plan</option>
-          </select>
-        </div>
-      </header>
-
+      <!-- Buscador -->
+      <div class="w-full bg-colorInputClaro dark:bg-gray-800 rounded-[15px] flex gap-1.5 py-2.5 px-4">
+        <Search class="text-gray-500" />
+        <input
+            v-model="searchTerm"
+            type="text"
+            class="text-[16px] font-normal bg-transparent w-full outline-none text-colorTextBlack dark:text-white"
+            placeholder="Buscar usuario..."
+        />
+      </div>
       <section class="mt-6">
-        <h3 class="text-colorTextBlack text-[16px] font-bold dark:text-white">
-          Usuarios ({{ filteredUsers.length }})
-        </h3>
+       <div class="flex justify-between items-center">
+         <h3 class="text-colorTextBlack text-[16px] font-bold dark:text-white">
+           Usuarios ({{ filteredUsers.length }})
+         </h3>
+         <!-- Dropdown filterPlan users -->
+         <div class="flex items-center justify-end ">
+           <select
+               v-model="filterPlan"
+               class="w-fit text-[14px]   bg-transparent rounded-[15px] py-2.5 px-4 text-colorTextBlack dark:text-white outline-none cursor-pointer min-w-[120px] "
+           >
+             <option value="all" class=" bg-colorInputClaro dark:bg-gray-800">Todos</option>
+             <option value="with-plan" class=" bg-colorInputClaro dark:bg-gray-800">Con plan</option>
+             <option value="without-plan" class=" bg-colorInputClaro dark:bg-gray-800">Sin plan</option>
+           </select>
+         </div>
+       </div>
         <nav class="overflow-y-auto max-h-[calc(100vh_-_250px)] mt-5">
           <div v-if="loading" class="flex justify-center py-4">
             <Loader2 class="animate-spin text-primary w-6 h-6" />

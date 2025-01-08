@@ -21,7 +21,7 @@ const pageTitle = computed(() => {
     case '/admin/contracts':
       return 'Contratos'
     case '/admin/operation':
-      return 'Operaciones'
+      return 'Retiros'
     case '/admin/plans':
       return 'Sistema: Planes'
     case '/admin/configurations/wallets':
@@ -97,7 +97,6 @@ const pageTitle = computed(() => {
           <li class="flex items-center">
             <DarkModeSwitcher />
           </li>
-          <DropdownNotification />
         </ul>
         <DropdownUser />
       </div>
