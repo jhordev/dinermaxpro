@@ -186,45 +186,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
             placeholder="Buscar..."
         >
       </div>
-      <div class="relative">
-        <button
-            @click="toggleDropdown"
-            class="py-2.5 rounded-[15px] inline-flex items-center text-gray-500 focus:outline-none hover:bg-gray-100 font-medium text-sm px-3 dark:bg-gray-800 dark:text-gray-400 bg-colorInputClaro"
-            type="button"
-        >
-          Exportar
-          <ChevronDown class="ml-1.5 w-5" />
-        </button>
-
-        <!-- Menú desplegable -->
-        <div
-            v-if="dropdownOpen"
-            class="absolute top-10 right-0 z-50 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600"
-        >
-          <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-            <li>
-              <a
-                  @click="exportToExcel"
-                  href="#"
-                  class="flex items-center text-[12px] md:text-[16px] font-semibold gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-              >
-                <Sheet />
-                Excel
-              </a>
-            </li>
-            <li>
-              <a
-                  @click="exportToPDF"
-                  href="#"
-                  class="flex items-center text-[12px] md:text-[16px] font-semibold gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-              >
-                <FileText />
-                PDF
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
     </header>
 
     <!-- Estado de carga -->

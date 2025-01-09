@@ -113,8 +113,8 @@ const nextPage = () => {
         </button>
 
         <div v-if="dropdownOpen" class="absolute top-10 right-0 z-50 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
-          <ul class="py-1 text-sm text-gray-700 dark:text-gray-200">
-            <li v-for="(option, index) in [{icon: Sheet, text: 'Excel'}, {icon: FileText, text: 'PDF'}]" :key="index">
+          <ul class="py-3 text-sm text-gray-700 dark:text-gray-200">
+            <li v-for="(option, index) in [{icon: FileText, text: 'PDF'}]" :key="index">
               <a href="#" class="flex items-center text-[12px] md:text-[16px] font-semibold gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
                 <component :is="option.icon"/>
                 {{ option.text }}

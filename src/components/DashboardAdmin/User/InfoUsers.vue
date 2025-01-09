@@ -3,7 +3,7 @@ import { computed } from "vue";
 import UserPersonalInfoCard from "@/components/DashboardAdmin/User/UserPersonalInfoCard.vue";
 import ActiveMembershipCard from "@/components/DashboardAdmin/User/ActiveMembershipCard.vue";
 import WalletHistoryCard from "@/components/DashboardAdmin/User/WalletHistoryCard.vue";
-import { Printer, Star, CircleUserRound } from 'lucide-vue-next';
+import { FileDown, Star, CircleUserRound } from 'lucide-vue-next';
 import { logDebug } from '@/utils/logger.js';
 
 const props = defineProps({
@@ -52,12 +52,7 @@ const handleStatusChange = (event) => {
         <button
             class="px-4 py-2 text-sm font-medium text-blue-700 bg-white border border-gray-200 rounded-s-lg hover:bg-gray-100 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
         >
-          <Printer />
-        </button>
-        <button
-            class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border-t border-b border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
-        >
-          <Star />
+          <FileDown />
         </button>
         <div
             class="flex px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-e-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-blue-500 dark:focus:text-white"
