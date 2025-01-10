@@ -1,4 +1,4 @@
-import { collection, query, getDocs, onSnapshot } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/services/firebase_config';
 import { logError, logInfo } from '@/utils/logger';
 import SecureLS from 'secure-ls';
@@ -152,6 +152,27 @@ export const subscribeToTotalInvestments = (callback) => {
     } catch (error) {
         logError('Error al crear suscripción de inversiones totales:', error);
         throw error;
+    }
+};
+
+export const updateUserStatus = async (userId, estado) => {
+    try {
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+            estado: estado ? 'activo' : 'inactivo'
+        });
+
+        logInfo(`Estado del usuario ${userId} actualizado a: ${estado ? 'activo' : 'inactivo'}`);
+        return {
+            success: true,
+            message: 'Estado actualizado correctamente'
+        };
+    } catch (error) {
+        logError(`Error al actualizar estado del usuario: ${error.message}`);
+        return {
+            success: false,
+            error: 'Error al actualizar el estado del usuario'
+        };
     }
 };
 

@@ -56,6 +56,13 @@ const paginationRange = computed(() => {
   return range;
 });
 
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value) + ' USDT';
+};
+
 const getStatusInfo = (status, operacion) => {
   const statusConfig = {
     'Depósito': {
@@ -153,7 +160,7 @@ const nextPage = () => {
             {{ item.operacion }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
-            ${{ item.monto }}
+            {{ formatCurrency(item.monto) }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center">
               <span :class="['px-3 py-1 rounded-full text-xs font-medium', getStatusInfo(item.status, item.operacion).classes]">

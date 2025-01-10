@@ -1,7 +1,8 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-import { ChevronDown, FileText, Search, Sheet, ChevronLeft, ChevronRight } from "lucide-vue-next";
+import { Search, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { investmentService } from '@/services/investment_service';
+import { subscribeToUserWithdrawals } from '@/services/withdrawal_service';
 import { logError, logInfo } from '@/utils/logger';
 
 const props = defineProps({
@@ -11,24 +12,18 @@ const props = defineProps({
   }
 });
 
-// Variables reactivas
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const searchTerm = ref('');
 const dropdownOpen = ref(false);
 const isLoading = ref(true);
 const transactions = ref([]);
-let unsubscribe = null;
+let unsubscribeInvestments = null;
+let unsubscribeWithdrawals = null;
 
-// Función para toggle del dropdown
-const toggleDropdown = () => {
-  dropdownOpen.value = !dropdownOpen.value;
-};
-
-// Formateo de fecha
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
-  const date = timestamp.toDate();
+  const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp);
   return new Intl.DateTimeFormat('es-ES', {
     year: 'numeric',
     month: '2-digit',
@@ -36,77 +31,13 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
-// Formateo de moneda
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
-  }).format(value);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value) + ' USDT';
 };
 
-// Función para iniciar la suscripción
-const startSubscription = () => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
-
-  isLoading.value = true;
-
-  try {
-    unsubscribe = investmentService.subscribeToInvestments((investments) => {
-      const userTransactions = investments
-          .filter(inv => inv.userId === props.userId)
-          .map(inv => ({
-            fecha: formatDate(inv.createdAt),
-            transaccion: inv.id.slice(0, 8).toUpperCase(),
-            operacion: 'Depósito',
-            monto: inv.investment,
-            status: inv.status
-          }))
-          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-
-      transactions.value = userTransactions;
-      isLoading.value = false;
-      logInfo('Transacciones cargadas para usuario:', props.userId);
-    });
-  } catch (error) {
-    logError('Error al cargar las transacciones:', error);
-    isLoading.value = false;
-  }
-};
-
-// Observar cambios en userId
-watch(() => props.userId, (newUserId) => {
-  if (newUserId) {
-    logInfo('Usuario cambiado, actualizando transacciones:', newUserId);
-    startSubscription();
-  }
-}, { immediate: true });
-
-onMounted(() => {
-  if (props.userId) {
-    startSubscription();
-  }
-});
-
-onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
-});
-
-// Exportar a Excel
-const exportToExcel = () => {
-  logInfo('Exportando a Excel...');
-};
-
-// Exportar a PDF
-const exportToPDF = () => {
-  logInfo('Exportando a PDF...');
-};
-
-// Filtro de búsqueda
 const filteredTransactions = computed(() => {
   return transactions.value.filter(transaction => {
     const search = searchTerm.value.toLowerCase();
@@ -114,36 +45,110 @@ const filteredTransactions = computed(() => {
         transaction.fecha.toLowerCase().includes(search) ||
         transaction.transaccion.toLowerCase().includes(search) ||
         transaction.operacion.toLowerCase().includes(search) ||
+        transaction.network?.toLowerCase().includes(search) ||
         transaction.monto.toString().toLowerCase().includes(search)
     );
   });
 });
 
-// Cálculos de paginación
+onMounted(async () => {
+  try {
+    if (props.userId) {
+      // Suscripción a depósitos
+      unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
+        const depositMovements = investments
+            .filter(inv => inv.userId === props.userId)
+            .map(inv => ({
+              fecha: formatDate(inv.createdAt),
+              transaccion: inv.id.slice(0, 8).toUpperCase(),
+              operacion: 'Depósito',
+              monto: inv.investment,
+              status: inv.status,
+              network: inv.network,
+              paymentMethod: inv.paymentMethod,
+              voucherUrl: inv.voucherUrl,
+              timestamp: inv.createdAt
+            }));
+
+        transactions.value = transactions.value
+            .filter(m => m.operacion === 'Retiro')
+            .concat(depositMovements);
+
+        ordenarTransacciones();
+        isLoading.value = false;
+        logInfo('Depósitos cargados:', depositMovements.length);
+      });
+
+      // Suscripción a retiros
+      unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
+        const withdrawalMovements = withdrawals
+            .filter(w => w.userId === props.userId)
+            .map(w => ({
+              fecha: formatDate(w.createdAt),
+              transaccion: w.id.slice(0, 8).toUpperCase(),
+              operacion: 'Retiro',
+              monto: w.netAmount,
+              status: w.status,
+              network: w.network || '',
+              paymentMethod: 'Wallet',
+              voucherUrl: '',
+              comision: w.withdrawalFee,
+              billetera: w.walletAddress,
+              timestamp: w.createdAt
+            }));
+
+        transactions.value = transactions.value
+            .filter(m => m.operacion === 'Depósito')
+            .concat(withdrawalMovements);
+
+        ordenarTransacciones();
+        isLoading.value = false;
+        logInfo('Retiros cargados:', withdrawalMovements.length);
+      });
+    }
+  } catch (error) {
+    logError('Error al cargar las transacciones:', error);
+    isLoading.value = false;
+  }
+});
+
+const ordenarTransacciones = () => {
+  transactions.value.sort((a, b) => {
+    const dateA = a.timestamp instanceof Date ? a.timestamp : a.timestamp.toDate();
+    const dateB = b.timestamp instanceof Date ? b.timestamp : b.timestamp.toDate();
+    return dateB - dateA;
+  });
+};
+
+onUnmounted(() => {
+  if (unsubscribeInvestments) unsubscribeInvestments();
+  if (unsubscribeWithdrawals) unsubscribeWithdrawals();
+});
+
 const totalItems = computed(() => filteredTransactions.value.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
+
 const paginatedTransactions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredTransactions.value.slice(start, end);
 });
 
+defineExpose({
+  transactions,
+  formatCurrency
+});
+
 const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
-  }
+  if (page >= 1 && page <= totalPages.value) currentPage.value = page;
 };
 
 const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
+  if (currentPage.value > 1) currentPage.value--;
 };
 
 const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
+  if (currentPage.value < totalPages.value) currentPage.value++;
 };
 
 const paginationRange = computed(() => {
@@ -175,7 +180,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
       Historial de Movimientos
     </h2>
 
-    <!-- Barra de búsqueda y exportación -->
     <header class="mt-5 flex gap-2.5 md:gap-5 md:justify-between items-center mb-4">
       <div class="w-full bg-colorInputClaro dark:bg-gray-800 rounded-[15px] flex gap-1.5 py-2.5 px-4">
         <Search class="text-gray-500" />
@@ -188,12 +192,10 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
       </div>
     </header>
 
-    <!-- Estado de carga -->
     <div v-if="isLoading" class="flex justify-center items-center p-8">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
 
-    <!-- Tabla de transacciones -->
     <div v-else-if="transactions.length > 0" class="overflow-x-auto mt-5">
       <table class="w-full table-auto border-collapse text-left">
         <thead>
@@ -201,6 +203,7 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
           <th class="p-4 text-sm font-medium uppercase text-black dark:text-white">Fecha</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Transacción</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Operación</th>
+          <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Red</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Monto</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Estado</th>
         </tr>
@@ -221,19 +224,31 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
             {{ transaction.operacion }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
+            {{ transaction.network || '-' }}
+          </td>
+          <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
             {{ formatCurrency(transaction.monto) }}
           </td>
           <td class="p-4 text-[14px] font-normal text-center">
               <span
                   :class="{
                   'px-2 py-1 rounded-full text-xs font-semibold': true,
-                  'bg-green-100 text-green-800': transaction.status === 'approved',
-                  'bg-yellow-100 text-yellow-800': transaction.status === 'pending',
-                  'bg-red-100 text-red-800': transaction.status === 'rejected'
+                  'bg-green-100 text-green-800':
+                    (transaction.operacion === 'Depósito' && transaction.status === 'approved') ||
+                    (transaction.operacion === 'Retiro' && transaction.status === 'completed'),
+                  'bg-yellow-100 text-yellow-800':
+                    (transaction.operacion === 'Depósito' && transaction.status === 'pending') ||
+                    (transaction.operacion === 'Retiro' && transaction.status === 'pending'),
+                  'bg-blue-100 text-blue-800':
+                    transaction.operacion === 'Retiro' && transaction.status === 'processing'
                 }"
               >
-                {{ transaction.status === 'approved' ? 'Aprobado' :
-                  transaction.status === 'pending' ? 'Pendiente' : 'Rechazado' }}
+                {{
+                  transaction.operacion === 'Depósito'
+                      ? (transaction.status === 'approved' ? 'Aprobado' : 'Pendiente')
+                      : (transaction.status === 'completed' ? 'Completado' :
+                          transaction.status === 'processing' ? 'Procesando' : 'Pendiente')
+                }}
               </span>
           </td>
         </tr>
@@ -241,12 +256,10 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
       </table>
     </div>
 
-    <!-- Mensaje cuando no hay transacciones -->
     <div v-else class="text-center py-8 text-colorGraydark">
       No hay movimientos disponibles
     </div>
 
-    <!-- Paginación -->
     <nav class="flex flex-row items-center gap-3 pt-4 md:justify-between" aria-label="Table navigation">
       <span class="text-sm font-normal text-gray-500 dark:text-gray-400 block w-full md:inline md:w-auto">
         <span class="hidden md:inline-block">Mostrando</span>

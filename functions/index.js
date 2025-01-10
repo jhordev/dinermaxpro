@@ -134,15 +134,33 @@ exports.processInvestmentEarnings = onSchedule("0 5 * * *", async (event) => {
             const startDate = new Date(activationDate);
             const activationDay = startDate.getDay();
 
-            // Casos especiales para viernes y sábado
-            if (activationDay === 5) { // Viernes
-                startDate.setDate(startDate.getDate() + 4); // Pago el martes
-            } else if (activationDay === 6) { // Sábado
-                startDate.setDate(startDate.getDate() + 3); // Pago el martes
-            } else {
-                // Para todos los demás días (domingo a jueves)
-                startDate.setDate(startDate.getDate() + 2); // Pago dos días después
+            // Ajustar la fecha de inicio de pago según el día de activación
+            switch (activationDay) {
+                case 1: // Lunes
+                    startDate.setDate(startDate.getDate() + 2); // Comienza el miércoles
+                    break;
+                case 2: // Martes
+                    startDate.setDate(startDate.getDate() + 2); // Comienza el jueves
+                    break;
+                case 3: // Miércoles
+                    startDate.setDate(startDate.getDate() + 2); // Comienza el viernes
+                    break;
+                case 4: // Jueves
+                    startDate.setDate(startDate.getDate() + 2); // Comienza el sábado
+                    break;
+                case 5: // Viernes
+                    startDate.setDate(startDate.getDate() + 4); // Comienza el martes
+                    break;
+                case 6: // Sábado
+                    startDate.setDate(startDate.getDate() + 3); // Comienza el martes
+                    break;
+                case 0: // Domingo
+                    startDate.setDate(startDate.getDate() + 3); // Comienza el miércoles
+                    break;
             }
+
+            // Asegurarse de que la hora sea 00:00:00
+            startDate.setHours(0, 0, 0, 0);
 
             if (now >= startDate) {
                 const dailyEarning = investment.investment * (investment.interestRate / 100);

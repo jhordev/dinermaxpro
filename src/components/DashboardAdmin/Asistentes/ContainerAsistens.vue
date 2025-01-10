@@ -70,7 +70,7 @@ const handleModalClose = () => {
 // Manejar cambio de estado
 const handleStatusChange = async (socio) => {
   try {
-    const newStatus = socio.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    const newStatus = socio.estado === 'activo' ? 'inactivo' : 'activo';
     await updateSocioStatus(socio.id, newStatus);
     logInfo(`Estado del socio ${socio.email} actualizado a ${newStatus}`);
   } catch (error) {

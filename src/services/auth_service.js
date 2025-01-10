@@ -71,23 +71,20 @@ export const authService = {
                 displayName: nombre
             });
 
-            // Crear objeto base de datos de usuario
             const userDataToSave = {
                 nombre,
                 email,
                 createdAt: new Date(),
-                role: 'user'
+                role: 'user',
+                estado: 'activo'
             };
 
-            // Agregar socioId si existe
             if (socioId) {
                 userDataToSave.socioId = socioId;
             }
 
-            // Guardar datos del usuario
             await setDoc(doc(db, 'users', userCredential.user.uid), userDataToSave);
 
-            // Procesar el referido si existe
             if (referralCode) {
                 await referralService.processReferral(referralCode, userCredential.user.uid);
             }
@@ -128,15 +125,22 @@ export const authService = {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             ls.remove(SESSION_KEY);
 
-            // Obtener el rol del usuario
             const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-            const userRole = userDoc.data().role;
+            const userData = userDoc.data();
+
+            if (userData.estado === 'inactivo') {
+                await this.logout();
+                return {
+                    success: false,
+                    error: 'Tu cuenta está desactivada. Contacta al administrador.'
+                };
+            }
 
             logInfo(`Inicio de sesión exitoso para: ${email}`);
             return {
                 success: true,
                 user: userCredential.user,
-                role: userRole
+                role: userData.role
             };
         } catch (error) {
             let errorMessage = '';
