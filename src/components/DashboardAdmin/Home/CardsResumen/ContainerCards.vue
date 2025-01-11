@@ -62,8 +62,9 @@ const setupSubscriptions = async () => {
 
     // Suscribirse a la lista de usuarios
     unsubscribeUsers = await subscribeToUsersList((users) => {
-      totalUsuarios.value = users.length;
-      logInfo('Total usuarios actualizados:', totalUsuarios.value);
+      // Restamos 1 al total de usuarios para no contar al admin
+      totalUsuarios.value = users.length > 0 ? users.length - 1 : 0;
+      logInfo('Total usuarios actualizados (sin admin):', totalUsuarios.value);
     }, props.showAllData);
 
     // Suscribirse a las inversiones totales
