@@ -207,7 +207,7 @@ onMounted(loadUserData);
           <input
               v-model="userData.nombre"
               type="text"
-              placeholder="Juan Perez"
+              placeholder="Escribe tu nombre completo"
               :disabled="!isEditable"
               :class="[
               'pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',
@@ -221,7 +221,7 @@ onMounted(loadUserData);
           <input
               v-model="userData.wallet"
               type="text"
-              placeholder="12eb5cRuXFwaXwKFsqUFS7yYTFVXwsHak9"
+              placeholder="Introduce tu dirección de billetera"
               :disabled="!isEditable"
               :class="[
               'truncate pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',
@@ -263,7 +263,7 @@ onMounted(loadUserData);
             <input
                 v-model="userData.telefono"
                 type="text"
-                placeholder="+51 959 659 502"
+                placeholder="Introduce tu número de teléfono"
                 :disabled="!isEditable"
                 :class="[
                 'pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',
@@ -277,7 +277,7 @@ onMounted(loadUserData);
             <input
                 v-model="userData.pais"
                 type="text"
-                placeholder="Panamá"
+                placeholder="Introduce el nombre de tu país"
                 :disabled="!isEditable"
                 :class="[
                 'pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',

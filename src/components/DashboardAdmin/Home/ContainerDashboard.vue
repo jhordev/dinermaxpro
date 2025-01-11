@@ -7,7 +7,6 @@ import SubscribersPlan from "@/components/DashboardAdmin/Home/SubscribersPlan.vu
 import ReferidosComponent from "@/components/DashboardAdmin/Home/ReferidosComponent.vue";
 import SecureLS from 'secure-ls';
 import SwitchDashboard from "@/components/DashboardAdmin/Home/SwitchDashboard.vue";
-import PdfPreviewhtml from "@/components/DashboardAdmin/Shared/PdfPreviewhtml.vue";
 import { logInfo } from '@/utils/logger';
 
 const ls = new SecureLS({encodingType: 'aes'});
