@@ -19,7 +19,7 @@ const toggleSwitch = () => {
     <div class="flex justify-between w-full">
       <!-- Título dinámico basado en el estado del switch -->
       <h1 class="text-colorTextBlack dark:text-white text-[18px] md:text-[22px] font-bold">
-        {{ isChecked ? 'Información General' : 'Información Local' }}
+        {{ isChecked ? 'Información General' : 'Información Específicos' }}
       </h1>
 
       <!-- Switch reutilizable -->

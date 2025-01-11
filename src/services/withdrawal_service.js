@@ -256,7 +256,7 @@ export const updateBalancesAfterWithdrawal = async (withdrawalId) => {
     }
 };
 
-export const subscribeToUserWithdrawals = (callback) => {
+export const subscribeToUserWithdrawals = (callback, showAllData = false) => {
     try {
         const userId = auth.currentUser?.uid;
         if (!userId) throw new Error('Usuario no autenticado');
@@ -265,28 +265,31 @@ export const subscribeToUserWithdrawals = (callback) => {
         const userRole = ls.get('user_role');
         let withdrawalsQuery;
 
-        switch (userRole) {
-            case 'admin':
-                // Admin solo ve los retiros que no tienen socioId
-                withdrawalsQuery = query(
-                    collection(db, 'withdrawals'),
-                    where('socioId', '==', null)
-                );
-                break;
-            case 'socio':
-                // Socio ve los retiros con su socioId
-                withdrawalsQuery = query(
-                    collection(db, 'withdrawals'),
-                    where('socioId', '==', userId)
-                );
-                break;
-            default:
-                // Usuario normal solo ve sus propios retiros
-                withdrawalsQuery = query(
-                    collection(db, 'withdrawals'),
-                    where('userId', '==', userId)
-                );
-                break;
+        if (showAllData) {
+            // Si showAllData es true, obtener todos los retiros
+            withdrawalsQuery = query(collection(db, 'withdrawals'));
+        } else {
+            // Lógica original de filtrado
+            switch (userRole) {
+                case 'admin':
+                    withdrawalsQuery = query(
+                        collection(db, 'withdrawals'),
+                        where('socioId', '==', null)
+                    );
+                    break;
+                case 'socio':
+                    withdrawalsQuery = query(
+                        collection(db, 'withdrawals'),
+                        where('socioId', '==', userId)
+                    );
+                    break;
+                default:
+                    withdrawalsQuery = query(
+                        collection(db, 'withdrawals'),
+                        where('userId', '==', userId)
+                    );
+                    break;
+            }
         }
 
         const unsubscribe = onSnapshot(withdrawalsQuery, (snapshot) => {
@@ -306,10 +309,8 @@ export const subscribeToUserWithdrawals = (callback) => {
             });
             withdrawals.sort((a, b) => b.createdAt - a.createdAt);
             callback(withdrawals);
-        }, (error) => {
-            logError('Error en la suscripción de retiros:', error);
-            callback([]);
         });
+
         return unsubscribe;
     } catch (error) {
         logError('Error al suscribirse a retiros:', error);

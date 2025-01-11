@@ -5,15 +5,12 @@ import SecureLS from 'secure-ls';
 
 const ls = new SecureLS({ encodingType: 'aes' });
 
-export const subscribeToUsersList = async (callback, planFilter = 'all') => {
+export const subscribeToUsersList = async (callback, showAllData = false) => {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error('No hay usuario autenticado');
 
         const userRole = ls.get('user_role');
-        logInfo('Usuario actual ID:', currentUser.uid);
-        logInfo('Rol del usuario:', userRole);
-
         const usersRef = collection(db, 'users');
         const investmentsRef = collection(db, 'investments');
 
@@ -34,32 +31,21 @@ export const subscribeToUsersList = async (callback, planFilter = 'all') => {
                 const hasApprovedPlan = investmentsMap.has(doc.id);
                 userData.hasActivePlan = hasApprovedPlan;
 
-                let shouldIncludeUser = false;
-
-                if (userRole === 'socio') {
-                    shouldIncludeUser = userData.socioId === currentUser.uid;
-                } else if (userRole === 'admin') {
-                    shouldIncludeUser = !userData.socioId && userData.role === 'user';
-                }
-
-                if (shouldIncludeUser) {
-                    switch (planFilter) {
-                        case 'with-plan':
-                            if (hasApprovedPlan) usersData.push(userData);
-                            break;
-                        case 'without-plan':
-                            if (!hasApprovedPlan) usersData.push(userData);
-                            break;
-                        default: // 'all'
-                            usersData.push(userData);
+                if (showAllData) {
+                    // Si showAllData es true, incluir todos los usuarios
+                    usersData.push(userData);
+                } else {
+                    // Lógica original de filtrado
+                    if (userRole === 'socio' && userData.socioId === currentUser.uid) {
+                        usersData.push(userData);
+                    } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
+                        usersData.push(userData);
                     }
                 }
             });
 
             logInfo('Total usuarios filtrados:', usersData.length);
             callback(usersData);
-        }, (error) => {
-            logError('Error en la suscripción de usuarios: ' + error.message);
         });
 
         return unsubscribe;
@@ -107,51 +93,190 @@ export const subscribeToUserInvestment = (userId, callback) => {
     }
 };
 
-export const subscribeToTotalInvestments = (callback) => {
+export const subscribeToTotalInvestments = (callback, showAllData = false) => {
     try {
         const currentUser = auth.currentUser;
         if (!currentUser) throw new Error('No hay usuario autenticado');
 
         const userRole = ls.get('user_role');
-        logInfo('Iniciando suscripción a inversiones totales para rol:', userRole);
-
         const investmentsRef = collection(db, 'investments');
         const usersRef = collection(db, 'users');
 
         const unsubscribe = onSnapshot(query(investmentsRef), async (investmentsSnapshot) => {
-            const usersSnapshot = await getDocs(query(usersRef));
-            const validUserIds = new Set();
+            if (showAllData) {
+                // Si showAllData es true, sumar todas las inversiones aprobadas
+                let totalInvestments = 0;
+                investmentsSnapshot.forEach(doc => {
+                    const investment = doc.data();
+                    if (investment.status === 'approved') {
+                        totalInvestments += Number(investment.investment || 0);
+                    }
+                });
+                callback(Number(totalInvestments.toFixed(2)));
+            } else {
+                // Lógica original de filtrado
+                const usersSnapshot = await getDocs(query(usersRef));
+                const validUserIds = new Set();
 
-            // Primero, obtener los IDs de usuarios válidos según el rol
-            usersSnapshot.forEach((userDoc) => {
-                const userData = userDoc.data();
-                if (userRole === 'socio' && userData.socioId === currentUser.uid) {
-                    validUserIds.add(userDoc.id);
-                } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
-                    validUserIds.add(userDoc.id);
-                }
-            });
+                usersSnapshot.forEach((userDoc) => {
+                    const userData = userDoc.data();
+                    if (userRole === 'socio' && userData.socioId === currentUser.uid) {
+                        validUserIds.add(userDoc.id);
+                    } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
+                        validUserIds.add(userDoc.id);
+                    }
+                });
 
-            // Calcular el total de inversiones solo para usuarios válidos
-            let totalInvestments = 0;
-            investmentsSnapshot.forEach(doc => {
-                const investment = doc.data();
-                if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
-                    totalInvestments += Number(investment.investment || 0);
-                }
-            });
+                let totalInvestments = 0;
+                investmentsSnapshot.forEach(doc => {
+                    const investment = doc.data();
+                    if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
+                        totalInvestments += Number(investment.investment || 0);
+                    }
+                });
 
-            const roundedTotal = Number(totalInvestments.toFixed(2));
-            logInfo('Total de inversiones calculado:', roundedTotal);
-            callback(roundedTotal);
-        }, (error) => {
-            logError('Error en la suscripción de inversiones totales:', error);
+                callback(Number(totalInvestments.toFixed(2)));
+            }
         });
 
         return unsubscribe;
     } catch (error) {
         logError('Error al crear suscripción de inversiones totales:', error);
         throw error;
+    }
+};
+
+export const subscribeToMembershipsStatus = (callback, showAllData = false) => {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('No hay usuario autenticado');
+
+        const userRole = ls.get('user_role');
+        const investmentsRef = collection(db, 'investments');
+        const usersRef = collection(db, 'users');
+
+        const unsubscribe = onSnapshot(query(investmentsRef), async (investmentsSnapshot) => {
+            try {
+                const usersSnapshot = await getDocs(query(usersRef));
+                const validUserIds = new Set();
+
+                // Obtener IDs de usuarios válidos según el rol y showAllData
+                if (showAllData) {
+                    usersSnapshot.forEach((userDoc) => {
+                        validUserIds.add(userDoc.id);
+                    });
+                } else {
+                    usersSnapshot.forEach((userDoc) => {
+                        const userData = userDoc.data();
+                        if (userRole === 'socio' && userData.socioId === currentUser.uid) {
+                            validUserIds.add(userDoc.id);
+                        } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
+                            validUserIds.add(userDoc.id);
+                        }
+                    });
+                }
+
+                let active = 0;
+                let inactive = 0;
+
+                investmentsSnapshot.forEach((doc) => {
+                    const investment = doc.data();
+                    if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
+                        if (investment.expirationDate && investment.expirationDate.seconds) {
+                            const expirationDate = new Date(investment.expirationDate.seconds * 1000);
+                            const now = new Date();
+                            if (expirationDate > now) {
+                                active++;
+                            } else {
+                                inactive++;
+                            }
+                        } else {
+                            inactive++;
+                        }
+                    }
+                });
+
+                logInfo(`Membresías activas: ${active}, Membresías inactivas: ${inactive}`);
+                callback({ active, inactive });
+            } catch (error) {
+                logError('Error al procesar datos de membresías:', error);
+                callback({ active: 0, inactive: 0 });
+            }
+        });
+
+        return unsubscribe;
+    } catch (error) {
+        logError('Error al suscribirse a estado de membresías:', error);
+        callback({ active: 0, inactive: 0 });
+        return () => {};
+    }
+};
+
+export const subscribeToActivePlansByType = (callback, showAllData = false) => {
+    try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) throw new Error('No hay usuario autenticado');
+
+        const userRole = ls.get('user_role');
+        const investmentsRef = collection(db, 'investments');
+        const usersRef = collection(db, 'users');
+
+        const unsubscribe = onSnapshot(query(investmentsRef), async (investmentsSnapshot) => {
+            try {
+                const usersSnapshot = await getDocs(query(usersRef));
+                const validUserIds = new Set();
+                const planCounts = new Map();
+
+                // Obtener IDs de usuarios válidos según el rol y showAllData
+                if (showAllData) {
+                    usersSnapshot.forEach((userDoc) => {
+                        validUserIds.add(userDoc.id);
+                    });
+                } else {
+                    usersSnapshot.forEach((userDoc) => {
+                        const userData = userDoc.data();
+                        if (userRole === 'socio' && userData.socioId === currentUser.uid) {
+                            validUserIds.add(userDoc.id);
+                        } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
+                            validUserIds.add(userDoc.id);
+                        }
+                    });
+                }
+
+                // Contar planes activos por tipo
+                investmentsSnapshot.forEach((doc) => {
+                    const investment = doc.data();
+                    if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
+                        if (investment.expirationDate && investment.expirationDate.seconds) {
+                            const expirationDate = new Date(investment.expirationDate.seconds * 1000);
+                            const now = new Date();
+
+                            if (expirationDate > now) {
+                                const count = planCounts.get(investment.planName) || 0;
+                                planCounts.set(investment.planName, count + 1);
+                            }
+                        }
+                    }
+                });
+
+                const chartData = {
+                    labels: Array.from(planCounts.keys()),
+                    data: Array.from(planCounts.values())
+                };
+
+                logInfo('Distribución de planes activos:', Object.fromEntries(planCounts));
+                callback(chartData);
+            } catch (error) {
+                logError('Error al procesar datos de planes:', error);
+                callback({ labels: [], data: [] });
+            }
+        });
+
+        return unsubscribe;
+    } catch (error) {
+        logError('Error al suscribirse a planes activos:', error);
+        callback({ labels: [], data: [] });
+        return () => {};
     }
 };
 

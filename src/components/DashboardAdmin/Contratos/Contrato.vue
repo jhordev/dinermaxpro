@@ -3,6 +3,7 @@ import {ref, watch} from 'vue';
 import imgVoucher from '@/assets/img/imgview.png';
 import {X, XCircle} from 'lucide-vue-next';
 import { investmentService } from '@/services/investment_service';
+import { logError, logInfo } from '@/utils/logger.js';
 
 const props = defineProps({
   modelValue: {
@@ -46,6 +47,7 @@ const imagePreview = ref(defaultImage);
 const showImagePopup = ref(false);
 const isApproved = ref(props.status === 'approved');
 const isImageLoading = ref(true);
+const hasBeenActivated = ref(props.status === 'approved');
 
 const closeModal = () => {
   imagePreview.value = defaultImage;
@@ -61,21 +63,30 @@ const handleImageLoad = () => {
 };
 
 const handleStatusChange = async (event) => {
-  const newStatus = event.target.checked ? 'approved' : 'pending';
+  if (hasBeenActivated.value) {
+    event.target.checked = true;
+    return;
+  }
+
   try {
-    await investmentService.updateInvestmentStatus(props.investmentId, newStatus);
+    await investmentService.updateInvestmentStatus(props.investmentId, 'approved');
+    isApproved.value = true;
+    hasBeenActivated.value = true;
+    logInfo(`Membresía activada exitosamente: ${props.investmentId}`);
   } catch (error) {
-    console.error('Error al actualizar estado:', error);
-    isApproved.value = !isApproved.value;
+    logError('Error al actualizar estado: ' + error.message);
+    isApproved.value = false;
+    event.target.checked = false;
   }
 };
 
 const handleReject = async () => {
   try {
     await investmentService.updateInvestmentStatus(props.investmentId, 'rejected');
+    logInfo(`Membresía rechazada: ${props.investmentId}`);
     closeModal();
   } catch (error) {
-    console.error('Error al rechazar:', error);
+    logError('Error al rechazar: ' + error.message);
   }
 };
 
@@ -90,8 +101,8 @@ watch(
 
 watch(() => props.status, (newStatus) => {
   isApproved.value = newStatus === 'approved';
+  hasBeenActivated.value = newStatus === 'approved';
 });
-
 </script>
 
 <template>
@@ -133,7 +144,7 @@ watch(() => props.status, (newStatus) => {
                     type="checkbox"
                     :checked="isApproved"
                     @change="handleStatusChange"
-                    :disabled="props.status === 'rejected'"
+                    :disabled="props.status === 'rejected' || (hasBeenActivated && isApproved)"
                     class="sr-only peer"
                 >
                 <div class="relative w-14 h-7 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-colorBgButton"></div>
@@ -149,7 +160,6 @@ watch(() => props.status, (newStatus) => {
           <div class="flex flex-col gap-2.5 items-center mt-5">
             <h3 class="text-[16px] font-bold text-colorTextBlack dark:text-white">Monto: {{ monto }}</h3>
             <div class="w-[275px] h-[349px] flex justify-center items-center" @click="showImagePopup = true">
-              <!-- Loader circular -->
               <div v-if="isImageLoading" class="absolute">
                 <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
@@ -160,8 +170,10 @@ watch(() => props.status, (newStatus) => {
                   :class="{ 'opacity-0': isImageLoading }"
               >
             </div>
-            <h3 class="text-[12px] text-center font-normal text-colorTextBlack dark:text-white">Transacción a: Wallet-Tron (TRC20)
-              <br> {{ walletAddress }}</h3>
+            <h3 class="text-[12px] text-center font-normal text-colorTextBlack dark:text-white">
+              Transacción a: Wallet-Tron (TRC20)
+              <br> {{ walletAddress }}
+            </h3>
           </div>
         </section>
       </div>
@@ -178,7 +190,6 @@ watch(() => props.status, (newStatus) => {
           @click="closeImagePopup">
         <X/>
       </button>
-      <!-- Loader circular para imagen popup -->
       <div v-if="isImageLoading" class="absolute">
         <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>

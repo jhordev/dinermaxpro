@@ -60,6 +60,17 @@ export const userService = {
         }
     },
 
+    subscribeToUserStatus(userId, callback) {
+        try {
+            const userRef = doc(db, 'users', userId);
+            return onSnapshot(userRef, (doc) => {
+                callback(doc);
+            });
+        } catch (error) {
+            logError(`Error en la suscripción al estado del usuario: ${error.message}`);
+        }
+    },
+
     async updateUserProfile(userData) {
         try {
             const userRef = doc(db, 'users', auth.currentUser.uid);

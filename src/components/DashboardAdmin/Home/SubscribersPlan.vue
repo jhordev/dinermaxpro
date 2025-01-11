@@ -1,16 +1,26 @@
 <script setup>
 import CardLayout from "@/layouts/CardLayout.vue";
 import { Bar } from 'vue-chartjs';
-import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js';
-import { ref, onMounted, onUnmounted } from 'vue';
-import { collection, query, onSnapshot, getDocs } from 'firebase/firestore';
-import { db, auth } from '@/services/firebase_config';
-import { logInfo, logError } from '@/utils/logger';
-import SecureLS from 'secure-ls';
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { subscribeToActivePlansByType } from '@/services/users_list_service';
+
+const props = defineProps({
+  showAllData: {
+    type: Boolean,
+    default: false
+  }
+});
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
-
-const ls = new SecureLS({ encodingType: 'aes' });
 
 const chartData = ref({
   labels: [],
@@ -35,70 +45,32 @@ const chartOptions = {
   },
 };
 
+const totalSuscriptores = computed(() => {
+  return chartData.value.datasets[0].data.reduce((acc, curr) => acc + curr, 0);
+});
+
 let unsubscribe = null;
 
-onMounted(async () => {
-  const currentUser = auth.currentUser;
-  if (!currentUser) {
-    logError('No hay usuario autenticado');
-    return;
-  }
+const setupSubscription = () => {
+  if (unsubscribe) unsubscribe();
 
-  const userRole = ls.get('user_role');
-  logInfo('Rol del usuario:', userRole);
+  unsubscribe = subscribeToActivePlansByType(({ labels, data }) => {
+    chartData.value = {
+      labels,
+      datasets: [{
+        ...chartData.value.datasets[0],
+        data
+      }]
+    };
+  }, props.showAllData);
+};
 
-  const investmentsRef = collection(db, 'investments');
-  const usersRef = collection(db, 'users');
+watch(() => props.showAllData, () => {
+  setupSubscription();
+});
 
-  unsubscribe = onSnapshot(query(investmentsRef), async (investmentsSnapshot) => {
-    try {
-      const usersSnapshot = await getDocs(query(usersRef));
-      const validUserIds = new Set();
-      const planCounts = new Map();
-
-      // Obtener IDs de usuarios válidos según el rol
-      usersSnapshot.forEach((userDoc) => {
-        const userData = userDoc.data();
-        if (userRole === 'socio' && userData.socioId === currentUser.uid) {
-          validUserIds.add(userDoc.id);
-        } else if (userRole === 'admin' && !userData.socioId && userData.role === 'user') {
-          validUserIds.add(userDoc.id);
-        }
-      });
-
-      // Contar planes activos
-      investmentsSnapshot.forEach((doc) => {
-        const investment = doc.data();
-        if (investment.status === 'approved' && validUserIds.has(investment.userId)) {
-          const expirationDate = new Date(investment.expirationDate.seconds * 1000);
-          const now = new Date();
-
-          if (expirationDate > now) {
-            const count = planCounts.get(investment.planName) || 0;
-            planCounts.set(investment.planName, count + 1);
-          }
-        }
-      });
-
-      // Actualizar datos del gráfico
-      const labels = Array.from(planCounts.keys());
-      const data = Array.from(planCounts.values());
-
-      chartData.value = {
-        labels,
-        datasets: [{
-          ...chartData.value.datasets[0],
-          data
-        }]
-      };
-
-      logInfo('Planes activos:', Object.fromEntries(planCounts));
-    } catch (error) {
-      logError('Error al procesar datos: ' + error.message);
-    }
-  }, (error) => {
-    logError('Error al obtener inversiones: ' + error.message);
-  });
+onMounted(() => {
+  setupSubscription();
 });
 
 onUnmounted(() => {
@@ -119,6 +91,27 @@ onUnmounted(() => {
         :options="chartOptions"
         :data="chartData"
     />
+    <div class="mt-6 flex flex-col items-center">
+      <div class="flex flex-wrap justify-center gap-4">
+        <div
+            v-for="(label, index) in chartData.labels"
+            :key="label"
+            class="flex items-center gap-2 text-sm"
+        >
+          <div
+              class="w-3 h-3 rounded-full"
+              :style="{ backgroundColor: chartData.datasets[0].backgroundColor[index] }"
+          ></div>
+          <span class="text-gray-600 dark:text-gray-300">
+            {{ label }}: {{ chartData.datasets[0].data[index] }}
+          </span>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+        <span>Total de suscriptores activos:</span>
+        <span class="font-bold text-primary">{{ totalSuscriptores }}</span>
+      </div>
+    </div>
   </CardLayout>
 </template>
 

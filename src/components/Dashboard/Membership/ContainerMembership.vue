@@ -45,6 +45,16 @@ const formatFeatures = (descripcion, interes) => {
   return features;
 };
 
+const isInvestmentActive = (investment) => {
+  if (!investment) return false;
+  if (investment.status !== 'approved') return false;
+
+  const now = new Date();
+  const expirationDate = investment.expirationDate?.toDate();
+
+  return expirationDate && now <= expirationDate;
+};
+
 onMounted(() => {
   isLoading.value = true;
 
@@ -67,7 +77,7 @@ onMounted(() => {
     unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
       const activeInv = investments.find(inv =>
           inv.userId === auth.currentUser.uid &&
-          inv.status === 'approved'
+          isInvestmentActive(inv)
       );
       activeInvestment.value = activeInv;
       isLoading.value = false;
@@ -92,7 +102,7 @@ onUnmounted(() => {
         :features="plan.features"
         :interes="plan.interes"
         :is-active="activeInvestment?.planId === plan.id"
-        :disabled="!!activeInvestment"
+        :disabled="isInvestmentActive(activeInvestment)"
         :is-loading="isLoading"
         @choose-plan="() => openModal(plan)"
     />

@@ -22,13 +22,14 @@ const setupUsersSubscription = async () => {
 
   loading.value = true;
   try {
+    // Pasamos explícitamente false para mantener el filtrado específico
     unsubscribe = await subscribeToUsersList((updatedUsers) => {
       if (updatedUsers) {
         users.value = updatedUsers;
         logInfo('Lista de usuarios actualizada');
       }
       loading.value = false;
-    }, filterPlan.value);
+    }, false); // Aquí pasamos false explícitamente
   } catch (error) {
     logError('Error al configurar la suscripción: ' + error.message);
     loading.value = false;

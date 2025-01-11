@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import Card from "@/components/DashboardAdmin/Home/CardsResumen/Card.vue";
 import iconUsers from '@/assets/img/icons/admin/resumen/users.svg'
 import iconFunds from '@/assets/img/icons/admin/resumen/fondos.svg'
@@ -8,6 +8,13 @@ import graficDash from '@/assets/img/icons/admin/resumen/graf.svg'
 import { subscribeToUsersList, subscribeToTotalInvestments } from '@/services/users_list_service';
 import { subscribeToUserWithdrawals } from '@/services/withdrawal_service';
 import { logError, logInfo } from '@/utils/logger';
+
+const props = defineProps({
+  showAllData: {
+    type: Boolean,
+    default: false
+  }
+});
 
 const totalUsuarios = ref(0);
 const fondos = ref(0);
@@ -47,19 +54,23 @@ const cardsData = computed(() => [
   },
 ]);
 
-onMounted(async () => {
+const setupSubscriptions = async () => {
   try {
+    if (unsubscribeUsers) unsubscribeUsers();
+    if (unsubscribeWithdrawals) unsubscribeWithdrawals();
+    if (unsubscribeInvestments) unsubscribeInvestments();
+
     // Suscribirse a la lista de usuarios
     unsubscribeUsers = await subscribeToUsersList((users) => {
       totalUsuarios.value = users.length;
       logInfo('Total usuarios actualizados:', totalUsuarios.value);
-    });
+    }, props.showAllData);
 
-    // Suscribirse a las inversiones totales según el rol
+    // Suscribirse a las inversiones totales
     unsubscribeInvestments = await subscribeToTotalInvestments((total) => {
       fondos.value = total;
       logInfo('Total fondos actualizados:', fondos.value);
-    });
+    }, props.showAllData);
 
     // Suscribirse a los retiros
     unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
@@ -71,27 +82,25 @@ onMounted(async () => {
       });
       retirados.value = Number(totalWithdrawals.toFixed(2));
       logInfo('Total retiros actualizados:', retirados.value);
-    });
+    }, props.showAllData);
 
   } catch (error) {
     logError('Error en la inicialización del dashboard:', error);
   }
+};
+
+watch(() => props.showAllData, () => {
+  setupSubscriptions();
+});
+
+onMounted(() => {
+  setupSubscriptions();
 });
 
 onUnmounted(() => {
-  // Limpiar todas las suscripciones
-  if (unsubscribeUsers) {
-    unsubscribeUsers();
-    logInfo('Suscripción a usuarios cancelada');
-  }
-  if (unsubscribeWithdrawals) {
-    unsubscribeWithdrawals();
-    logInfo('Suscripción a retiros cancelada');
-  }
-  if (unsubscribeInvestments) {
-    unsubscribeInvestments();
-    logInfo('Suscripción a inversiones cancelada');
-  }
+  if (unsubscribeUsers) unsubscribeUsers();
+  if (unsubscribeWithdrawals) unsubscribeWithdrawals();
+  if (unsubscribeInvestments) unsubscribeInvestments();
 });
 </script>
 

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Search, ChevronDown, Sheet, FileText, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { logInfo } from '@/utils/logger';
 
 const props = defineProps({
   datos: {
@@ -10,8 +11,14 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  },
+  isGeneratingPDF: {
+    type: Boolean,
+    default: false
   }
 });
+
+const emit = defineEmits(['generate-pdf']);
 
 const dropdownOpen = ref(false);
 const searchQuery = ref('');
@@ -91,6 +98,12 @@ const previousPage = () => {
 const nextPage = () => {
   if (currentPage.value < totalPages.value) currentPage.value++;
 };
+
+// Exponer datos necesarios para el PDF
+defineExpose({
+  transactions: paginatedProducts,
+  formatCurrency
+});
 </script>
 
 <template>
@@ -121,11 +134,16 @@ const nextPage = () => {
 
         <div v-if="dropdownOpen" class="absolute top-10 right-0 z-50 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
           <ul class="py-3 text-sm text-gray-700 dark:text-gray-200">
-            <li v-for="(option, index) in [{icon: FileText, text: 'PDF'}]" :key="index">
-              <a href="#" class="flex items-center text-[12px] md:text-[16px] font-semibold gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                <component :is="option.icon"/>
-                {{ option.text }}
-              </a>
+            <li>
+              <button
+                  @click="emit('generate-pdf')"
+                  :disabled="isGeneratingPDF"
+                  class="w-full flex items-center text-[12px] md:text-[16px] font-semibold gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
+              >
+                <div v-if="isGeneratingPDF" class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                <FileText v-else />
+                {{ isGeneratingPDF ? 'Generando...' : 'PDF' }}
+              </button>
             </li>
           </ul>
         </div>

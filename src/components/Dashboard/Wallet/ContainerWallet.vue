@@ -6,9 +6,12 @@ import { investmentService } from '@/services/investment_service';
 import { subscribeToUserWithdrawals } from '@/services/withdrawal_service';
 import { auth } from '@/services/firebase_config';
 import { logError, logInfo } from '@/utils/logger';
+import { generarPdf } from '@/utils/pdf_generator';
 
 const movimientos = ref([]);
 const isLoading = ref(true);
+const isGeneratingPDF = ref(false);
+const tableRef = ref(null);
 let unsubscribeInvestments = null;
 let unsubscribeWithdrawals = null;
 
@@ -22,11 +25,48 @@ const formatDate = (timestamp) => {
   }).format(date);
 };
 
+const handleGeneratePDF = async () => {
+  try {
+    isGeneratingPDF.value = true;
+    logInfo('Iniciando generación de PDF...');
+
+    const transactions = tableRef.value?.transactions || [];
+    const filasPDF = transactions.map(transaction => [
+      transaction.fecha,
+      transaction.transaccion,
+      transaction.operacion,
+      transaction.network || '-',
+      tableRef.value.formatCurrency(transaction.monto),
+      transaction.operacion === 'Depósito' ?
+          (transaction.status === 'approved' ? 'Aprobado' :
+              transaction.status === 'pending' ? 'Pendiente' : 'Rechazado') :
+          (transaction.status === 'completed' ? 'Completado' : 'Pendiente')
+    ]);
+
+    const opcionesPDF = {
+      nombreCompleto: auth.currentUser?.displayName || 'Usuario',
+      pais: ''|| 'No especificado',
+      telefono: ''|| 'No especificado',
+      email: auth.currentUser?.email || '',
+      columnas: ['Fecha', 'Transacción', 'Operación', 'Red', 'Monto', 'Estado'],
+      filas: filasPDF
+    };
+
+    const doc = generarPdf(opcionesPDF);
+    doc.save(`reporte_movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
+
+    logInfo('PDF generado exitosamente');
+  } catch (error) {
+    logError('Error al generar PDF:', error);
+  } finally {
+    isGeneratingPDF.value = false;
+  }
+};
+
 onMounted(async () => {
   try {
     const userId = auth.currentUser?.uid;
     if (userId) {
-      // Suscripción a depósitos
       unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
         const depositMovements = investments
             .filter(inv => inv.userId === userId)
@@ -42,7 +82,6 @@ onMounted(async () => {
               timestamp: inv.createdAt
             }));
 
-        // Actualizar solo los depósitos manteniendo los retiros existentes
         movimientos.value = movimientos.value
             .filter(m => m.operacion === 'Retiro')
             .concat(depositMovements);
@@ -52,7 +91,6 @@ onMounted(async () => {
         logInfo('Depósitos cargados:', depositMovements.length);
       });
 
-      // Suscripción a retiros
       unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
         const withdrawalMovements = withdrawals
             .filter(w => w.userId === userId)
@@ -70,7 +108,6 @@ onMounted(async () => {
               timestamp: w.createdAt
             }));
 
-        // Actualizar solo los retiros manteniendo los depósitos existentes
         movimientos.value = movimientos.value
             .filter(m => m.operacion === 'Depósito')
             .concat(withdrawalMovements);
@@ -104,13 +141,16 @@ onUnmounted(() => {
   <section class="flex flex-col md:flex-row gap-[24px]">
     <FormRetirar class="flex-[0.4] h-fit" />
     <TableMovimientos
+        ref="tableRef"
         :datos="movimientos"
         :isLoading="isLoading"
+        :isGeneratingPDF="isGeneratingPDF"
+        @generate-pdf="handleGeneratePDF"
         class="flex-1"
     />
   </section>
 </template>
 
 <style scoped>
-/* Agregar estilos si es necesario */
+
 </style>
