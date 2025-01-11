@@ -227,14 +227,14 @@ onMounted(loadUserData);
           <BaseInput
               v-model="userData.telefono"
               label="Teléfono"
-              placeholder="+51 959 659 502"
+              placeholder="Introduce tu número de teléfono"
               :disabled="!isEditable"
           />
 
           <BaseInput
               v-model="userData.pais"
               label="País"
-              placeholder="Ecuador"
+              placeholder="Introduce el nombre de tu país"
               :disabled="!isEditable"
           />
 
