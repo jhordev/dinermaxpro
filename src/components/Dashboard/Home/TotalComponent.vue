@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { EyeOff, Eye } from 'lucide-vue-next';
 import { investmentService } from '@/services/investment_service';
+import { referralService } from '@/services/referral_service';
+import { auth } from '@/services/firebase_config';
 import { logError, logInfo } from '@/utils/logger';
 
 const props = defineProps({
@@ -12,11 +14,27 @@ const props = defineProps({
 });
 
 const investments = ref([]);
+const referralStats = ref({
+  ownReferral: {
+    totalReferrals: 0,
+    earnings: 0
+  }
+});
 const isHidden = ref(false);
-let unsubscribe = null;
+const dataLoaded = ref(false);
+let unsubscribeInvestments = null;
+let unsubscribeReferrals = null;
 
 const totals = computed(() => {
+  if (!dataLoaded.value) {
+    return {
+      totalAmount: '0.00',
+      totalInUSD: '0.00 USD'
+    };
+  }
+
   const userInvestments = investments.value.filter(inv => inv.userId === props.userId);
+  const referralEarnings = Number(referralStats.value.ownReferral.earnings) || 0;
 
   const total = userInvestments.reduce((acc, inv) => {
     if (inv.status === 'approved') {
@@ -26,11 +44,11 @@ const totals = computed(() => {
       acc.totalInvestment += investment;
     }
     return acc;
-  }, { totalBalance: 0, totalInvestment: 0 });
+  }, { totalBalance: referralEarnings, totalInvestment: 0 });
 
   return {
     totalAmount: formatCurrency(total.totalBalance),
-    totalInUSD: `${formatCurrency(total.totalInvestment)} USD`
+    totalInUSD: `${formatCurrency(total.totalInvestment)} USD`,
   };
 });
 
@@ -49,18 +67,37 @@ const toggleVisibility = () => {
 
 onMounted(() => {
   try {
-    unsubscribe = investmentService.subscribeToInvestments((allInvestments) => {
+    let investmentsLoaded = false;
+    let referralsLoaded = false;
+
+    // Suscripción a inversiones
+    unsubscribeInvestments = investmentService.subscribeToInvestments((allInvestments) => {
       investments.value = allInvestments;
+      investmentsLoaded = true;
+      if (referralsLoaded) dataLoaded.value = true;
       logInfo('Inversiones actualizadas');
     });
+
+    // Suscripción a estadísticas de referidos
+    if (auth.currentUser) {
+      unsubscribeReferrals = referralService.getReferralStats(auth.currentUser.uid, (newStats) => {
+        referralStats.value = newStats;
+        referralsLoaded = true;
+        if (investmentsLoaded) dataLoaded.value = true;
+        logInfo('Estadísticas de referidos actualizadas');
+      });
+    }
   } catch (error) {
-    logError('Error al suscribirse a inversiones:', error);
+    logError('Error al suscribirse a los datos:', error);
   }
 });
 
 onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
+  if (unsubscribeInvestments) {
+    unsubscribeInvestments();
+  }
+  if (unsubscribeReferrals) {
+    unsubscribeReferrals();
   }
 });
 </script>
