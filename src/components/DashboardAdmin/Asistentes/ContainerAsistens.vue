@@ -3,10 +3,12 @@ import { Loader2, Plus, UserPen, Search, ChevronLeft, ChevronRight } from "lucid
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import CardLayout from '@/layouts/CardLayout.vue';
 import { logError, logInfo } from "@/utils/logger.js";
-import { subscribeToSocios, updateSocioStatus} from '@/services/socio_service';
+import { subscribeToSocios, updateSocioStatus } from '@/services/socio_service';
 import AsistentesDialog from "@/dialogs/AsistentesDialog.vue";
+import InfoSocioModal from "@/components/DashboardAdmin/Asistentes/InfoSocioModal.vue";
 
 // Variables reactivas
+const isModalVisible = ref(false); // Estado del modal
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const searchTerm = ref('');
@@ -14,6 +16,15 @@ const dropdownOpen = ref(false);
 const asistentes = ref([]);
 const loading = ref(true);
 let unsubscribe = null;
+
+// Funciones para abrir y cerrar el modal
+const openModal = () => {
+  isModalVisible.value = true;
+};
+
+const closeModal = () => {
+  isModalVisible.value = false;
+};
 
 // Suscripción a datos en tiempo real
 onMounted(() => {
@@ -36,7 +47,7 @@ const toggleDropdown = () => {
   dropdownOpen.value = !dropdownOpen.value;
 };
 
-// Modal
+// Modal para agregar y editar asistentes
 const isModalOpen = ref(false);
 const modalMode = ref("add");
 const selectedAssistant = ref(null);
@@ -195,9 +206,10 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
               </td>
             </tr>
             <tr
+                @click="openModal"
                 v-for="(transaction, index) in paginatedasistentes"
                 :key="transaction.id"
-                :class="index % 2 === 0 ? 'bg-transparent' : 'bg-bgf3 dark:bg-colorfila'"
+                class=" bg-transparent hover:bg-bgf3 hover:dark:bg-colorfila"
             >
               <td class="p-4 text-[14px] font-normal text-colorTextBlack dark:text-white">
                 {{ transaction.email }}
@@ -316,6 +328,17 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
         </nav>
       </CardLayout>
     </main>
+    <InfoSocioModal
+        :show="isModalVisible"
+        :membershipData="{ active: 1200, inactive: 300 }"
+        :subscriptionPlans="[
+          { name: 'Plan Básico', count: 500 },
+          { name: 'Plan Estándar', count: 700 },
+          { name: 'Plan Pro', count: 300 }
+        ]"
+        :referralData="{ referred: 150, earnings: 2000 }"
+        @close="closeModal"
+    />
   </section>
 </template>
 
