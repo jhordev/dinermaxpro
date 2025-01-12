@@ -73,7 +73,7 @@ onUnmounted(() => unsubscribe?.());
       >
         <Loader2 v-if="isLoading" class="animate-spin" />
         <Plus v-else />
-        Agregar Plan
+        <span class="hidden md:flex">Agregar Plan</span>
       </button>
     </div>
 

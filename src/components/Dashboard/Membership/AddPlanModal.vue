@@ -216,7 +216,7 @@ onMounted(() => {
                   :min="selectedPlan.capitalMinimo"
                   step="any"
                   @input="validateInput"
-                  :placeholder="`Mínimo $${selectedPlan.capitalMinimo.toLocaleString()}`"
+                  :placeholder="`$${selectedPlan.capitalMinimo.toLocaleString()}`"
                   :class="{
       'bg-gray-50 border text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-600 dark:text-white': true,
       'border-red-500 focus:ring-red-500 focus:border-red-500 dark:border-red-500': inputError,
@@ -224,7 +224,7 @@ onMounted(() => {
     }"
                   required
               >
-              <p v-if="errorMessage" class="mt-1 text-sm text-red-600">
+              <p v-if="errorMessage" class="mt-1 text-[10px] md:text-[12px] text-red-600">
                 {{ errorMessage }}
               </p>
             </div>
@@ -268,9 +268,9 @@ onMounted(() => {
                     </button>
                   </div>
                 </div>
-                <div class="w-[80px] md:w-auto absolute top-0 right-0 md:relative">
+                <div class="w-[80px] rounded-full md:w-auto absolute top-0 right-0 md:relative">
                   <img v-if="activeWallet.qrImage" :src="activeWallet.qrImage" alt="QR Code"
-                       class="max-w-[140px] max-h-[140px] object-contain"/>
+                       class="md:max-w-[140px] rounded-[8px]  md:max-h-[140px] object-cover"/>
                   <WalletIcon v-else class="w-20 h-20 text-gray-400"/>
                 </div>
               </div>

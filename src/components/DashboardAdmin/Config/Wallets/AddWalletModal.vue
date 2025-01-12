@@ -202,7 +202,7 @@ watch(
                   type="text"
                   id="walletAddress"
                   class="truncate pl-5 py-2 md:py-3 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal"
-                  placeholder="12eb5cRuXFwaXwKFsqUFS7yYTFVXwsHak9"
+                  placeholder="Ingrese la dirección de billetera"
                   required
                   :disabled="isLoading || isSubmitting">
             </div>

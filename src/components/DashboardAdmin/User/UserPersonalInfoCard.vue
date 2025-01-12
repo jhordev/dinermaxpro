@@ -122,7 +122,7 @@ const copyToClipboard = () => {
       </div>
     </article>
 
-    <article class="flex items-center gap-[25px] mt-2.5 p-2.5 bg-colorInputClaro rounded-[6px] relative">
+    <article class="flex items-center justify-between  gap-[25px] mt-2.5 p-2.5 bg-colorInputClaro rounded-[6px] relative">
       <div class="bg-white p-1 rounded-[5px]">
         <Wallet/>
       </div>

@@ -187,7 +187,7 @@ watch(() => props.modelValue, (newValue) => {
                 </div>
 
                 <div class="col-span-1 flex flex-col gap-2.5">
-                  <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">% Mín. Retiro (días)</label>
+                  <label class="text-colorTextBlack dark:text-white font-normal text-[14px] md:text-[16px]">% Mín. Retiro</label>
                   <input
                       v-model="formData.porcentajeMinRetiro"
                       type="number"

@@ -48,7 +48,7 @@ defineProps({
      </strong>
    </div>
 
-    <footer class="flex items-center gap-1.5" :class="textColor">
+    <footer class="w-full flex justify-end md:justify-start  items-center gap-1.5" :class="textColor">
       <component
           :is="isPositive ? ChevronUp : ChevronDown"
           class="w-4 h-4"

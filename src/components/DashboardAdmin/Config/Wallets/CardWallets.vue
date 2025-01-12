@@ -93,7 +93,7 @@ const copyToClipboard = (text) => {
         </div>
 
       </div>
-      <div class="w-[80px] md:w-[150px] h-[80px] md:h-[150px] p-1 absolute top-0 right-0 md:relative flex items-center justify-center border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
+      <div class="w-[80px] md:w-[200px] h-[80px] md:h-full  absolute top-0 right-0 md:relative flex items-center justify-center rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-700">
         <img
             v-if="qrImage"
             :src="qrImage"
