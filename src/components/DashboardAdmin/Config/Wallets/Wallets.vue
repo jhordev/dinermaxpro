@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Plus, Loader2 } from "lucide-vue-next";
 import { walletService } from '@/services/wallet_service.js';
 import { logInfo, logError } from '@/utils/logger.js';
@@ -14,10 +14,18 @@ const editData = ref(null);
 const isLoading = ref(false);
 let unsubscribe = null;
 
+watch(() => isModalOpen.value, (newValue) => {
+  if (!newValue) {
+    // Resetear el estado cuando se cierra el modal
+    isEditMode.value = false;
+    editData.value = null;
+  }
+});
+
 const openModal = (wallet) => {
   if (wallet) {
     isEditMode.value = true;
-    editData.value = wallet;
+    editData.value = JSON.parse(JSON.stringify(wallet));
   } else {
     isEditMode.value = false;
     editData.value = null;
@@ -30,6 +38,7 @@ const addWallet = async (walletData) => {
     isLoading.value = true;
     await walletService.createWallet(walletData);
     logInfo('Wallet agregada correctamente');
+    isModalOpen.value = false;
   } catch (error) {
     logError('Error al agregar wallet:', error);
   } finally {
@@ -40,9 +49,13 @@ const addWallet = async (walletData) => {
 const updateWallet = async (walletData) => {
   try {
     isLoading.value = true;
+    if (!editData.value?.id) {
+      throw new Error('ID de wallet no encontrado');
+    }
     const id = editData.value.id;
     await walletService.updateWallet(id, walletData);
     logInfo('Wallet actualizada correctamente');
+    isModalOpen.value = false;
   } catch (error) {
     logError('Error al actualizar wallet:', error);
   } finally {
@@ -89,23 +102,22 @@ onUnmounted(() => {
     </header>
     <main class="grid grid-cols-1 lg:grid-cols-2 mt-[30px] gap-[30px]">
       <CardWallets
-          v-for="(wallet, index) in wallets"
-          :key="index"
+          v-for="wallet in wallets"
+          :key="wallet.id"
           :paymentMethod="wallet.paymentMethod"
           :network="wallet.network"
           :walletAddress="wallet.walletAddress"
           :qrImage="wallet.qrImage"
           :onEdit="() => openModal(wallet)"
+          :onDelete="() => deleteWallet(wallet.id)"
       />
     </main>
 
-    <!-- Modal para agregar o editar billetera -->
     <AddWalletModal
-        :modelValue="isModalOpen"
+        v-model="isModalOpen"
         :isEditMode="isEditMode"
         :editData="editData"
         :isLoading="isLoading"
-        @update:modelValue="isModalOpen = $event"
         @add-wallet="addWallet"
         @update-wallet="updateWallet"
     />

@@ -6,151 +6,177 @@ import { logError, logInfo } from "@/utils/logger.js";
 import { subscribeToSocios, updateSocioStatus } from '@/services/socio_service';
 import AsistentesDialog from "@/dialogs/AsistentesDialog.vue";
 import InfoSocioModal from "@/components/DashboardAdmin/Asistentes/InfoSocioModal.vue";
+import {
+  subscribeToSocioInvestments,
+  subscribeToSocioUsersList,
+  subscribeToSocioWithdrawals,
+  subscribeToSocioMembershipsStatus,
+  subscribeToSocioReferrals
+} from "@/services/socio_users_service.js";
 
-// Variables reactivas
-const isModalVisible = ref(false); // Estado del modal
+const isModalVisible = ref(false);
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const searchTerm = ref('');
 const dropdownOpen = ref(false);
 const asistentes = ref([]);
 const loading = ref(true);
-let unsubscribe = null;
-
-// Funciones para abrir y cerrar el modal
-const openModal = () => {
-  isModalVisible.value = true;
-};
-
-const closeModal = () => {
-  isModalVisible.value = false;
-};
-
-// Suscripción a datos en tiempo real
-onMounted(() => {
-  unsubscribe = subscribeToSocios((socios) => {
-    asistentes.value = socios;
-    loading.value = false;
-    logInfo('Lista de socios actualizada');
-  });
-});
-
-onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-    logInfo('Suscripción cancelada');
-  }
-});
-
-// Función para toggle del dropdown
-const toggleDropdown = () => {
-  dropdownOpen.value = !dropdownOpen.value;
-};
-
-// Modal para agregar y editar asistentes
+const selectedSocioId = ref(null);
+const selectedSocio = ref(null);
 const isModalOpen = ref(false);
 const modalMode = ref("add");
 const selectedAssistant = ref(null);
 
-const openAddModal = () => {
-  modalMode.value = "add";
-  selectedAssistant.value = null;
-  isModalOpen.value = true;
-};
+const socioData = ref({
+  totalUsuarios: 0,
+  fondos: 0,
+  retirados: 0
+});
 
-const openEditModal = (assistant) => {
-  modalMode.value = "update";
-  selectedAssistant.value = assistant;
-  isModalOpen.value = true;
-};
+const membershipData = ref({
+  active: 0,
+  inactive: 0
+});
 
-const handleAssistantAdded = () => {
-  isModalOpen.value = false;
-  logInfo('Socio agregado correctamente');
-};
+const subscriptionPlans = ref([
+  { name: 'Plan Básico', count: 0 },
+  { name: 'Plan Estándar', count: 0 },
+  { name: 'Plan Pro', count: 0 }
+]);
 
-const handleAssistantUpdated = (updatedAssistant) => {
-  isModalOpen.value = false;
-  logInfo('Socio actualizado correctamente');
-};
+const referralData = ref({
+  referred: 0,
+  earnings: 0
+});
 
-const handleModalClose = () => {
-  isModalOpen.value = false;
-};
+let unsubscribe = null;
+let unsubscribeUsers = null;
+let unsubscribeWithdrawals = null;
+let unsubscribeInvestments = null;
+let unsubscribeMemberships = null;
+let unsubscribeReferrals = null;
 
-// Manejar cambio de estado
-const handleStatusChange = async (socio) => {
+const loadSocioData = async (socioId) => {
   try {
-    const newStatus = socio.estado === 'activo' ? 'inactivo' : 'activo';
-    await updateSocioStatus(socio.id, newStatus);
-    logInfo(`Estado del socio ${socio.email} actualizado a ${newStatus}`);
+    [unsubscribeUsers, unsubscribeWithdrawals, unsubscribeInvestments, unsubscribeMemberships, unsubscribeReferrals]
+        .forEach(unsub => unsub?.());
+
+    unsubscribeUsers = await subscribeToSocioUsersList((users) => {
+      socioData.value.totalUsuarios = users.length;
+    }, socioId);
+
+    unsubscribeMemberships = await subscribeToSocioMembershipsStatus((stats) => {
+      membershipData.value = stats.membershipStatus;
+      subscriptionPlans.value = [
+        { name: 'Plan Básico', count: stats.planCounts.basico },
+        { name: 'Plan Estándar', count: stats.planCounts.estandar },
+        { name: 'Plan Pro', count: stats.planCounts.pro }
+      ];
+    }, socioId);
+
+    unsubscribeInvestments = await subscribeToSocioInvestments((total) => {
+      socioData.value.fondos = total;
+    }, socioId);
+
+    unsubscribeWithdrawals = await subscribeToSocioWithdrawals((withdrawals) => {
+      socioData.value.retirados = withdrawals.reduce((total, w) =>
+          w.status === 'completed' ? total + Number(w.amount || 0) : total, 0);
+    }, socioId);
+
+    unsubscribeReferrals = await subscribeToSocioReferrals((data) => {
+      referralData.value = data;
+    }, socioId);
+
   } catch (error) {
-    logError('Error al actualizar estado:', error);
+    logError('Error al cargar datos del socio:', error);
   }
 };
 
-// Filtro de búsqueda
-const filteredasistentes = computed(() => {
-  return asistentes.value.filter((transaction) => {
-    const search = searchTerm.value.toLowerCase();
-    return (
-        transaction.email?.toLowerCase().includes(search) ||
-        transaction.nombre?.toLowerCase().includes(search) ||
-        transaction.pais?.toLowerCase().includes(search) ||
-        transaction.estado?.toLowerCase().includes(search)
-    );
+const handleRowClick = (event, socio) => {
+  if (!event.target.closest('td:last-child')) {
+    selectedSocio.value = socio;
+    selectedSocioId.value = socio.id;
+    loadSocioData(socio.id);
+    isModalVisible.value = true;
+  }
+};
+
+const closeModal = () => {
+  isModalVisible.value = false;
+  [unsubscribeUsers, unsubscribeWithdrawals, unsubscribeInvestments, unsubscribeMemberships, unsubscribeReferrals]
+      .forEach(unsub => unsub?.());
+};
+
+onMounted(() => {
+  unsubscribe = subscribeToSocios((socios) => {
+    asistentes.value = socios;
+    loading.value = false;
   });
 });
 
-// Cálculos de paginación
+onUnmounted(() => {
+  [unsubscribe, unsubscribeUsers, unsubscribeWithdrawals, unsubscribeInvestments, unsubscribeMemberships, unsubscribeReferrals]
+      .forEach(unsub => unsub?.());
+});
+
+const filteredasistentes = computed(() => {
+  const search = searchTerm.value.toLowerCase();
+  return asistentes.value.filter(t =>
+      t.email?.toLowerCase().includes(search) ||
+      t.nombre?.toLowerCase().includes(search) ||
+      t.pais?.toLowerCase().includes(search) ||
+      t.estado?.toLowerCase().includes(search)
+  );
+});
+
 const totalItems = computed(() => filteredasistentes.value.length);
 const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value));
 const paginatedasistentes = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
-  const end = start + itemsPerPage.value;
-  return filteredasistentes.value.slice(start, end);
+  return filteredasistentes.value.slice(start, start + itemsPerPage.value);
 });
-
-// Métodos de paginación
-const changePage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
-  }
-};
-
-const previousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-  }
-};
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++;
-  }
-};
 
 const paginationRange = computed(() => {
   const range = [];
   const maxPages = totalPages.value;
-  let startPage = currentPage.value - 1;
-  let endPage = currentPage.value + 1;
+  let [start, end] = [Math.max(1, currentPage.value - 1), Math.min(maxPages, currentPage.value + 1)];
 
-  if (startPage < 1) startPage = 1;
-  if (endPage > maxPages) endPage = maxPages;
-
-  for (let i = startPage; i <= endPage; i++) {
-    range.push(i);
-  }
-
-  if (startPage > 2) range.unshift('...');
-  if (endPage < maxPages - 1) range.push('...');
+  if (start > 2) range.push('...');
+  for (let i = start; i <= end; i++) range.push(i);
+  if (end < maxPages - 1) range.push('...');
 
   return range;
 });
 
 const showingFrom = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
 const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalItems.value));
+
+const handleStatusChange = async (socio) => {
+  try {
+    const newStatus = socio.estado === 'activo' ? 'inactivo' : 'activo';
+    await updateSocioStatus(socio.id, newStatus);
+  } catch (error) {
+    logError('Error al actualizar estado:', error);
+  }
+};
+
+const changePage = page => page >= 1 && page <= totalPages.value && (currentPage.value = page);
+const previousPage = () => currentPage.value > 1 && currentPage.value--;
+const nextPage = () => currentPage.value < totalPages.value && currentPage.value++;
+const toggleDropdown = () => dropdownOpen.value = !dropdownOpen.value;
+const openAddModal = () => {
+  modalMode.value = "add";
+  selectedAssistant.value = null;
+  isModalOpen.value = true;
+};
+const openEditModal = assistant => {
+  modalMode.value = "update";
+  selectedAssistant.value = assistant;
+  isModalOpen.value = true;
+};
+const handleAssistantAdded = () => isModalOpen.value = false;
+const handleAssistantUpdated = () => isModalOpen.value = false;
+const handleModalClose = () => isModalOpen.value = false;
 </script>
 
 <template>
@@ -181,7 +207,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
           </div>
         </header>
 
-        <!-- Tabla con loader -->
         <div class="overflow-x-auto mt-5">
           <div v-if="loading" class="flex justify-center items-center py-8">
             <Loader2 class="animate-spin" />
@@ -206,10 +231,10 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
               </td>
             </tr>
             <tr
-                @click="openModal"
                 v-for="(transaction, index) in paginatedasistentes"
                 :key="transaction.id"
-                class=" bg-transparent hover:bg-bgf3 hover:dark:bg-colorfila"
+                @click="(event) => handleRowClick(event, transaction)"
+                class="bg-transparent hover:bg-bgf3 hover:dark:bg-colorfila"
             >
               <td class="p-4 text-[14px] font-normal text-colorTextBlack dark:text-white">
                 {{ transaction.email }}
@@ -262,7 +287,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
           </table>
         </div>
 
-        <!-- Modal -->
         <AsistentesDialog
             v-if="isModalOpen"
             v-model="isModalOpen"
@@ -273,7 +297,6 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
             @close="handleModalClose"
         />
 
-        <!-- Paginación -->
         <nav
             class="flex flex-row items-center gap-3 pt-4 md:justify-between"
             aria-label="Table navigation"
@@ -330,13 +353,11 @@ const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value
     </main>
     <InfoSocioModal
         :show="isModalVisible"
-        :membershipData="{ active: 1200, inactive: 300 }"
-        :subscriptionPlans="[
-          { name: 'Plan Básico', count: 500 },
-          { name: 'Plan Estándar', count: 700 },
-          { name: 'Plan Pro', count: 300 }
-        ]"
-        :referralData="{ referred: 150, earnings: 2000 }"
+        :socioData="socioData"
+        :membershipData="membershipData"
+        :subscriptionPlans="subscriptionPlans"
+        :referralData="referralData"
+        :socioNombre="selectedSocio?.nombre || 'Sin nombre'"
         @close="closeModal"
     />
   </section>
