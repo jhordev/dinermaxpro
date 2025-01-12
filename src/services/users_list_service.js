@@ -32,8 +32,10 @@ export const subscribeToUsersList = async (callback, showAllData = false) => {
                 userData.hasActivePlan = hasApprovedPlan;
 
                 if (showAllData) {
-                    // Si showAllData es true, incluir todos los usuarios
-                    usersData.push(userData);
+                    // Si showAllData es true, incluir solo usuarios con role 'user'
+                    if (userData.role === 'user') {
+                        usersData.push(userData);
+                    }
                 } else {
                     // Lógica original de filtrado
                     if (userRole === 'socio' && userData.socioId === currentUser.uid) {

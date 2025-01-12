@@ -62,10 +62,7 @@ const setupSubscriptions = async () => {
 
     // Suscribirse a la lista de usuarios
     unsubscribeUsers = await subscribeToUsersList((users) => {
-      // Solo restamos 1 cuando showAllData es true
-      totalUsuarios.value = props.showAllData ?
-          (users.length > 0 ? users.length - 1 : 0) :
-          users.length;
+      totalUsuarios.value = users.length;
       logInfo('Total usuarios actualizados:', totalUsuarios.value);
     }, props.showAllData);
 

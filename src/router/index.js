@@ -49,7 +49,7 @@ const routes = [
   {
     path: '/dashboard',
     component: HomeScreen,
-    meta: { requiresAuth: false },
+    meta: { requiresAuth: true, allowedRoles: ['user'] },
     children: [
       {
         path: '',
@@ -82,8 +82,8 @@ const routes = [
     path: '/admin',
     component: HomeViewAdmin,
     meta: {
-      requiresAuth: false,
-      requiresAdmin: false
+      requiresAuth: true,
+      allowedRoles: ['admin', 'socio']
     },
     children: [
       {
@@ -115,20 +115,20 @@ const routes = [
         path: 'configurations',
         name: 'configurations',
         component: ContainerConfig,
-        meta: { requiresAdmin: true, adminOnly: true },
+        meta: { allowedRoles: ['admin'] },
         redirect: { name: 'wallets' },
         children:[
           {
             path: 'wallets',
             name: 'wallets',
             component: Wallets,
-            meta: { adminOnly: true }
+            meta: { allowedRoles: ['admin'] }
           },
           {
             path: 'recompensas',
             name: 'recompensas',
             component: Recompensas,
-            meta: { adminOnly: true }
+            meta: { allowedRoles: ['admin'] }
           }
         ]
       },
@@ -159,22 +159,13 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition;
-    } else {
-      return { top: 0 };
-    }
+    return savedPosition || { top: 0 };
   }
 });
 
 let authInitialized = false;
 
 router.beforeEach(async (to, from, next) => {
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const requiresGuest = to.matched.some(record => record.meta.requiresGuest);
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
-  const adminOnly = to.matched.some(record => record.meta.adminOnly);
-
   try {
     if (!authInitialized) {
       await new Promise((resolve) => {
@@ -189,61 +180,38 @@ router.beforeEach(async (to, from, next) => {
     const currentUser = auth.currentUser;
     const isSessionValidated = authService.isSessionValidated();
 
-    if (requiresAuth || requiresAdmin) {
-      if (!currentUser) {
-        logInfo('Acceso denegado: se requiere autenticación');
-        next('/login');
-        return;
-      }
-
-      if (!isSessionValidated) {
-        logInfo('Sesión no validada, redirigiendo a login');
-        await authService.logout();
-        next('/login');
-        return;
-      }
-
-      if (requiresAdmin) {
+    if (to.matched.some(record => record.meta.requiresGuest)) {
+      if (currentUser && isSessionValidated) {
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        const userRole = userDoc.data().role;
-
-        if (userRole !== 'admin' && userRole !== 'socio') {
-          logInfo('Acceso denegado: se requiere rol de administrador o socio');
-          next('/dashboard');
-          return;
-        }
-
-        if (adminOnly && userRole !== 'admin') {
-          logInfo('Acceso denegado: ruta exclusiva para administradores');
-          next('/admin');
-          return;
-        }
+        const userRole = userDoc.data()?.role;
+        next(userRole === 'user' ? '/dashboard' : '/admin');
+        return;
       }
-
       next();
       return;
     }
 
-    if (requiresGuest) {
-      if (currentUser && isSessionValidated) {
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        const userRole = userDoc.data().role;
-
-        logInfo('Usuario autenticado y validado, redirigiendo');
-        if (userRole === 'admin' || userRole === 'socio') {
-          next('/admin');
-        } else {
-          next('/dashboard');
-        }
+    if (to.matched.some(record => record.meta.requiresAuth)) {
+      if (!currentUser || !isSessionValidated) {
+        logInfo('Acceso denegado: se requiere autenticación válida');
+        await authService.logout();
+        next('/login');
         return;
       }
 
-      if (currentUser && !isSessionValidated) {
-        await authService.logout();
-      }
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      const userRole = userDoc.data()?.role;
 
-      next();
-      return;
+      const hasPermission = to.matched.every(record => {
+        const allowedRoles = record.meta.allowedRoles;
+        return !allowedRoles || allowedRoles.includes(userRole);
+      });
+
+      if (!hasPermission) {
+        logInfo(`Acceso denegado: rol ${userRole} no tiene permiso para esta ruta`);
+        next(userRole === 'user' ? '/dashboard' : '/admin');
+        return;
+      }
     }
 
     next();

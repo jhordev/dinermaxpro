@@ -8,6 +8,7 @@ import refIcon from '@/assets/img/item1.png'
 import refDinnerIcon from '@/assets/img/item2.png'
 import { Pie } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
+import { logError, logInfo } from '@/utils/logger'
 
 const props = defineProps({
   userId: {
@@ -19,9 +20,68 @@ const props = defineProps({
 ChartJS.register(Title, Tooltip, Legend, ArcElement)
 
 const investment = ref(null)
-const progress = ref(0)
+const daysMetrics = ref({
+  daysElapsed: 0,
+  totalPaymentDays: 0,
+  percentage: 0
+})
 const referralData = ref(null)
 const isLoading = ref(true)
+
+const getPaymentDays = (startDate, endDate) => {
+  let count = 0;
+  const curDate = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (curDate <= end) {
+    const dayOfWeek = curDate.getDay();
+    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+      count++;
+    }
+    curDate.setDate(curDate.getDate() + 1);
+  }
+  return count;
+};
+
+const getFirstPaymentDate = (activationDate) => {
+  const date = new Date(activationDate);
+  const dayOfWeek = date.getDay();
+
+  if (dayOfWeek === 5) {
+    date.setDate(date.getDate() + 4);
+  } else if (dayOfWeek === 6) {
+    date.setDate(date.getDate() + 3);
+  } else {
+    date.setDate(date.getDate() + 2);
+  }
+  return date;
+};
+
+const calculateDaysMetrics = (investment) => {
+  if (!investment || investment.status !== 'approved') {
+    return { daysElapsed: 0, totalPaymentDays: 0, percentage: 0 };
+  }
+
+  const now = new Date();
+  const activationDate = new Date(investment.activationDate.seconds * 1000);
+  const expirationDate = new Date(investment.expirationDate.seconds * 1000);
+  const firstPaymentDate = getFirstPaymentDate(activationDate);
+
+  if (now < firstPaymentDate) {
+    const totalDays = getPaymentDays(firstPaymentDate, expirationDate);
+    return {
+      daysElapsed: 0,
+      totalPaymentDays: totalDays,
+      percentage: 0
+    };
+  }
+
+  const daysElapsed = getPaymentDays(firstPaymentDate, now);
+  const totalPaymentDays = getPaymentDays(firstPaymentDate, expirationDate);
+  const percentage = Math.min(Math.round((daysElapsed / totalPaymentDays) * 100), 100);
+
+  return { daysElapsed, totalPaymentDays, percentage };
+};
 
 function subscribeToUserInvestmentPromise(id) {
   return new Promise((resolve, reject) => {
@@ -49,11 +109,14 @@ const formatCurrency = v => {
 }
 
 const data = computed(() => ({
-  labels: ['Transcurridos', 'Faltantes'],
+  labels: ['Días Recorrido', 'Días Faltantes'],
   datasets: [
     {
       label: 'Días',
-      data: [progress.value || 0, 100 - (progress.value || 0)],
+      data: [
+        daysMetrics.value.daysElapsed,
+        daysMetrics.value.totalPaymentDays - daysMetrics.value.daysElapsed
+      ],
       backgroundColor: ['#7586FF', '#FF49A0'],
       borderWidth: 0,
       cutout: '60%'
@@ -70,7 +133,7 @@ const options = {
     },
     title: {
       display: false,
-      text: 'Distribución de Membresías'
+      text: 'Distribución de Días'
     }
   }
 }
@@ -86,10 +149,11 @@ watch(
             getReferralStatsPromise(newId)
           ])
           investment.value = investmentData
-          progress.value = investmentData?.progress || 0
+          daysMetrics.value = calculateDaysMetrics(investmentData)
           referralData.value = referralStatsData
+          logInfo('Datos de inversión y referidos actualizados correctamente')
         } catch (e) {
-          console.error(e)
+          logError('Error al cargar los datos:', e)
         } finally {
           isLoading.value = false
         }
@@ -151,10 +215,11 @@ watch(
       </div>
       <div class="relative flex-1 justify-center w-[140px] lg:w-[180px]">
         <Pie :data="data" :options="options" />
-        <div class="absolute top-[58px] left-[53px] lg:top-[40%] lg:left-[36%]">
+        <div class="absolute top-[58px] left-[53px] lg:top-[40%] lg:left-[36%] flex flex-col items-center">
           <span class="text-[18px] lg:text-[25px] font-bold text-colorTextBlack dark:text-white">
-            {{ progress }}%
+            {{ daysMetrics.percentage }}%
           </span>
+          <span class="text-[12px] text-colorGraydark">Días</span>
         </div>
       </div>
     </main>
@@ -162,4 +227,7 @@ watch(
 </template>
 
 <style scoped>
+.shadow-custom-card-info {
+  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+}
 </style>
