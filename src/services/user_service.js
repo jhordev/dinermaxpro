@@ -1,4 +1,3 @@
-// services/user_service.js
 import { auth, db, storage } from './firebase_config';
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
@@ -78,6 +77,7 @@ export const userService = {
 
             // Solo agregar campos que no sean null
             if (userData.nombre) updateData.nombre = userData.nombre;
+            if (userData.email) updateData.email = userData.email;
             if (userData.wallet) updateData.wallet = userData.wallet;
             if (userData.sexo) updateData.sexo = userData.sexo;
             if (userData.telefono) updateData.telefono = userData.telefono;
