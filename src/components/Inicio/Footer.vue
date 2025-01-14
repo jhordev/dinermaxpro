@@ -18,10 +18,10 @@ const scrollToSection = (sectionId) => {
       <div class="py-5 md:py-6 border-t border-gray-400 dark:border-colorBorder flex justify-center ">
        <div class="max-w-[956px] flex flex-col md:flex-row md:gap-[200px]">
          <div class="flex flex-col gap-[15px] md:max-w-[380px] ">
-           <h2 class="text-[30px] font-bold text-colorTextBlack dark:text-white">DinerMax</h2>
+           <h2 class="text-[30px] font-bold text-colorTextBlack dark:text-white">DinnerMax</h2>
            <div class="flex flex-col gap-[10px]">
-             <p class="dark:text-white text-colorTextBlack text-3 font-normal">Dinner Max facilita el crecimiento de tu dinero con planes ajustados a tus metas, retornos diarios y retiros flexibles, brindándote soporte personalizado en cada paso.</p>
-             <p class="dark:text-white text-colorTextBlack text-3 font-normal">Regístrate para recibir las últimas novedades, consejos de inversión y más sobre cómo alcanzar tus objetivos financieros con Dinner Max.</p>
+             <p class="dark:text-white text-colorTextBlack text-3 font-normal">DinnerMax facilita el crecimiento de tu dinero con planes ajustados a tus metas, retornos diarios y retiros flexibles, brindándote soporte personalizado en cada paso.</p>
+             <p class="dark:text-white text-colorTextBlack text-3 font-normal">Regístrate para recibir las últimas novedades, consejos de inversión y más sobre cómo alcanzar tus objetivos financieros con DinnerMax.</p>
            </div>
            <nav class="flex gap-4">
              <a href="" class="dark:text-colorGray text-gray-500"><Facebook /></a>
@@ -37,7 +37,7 @@ const scrollToSection = (sectionId) => {
                </svg>
              </a>
            </nav>
-           <p class="mt-[10px] hidden md:flex text-gray-600 dark:text-gray-400 text-left text-3">&copy 2024 Dinner Max, inversión segura</p>
+           <p class="mt-[10px] hidden md:flex text-gray-600 dark:text-gray-400 text-left text-3">&copy 2024 DinnerMax, inversión segura</p>
          </div>
          <div class="mt-5 grid grid-cols-2 md:gap-[100px]">
            <div class="flex flex-col gap-[10px] md:gap-[24px] text-colorTextBlack dark:text-white">
@@ -57,7 +57,7 @@ const scrollToSection = (sectionId) => {
          </div>
        </div>
       </div>
-      <p class="block md:hidden text-gray-600 dark:text-gray-400 text-center text-3">&copy 2024 Dinner Max, inversión segura</p>
+      <p class="block md:hidden text-gray-600 dark:text-gray-400 text-center text-3">&copy 2025 DinnerMax, inversión segura</p>
     </footer>
 </template>
 

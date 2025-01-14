@@ -9,8 +9,8 @@ import {CircleDollarSign, Smartphone} from "lucide-vue-next";
         <span class="text-[14px] md:text-[18px] font-semibold  md:font-medium text-colorTextBlack dark:text-white">Potencial financiero con DinnerMax</span>
       </div>
       <div class="flex flex-col items-center gap-4 ">
-          <h1 class="md:max-w-[1240px] text-center text-[34px] md:text-[60px] font-bold text-colorTextBlack dark:text-white">Descubre posibilidades ilimitadas en el mundo de la inversión con DinerMax</h1>
-          <p class="md:max-w-[818px] text-colorPurple dark:text-colorPurpleText  text-[14px] md:text-[18px] text-center font-semibold md:font-normal">Adéntrate en el universo de Dinner Max, la plataforma de inversión que transforma la manera en que gestionas tu dinero. Aprovecha cada oportunidad con nuestra avanzada tecnología, asesoría experta y estrategias optimizadas para maximizar tu éxito financiero.</p>
+          <h1 class="md:max-w-[1240px] text-center text-[34px] md:text-[60px] font-bold text-colorTextBlack dark:text-white">Descubre posibilidades ilimitadas en el mundo de la inversión con DinnerMax</h1>
+          <p class="md:max-w-[818px] text-colorPurple dark:text-colorPurpleText  text-[14px] md:text-[18px] text-center font-semibold md:font-normal">Adéntrate en el universo de DinnerMax, la plataforma de inversión que transforma la manera en que gestionas tu dinero. Aprovecha cada oportunidad con nuestra avanzada tecnología, asesoría experta y estrategias optimizadas para maximizar tu éxito financiero.</p>
       </div>
       <div class="flex flex-wrap items-center justify-center gap-3 md:gap-6">
         <div class="flex flex-2 items-center">
