@@ -1,8 +1,8 @@
 <script setup>
-import { Copy, Loader2, Wallet } from "lucide-vue-next";
-import { ref, watch } from 'vue';
-import { logInfo, logError } from '@/utils/logger.js';
-import { userService } from '@/services/user_service';
+import {Copy, Loader2, Wallet, UserCircle2} from "lucide-vue-next";
+import {ref, watch} from 'vue';
+import {logInfo, logError} from '@/utils/logger.js';
+import {userService} from '@/services/user_service';
 
 const props = defineProps({
   userId: {
@@ -12,7 +12,7 @@ const props = defineProps({
 });
 
 const userData = ref({
-  photoURL: "https://via.placeholder.com/70",
+  photoURL: "",
   nombre: "",
   email: "",
   pais: "",
@@ -42,7 +42,7 @@ const loadUserData = async () => {
     const response = await userService.getUserById(props.userId);
     if (response.success) {
       userData.value = {
-        photoURL: response.data.photoURL || "https://via.placeholder.com/70",
+        photoURL: response.data.photoURL || "",
         nombre: response.data.nombre || "Sin nombre",
         email: response.data.email || "Sin email",
         pais: response.data.pais || "No especificado",
@@ -90,11 +90,16 @@ const copyToClipboard = () => {
         <div class="border-8 rounded-full p-1.5">
           <div
               class="w-[70px] h-[70px] rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 overflow-hidden">
-            <img
-                :src="userData.photoURL"
-                class="w-full h-full object-cover"
-                alt="Profile"
-            />
+            <template v-if="userData.photoURL">
+              <img
+                  :src="userData.photoURL"
+                  class="w-full h-full object-cover"
+                  alt="Profile"
+              />
+            </template>
+            <template v-else>
+              <UserCircle2 class="w-full h-full text-gray-500"/>
+            </template>
           </div>
         </div>
         <h3 class="mt-2.5 text-colorTextBlack dark:text-white text-[16px] font-semibold uppercase text-center">
@@ -122,7 +127,8 @@ const copyToClipboard = () => {
       </div>
     </article>
 
-    <article class="flex items-center justify-between  gap-[25px] mt-2.5 p-2.5 bg-colorInputClaro rounded-[6px] relative">
+    <article
+        class="flex items-center justify-between  gap-[25px] mt-2.5 p-2.5 bg-colorInputClaro rounded-[6px] relative">
       <div class="bg-white p-1 rounded-[5px]">
         <Wallet/>
       </div>

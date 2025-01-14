@@ -6,7 +6,7 @@ import {CircleDollarSign, Smartphone} from "lucide-vue-next";
     <section class="container flex flex-col gap-[24px] md:gap-[35px] items-center pt-[45px] md:pt-[60px]" id="hero">
       <div class=" flex gap-3 px-[30px] py-[10px] shadow-custom-inset-black rounded-full border-colorBlue">
         <img src="@/assets/img/stars.svg" class="w-[25px] h-[25px]" />
-        <span class="text-[14px] md:text-[18px] font-semibold  md:font-medium text-colorTextBlack dark:text-white">Potencial financiero con DinerMax</span>
+        <span class="text-[14px] md:text-[18px] font-semibold  md:font-medium text-colorTextBlack dark:text-white">Potencial financiero con DinnerMax</span>
       </div>
       <div class="flex flex-col items-center gap-4 ">
           <h1 class="md:max-w-[1240px] text-center text-[34px] md:text-[60px] font-bold text-colorTextBlack dark:text-white">Descubre posibilidades ilimitadas en el mundo de la inversión con DinerMax</h1>

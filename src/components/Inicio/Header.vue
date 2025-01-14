@@ -26,7 +26,7 @@ const scrollToSection = (sectionId) => {
     <!-- Logo -->
     <div class="flex items-center  md:gap-2 md:w-[266.69px]">
       <img src="@/assets/img/isotipo.png" class="w-12 md:w-14" />
-      <span class="font-bold text-xl md:text-2xl dark:text-white">DinerMax</span>
+      <span class="font-bold text-xl md:text-2xl dark:text-white">DinnerMax</span>
       <DarkModeSwircher class="block ml-4" />
     </div>
 

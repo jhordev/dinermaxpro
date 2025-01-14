@@ -170,7 +170,7 @@ watch(
       <Loader2 class="w-8 h-8 animate-spin text-blue-500"/>
     </div>
 
-    <header class="border-b border-gray-600 pb-2.5">
+    <header class="border-b border-gray:50 dark:border-colorGray2 pb-2.5">
       <div class="flex items-center justify-between text-colorTextBlack dark:text-white">
         <h3 class="text-[16px] font-bold tracking-[1.6px]">Membresía activa</h3>
         <span class="text-[12px] font-bold tracking-[1.6px]">{{ investment?.planName || 'Ninguno' }}</span>
@@ -227,7 +227,4 @@ watch(
 </template>
 
 <style scoped>
-.shadow-custom-card-info {
-  box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
-}
 </style>
