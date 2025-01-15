@@ -251,5 +251,35 @@ export const referralService = {
             logError('Error al configurar la suscripción de referidos:', error);
             throw error;
         }
+    },
+
+    async getReferralInfoFromCode(code) {
+        try {
+            const q = query(
+                collection(db, 'referralCodes'),
+                where('code', '==', code)
+            );
+            const snapshot = await getDocs(q);
+
+            if (!snapshot.empty) {
+                const referralDoc = snapshot.docs[0];
+                const referralData = referralDoc.data();
+
+                // Obtener la información del usuario referido
+                const userDoc = await getDoc(doc(db, 'users', referralData.userId));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    return {
+                        socioId: referralData.userId,
+                        nombre: userData.nombre,
+                        role: referralData.role
+                    };
+                }
+            }
+            return null;
+        } catch (error) {
+            logError('Error al obtener información del referido:', error);
+            return null;
+        }
     }
 };

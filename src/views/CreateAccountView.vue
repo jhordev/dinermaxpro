@@ -21,22 +21,23 @@ const errorMessage = ref('');
 const showValidationDialog = ref(false);
 const referralCode = ref(null);
 const socioId = ref(null);
+const referralName = ref('');
 
 onMounted(async () => {
   const refCode = route.query.ref;
   if (refCode) {
     referralCode.value = refCode;
     try {
-      // Obtener el socioId del código de referido
-      const retrievedSocioId = await referralService.getSocioIdFromReferralCode(refCode);
-      if (retrievedSocioId) {
-        socioId.value = retrievedSocioId;
-        logInfo(`Código de referido detectado: ${refCode}, SocioId: ${retrievedSocioId}`);
+      const referralInfo = await referralService.getReferralInfoFromCode(refCode);
+      if (referralInfo) {
+        socioId.value = referralInfo.socioId;
+        referralName.value = referralInfo.nombre;
+        logInfo(`Código de referido detectado: ${refCode}, Nombre: ${referralInfo.nombre}`);
       } else {
-        logInfo(`Código de referido detectado: ${refCode}, sin socio asociado`);
+        logInfo(`Código de referido inválido: ${refCode}`);
       }
     } catch (error) {
-      logError(`Error al obtener socioId: ${error.message}`);
+      logError(`Error al obtener información del referido: ${error.message}`);
     }
   }
 });
@@ -70,7 +71,6 @@ const handleSubmit = async (e) => {
   errorMessage.value = '';
 
   try {
-    // Iniciar proceso de registro incluyendo código de referido y socioId
     const result = await authService.initializeRegistration(
         email.value,
         password.value,
@@ -103,6 +103,13 @@ const handleSubmit = async (e) => {
       <h1 class="font-bold text-[26px] md:text-[30px] text-colorTextBlack dark:text-white text-center md:text-left">
         Registrate para iniciar
       </h1>
+
+      <!-- Texto de Referido -->
+      <div v-if="referralName" class="mt-2 mb-3 flex items-center justify-center gap-2">
+        <span class="text-colorGray dark:text-colorCelesteligth text-sm">
+          Invitado por <span class="font-semibold text-colorTextBlack dark:text-white">{{ referralName }}</span>
+        </span>
+      </div>
 
       <!-- Campo Nombre -->
       <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
