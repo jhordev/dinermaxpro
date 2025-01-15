@@ -18,12 +18,33 @@ exports.createSocioUser = onCall(async (request) => {
             throw new Error('No tienes permisos para crear usuarios socios');
         }
 
+        // Validación básica del correo electrónico
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            throw new Error('Formato de correo electrónico inválido');
+        }
+
+        // Verificar si el correo ya existe
+        try {
+            const userExists = await admin.auth().getUserByEmail(data.email);
+            if (userExists) {
+                throw new Error('El correo electrónico ya está registrado');
+            }
+        } catch (error) {
+            if (error.code !== 'auth/user-not-found') {
+                throw error;
+            }
+        }
+
+        // Crear usuario con configuración personalizada
         const userRecord = await admin.auth().createUser({
             email: data.email,
             password: data.password,
-            displayName: data.nombre
+            displayName: data.nombre,
+            emailVerified: true // Marcamos el email como verificado por defecto
         });
 
+        // Establecer claims personalizados
         await admin.auth().setCustomUserClaims(userRecord.uid, {
             role: 'socio'
         });
@@ -33,10 +54,11 @@ exports.createSocioUser = onCall(async (request) => {
             nombre: data.nombre,
             pais: data.pais,
             registro: data.registro || new Date().toISOString(),
-            estado: data.estado,
+            estado: data.estado || 'activo',
             role: 'socio',
             password: data.password,
-            createdAt: admin.firestore.FieldValue.serverTimestamp()
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            emailVerified: true
         };
 
         await admin.firestore().collection('users').doc(userRecord.uid).set(userData);
@@ -49,7 +71,8 @@ exports.createSocioUser = onCall(async (request) => {
             }
         };
     } catch (error) {
-        throw new Error(error.message);
+        console.error('Error en createSocioUser:', error);
+        throw new Error(error.message || 'Error al crear el usuario');
     }
 });
 
@@ -72,19 +95,32 @@ exports.updateSocioUser = onCall(async (request) => {
             throw new Error('Usuario no encontrado');
         }
 
+        // Validación del nuevo correo electrónico
+        if (data.email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(data.email)) {
+                throw new Error('Formato de correo electrónico inválido');
+            }
+        }
+
         const updates = {
             email: data.email,
             nombre: data.nombre,
             pais: data.pais,
             password: data.password,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            emailVerified: true
         };
 
         const authUpdates = {
             email: data.email,
             displayName: data.nombre,
-            password: data.password
+            emailVerified: true
         };
+
+        if (data.password) {
+            authUpdates.password = data.password;
+        }
 
         await admin.auth().updateUser(data.docId, authUpdates);
         await admin.firestore().collection('users').doc(data.docId).update(updates);
@@ -98,7 +134,8 @@ exports.updateSocioUser = onCall(async (request) => {
             }
         };
     } catch (error) {
-        throw new Error(error.message);
+        console.error('Error en updateSocioUser:', error);
+        throw new Error(error.message || 'Error al actualizar el usuario');
     }
 });
 

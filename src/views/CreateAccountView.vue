@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import { Eye, EyeOff, Loader2 } from 'lucide-vue-next';
 import { useRouter, useRoute } from 'vue-router';
 import { authService } from '@/services/auth_service';
@@ -22,23 +22,35 @@ const showValidationDialog = ref(false);
 const referralCode = ref(null);
 const socioId = ref(null);
 const referralName = ref('');
+const loadingReferral = ref(false);
 
-onMounted(async () => {
+const loadReferralData = async (refCode) => {
+  loadingReferral.value = true;
+  try {
+    const referralInfo = await Promise.race([
+      referralService.getReferralInfoFromCode(refCode),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+    ]);
+
+    if (referralInfo) {
+      socioId.value = referralInfo.socioId;
+      referralName.value = referralInfo.nombre;
+      logInfo(`Código de referido detectado: ${refCode}, Nombre: ${referralInfo.nombre}`);
+    } else {
+      logInfo(`Código de referido inválido: ${refCode}`);
+    }
+  } catch (error) {
+    logError(`Error al obtener información del referido: ${error.message}`);
+  } finally {
+    loadingReferral.value = false;
+  }
+};
+
+onBeforeMount(() => {
   const refCode = route.query.ref;
   if (refCode) {
     referralCode.value = refCode;
-    try {
-      const referralInfo = await referralService.getReferralInfoFromCode(refCode);
-      if (referralInfo) {
-        socioId.value = referralInfo.socioId;
-        referralName.value = referralInfo.nombre;
-        logInfo(`Código de referido detectado: ${refCode}, Nombre: ${referralInfo.nombre}`);
-      } else {
-        logInfo(`Código de referido inválido: ${refCode}`);
-      }
-    } catch (error) {
-      logError(`Error al obtener información del referido: ${error.message}`);
-    }
+    loadReferralData(refCode);
   }
 });
 
@@ -104,14 +116,16 @@ const handleSubmit = async (e) => {
         Registrate para iniciar
       </h1>
 
-      <!-- Texto de Referido -->
-      <div v-if="referralName" class="mt-2 mb-3 flex items-center justify-center gap-2">
+      <div v-if="loadingReferral" class="mt-2 mb-3 flex items-center justify-center gap-2">
+        <div class="w-4 h-4 border-2 border-colorCeleste border-t-transparent rounded-full animate-spin"></div>
+      </div>
+
+      <div v-else-if="referralName" class="mt-2 mb-3 flex items-center justify-center gap-2">
         <span class="text-colorGray dark:text-colorCelesteligth text-sm">
           Invitado por <span class="font-semibold text-colorTextBlack dark:text-white">{{ referralName }}</span>
         </span>
       </div>
 
-      <!-- Campo Nombre -->
       <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
         <label for="nombre" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
           Nombre
@@ -126,7 +140,6 @@ const handleSubmit = async (e) => {
         />
       </div>
 
-      <!-- Campo Correo -->
       <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
         <label for="user" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
           Correo
@@ -141,7 +154,6 @@ const handleSubmit = async (e) => {
         />
       </div>
 
-      <!-- Campo Contraseña -->
       <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5 items-center relative">
         <label for="password" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
           Contraseña
@@ -164,7 +176,6 @@ const handleSubmit = async (e) => {
         </button>
       </div>
 
-      <!-- Mensaje de error -->
       <p v-if="errorMessage" class="mt-2 text-red-500 text-sm text-center">
         {{ errorMessage }}
       </p>
@@ -189,7 +200,6 @@ const handleSubmit = async (e) => {
     <img src="@/assets/img/arrow-left.png" class="absolute top-0 right-0 w-36 md:w-auto" alt="Arrow Left">
     <img src="@/assets/img/arrow-rigth.png" class="absolute top-0 left-0 w-36 md:w-auto" alt="Arrow Right">
 
-    <!-- Diálogo de validación -->
     <DialogValidation
         v-if="showValidationDialog"
         :email="email"

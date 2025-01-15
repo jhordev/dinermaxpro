@@ -1,5 +1,5 @@
 import { db } from '@/services/firebase_config';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc, getDoc, onSnapshot, limit } from 'firebase/firestore';
 import { logError, logInfo } from '@/utils/logger';
 
 export const referralService = {
@@ -255,18 +255,22 @@ export const referralService = {
 
     async getReferralInfoFromCode(code) {
         try {
+            // 1. Añadir limit(1) ya que solo necesitamos un resultado
             const q = query(
                 collection(db, 'referralCodes'),
-                where('code', '==', code)
+                where('code', '==', code),
+                limit(1)
             );
+
             const snapshot = await getDocs(q);
 
             if (!snapshot.empty) {
                 const referralDoc = snapshot.docs[0];
                 const referralData = referralDoc.data();
 
-                // Obtener la información del usuario referido
+                // 2. Obtener datos del usuario
                 const userDoc = await getDoc(doc(db, 'users', referralData.userId));
+
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     return {
