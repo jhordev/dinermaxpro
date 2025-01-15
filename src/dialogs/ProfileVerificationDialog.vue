@@ -1,8 +1,8 @@
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref, defineProps, defineEmits, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { CircleCheck, CircleX, ChevronRight, AlertTriangle, X } from 'lucide-vue-next';
-import { logInfo } from '@/utils/logger.js';
+import { logInfo, logDebug } from '@/utils/logger.js';
 
 const props = defineProps({
   modelValue: {
@@ -11,14 +11,15 @@ const props = defineProps({
   },
   userData: {
     type: Object,
-    required: true
+    required: true,
+    default: () => ({})
   }
 });
 
 const emit = defineEmits(['update:modelValue']);
 const router = useRouter();
 
-const requiredFields = [
+const requiredFields = computed(() => [
   {
     key: 'wallet',
     label: 'Dirección de Wallet',
@@ -40,9 +41,10 @@ const requiredFields = [
     status: props.userData?.pais ? 'completado' : 'pendiente',
     description: 'Requerido para cumplimiento legal'
   }
-];
+]);
 
 const closeDialog = () => {
+  logDebug('Cerrando diálogo de verificación');
   emit('update:modelValue', false);
 };
 
@@ -52,10 +54,10 @@ const goToProfile = () => {
   router.push({ name: 'profileuser' });
 };
 
-const getCompletionPercentage = () => {
-  const completed = requiredFields.filter(field => props.userData?.[field.key]).length;
-  return Math.round((completed / requiredFields.length) * 100);
-};
+const getCompletionPercentage = computed(() => {
+  const completed = requiredFields.value.filter(field => props.userData?.[field.key]).length;
+  return Math.round((completed / requiredFields.value.length) * 100);
+});
 </script>
 
 <template>
@@ -83,6 +85,9 @@ const getCompletionPercentage = () => {
             <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white text-center">
               ¡Perfil Incompleto!
             </h3>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+              Completa tu perfil para continuar ({{ getCompletionPercentage }}% completado)
+            </p>
           </div>
 
           <div class="space-y-3">
@@ -111,6 +116,7 @@ const getCompletionPercentage = () => {
                       </p>
                     </div>
                   </div>
+                  <ChevronRight class="w-5 h-5" :class="field.status === 'completado' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'" />
                 </div>
               </div>
             </div>

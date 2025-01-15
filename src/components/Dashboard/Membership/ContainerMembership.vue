@@ -171,7 +171,7 @@ onUnmounted(() => {
 
     <ProfileVerificationDialog
         v-model="isProfileDialogVisible"
-        :userData="userData"
+        :userData="userData || {}"
     />
   </section>
 </template>

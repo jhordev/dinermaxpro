@@ -100,6 +100,9 @@ export const getUserBalances = (callback) => {
                     total = totalInvestment + totalEarnings + referralBonus;
                 } else if (canWithdrawEarnings) {
                     total = totalEarnings + referralBonus;
+                } else if (referralBonus > 0) {
+                    total = referralBonus;
+                    canWithdrawEarnings = true;
                 }
 
                 // Restar los retiros pendientes
@@ -157,7 +160,7 @@ export const createWithdrawalRequest = async (amount) => {
                         userId,
                         userName: userData.nombre,
                         email: userData.email,
-                        socioId: userData.socioId,
+                        socioId: userData.socioId || null,
                         amount: Number(amount),
                         netAmount,
                         withdrawalFee,
@@ -170,7 +173,7 @@ export const createWithdrawalRequest = async (amount) => {
                             earnings: balances.earnings,
                             referralBonus: balances.referralBonus,
                             isCompleted: balances.isCompleted
-                        }
+                        },
                     };
 
                     const docRef = await addDoc(collection(db, 'withdrawals'), withdrawalData);

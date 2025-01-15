@@ -2,11 +2,13 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Loader2 } from 'lucide-vue-next';
 import CardLayout from "@/layouts/CardLayout.vue";
+import WithdrawalVerificationDialog from '@/dialogs/WithdrawalVerificationDialog.vue';
 import { getSystemSettings } from '@/services/system_service';
 import { getUserBalances, createWithdrawalRequest } from '@/services/withdrawal_service';
 import { logError, logInfo } from '@/utils/logger';
 
 const loading = ref(false);
+const showVerificationDialog = ref(false);
 const systemSettings = ref({
   withdrawal: 0,
   referral: 0,
@@ -31,8 +33,7 @@ let unsubscribeBalances = null;
 const loadData = async () => {
   try {
     loading.value = true;
-    const settings = await getSystemSettings();
-    systemSettings.value = settings;
+    systemSettings.value = await getSystemSettings();
 
     unsubscribeBalances = getUserBalances((balances) => {
       if (!balances) {
@@ -89,6 +90,18 @@ const loadData = async () => {
   }
 };
 
+watch(montoRetirar, (newValue) => {
+  if (newValue &&
+      newValue >= systemSettings.value.minimumWithdrawal &&
+      newValue <= saldoDis.value) {
+    porcentajeRetiro.value = Number((newValue * (systemSettings.value.withdrawal / 100)).toFixed(2));
+    totalRetiro.value = Number((newValue - porcentajeRetiro.value).toFixed(2));
+  } else {
+    porcentajeRetiro.value = null;
+    totalRetiro.value = null;
+  }
+});
+
 const isButtonDisabled = computed(() => {
   return !montoRetirar.value ||
       montoRetirar.value < systemSettings.value.minimumWithdrawal ||
@@ -104,34 +117,34 @@ const inputBgClass = computed(() => {
   return "bg-colorInputClaro dark:bg-colorTextBlack";
 });
 
-watch(montoRetirar, (newValue) => {
-  if (newValue &&
-      newValue >= systemSettings.value.minimumWithdrawal &&
-      newValue <= saldoDis.value) {
-    const comision = (newValue * (systemSettings.value.withdrawal / 100)).toFixed(2);
-    porcentajeRetiro.value = comision;
-    totalRetiro.value = (newValue - comision).toFixed(2);
-  } else {
-    porcentajeRetiro.value = null;
-    totalRetiro.value = null;
-  }
-});
-
 const handleWithdraw = async () => {
   if (!userStatus.value.canWithdraw) return;
 
   try {
-    loading.value = true;
+    if (!montoRetirar.value ||
+        montoRetirar.value < systemSettings.value.minimumWithdrawal ||
+        montoRetirar.value > saldoDis.value) {
+      throw new Error('Monto de retiro inválido');
+    }
+
+    showVerificationDialog.value = true;
+  } catch (error) {
+    logError('Error en validación de retiro:', error);
+  }
+};
+
+const handleVerificationSuccess = async () => {
+  try {
     await createWithdrawalRequest(montoRetirar.value);
     logInfo(`Retiro solicitado por: ${montoRetirar.value} USDT`);
     montoRetirar.value = null;
-
-    // Forzar actualización de balances
+    porcentajeRetiro.value = null;
+    totalRetiro.value = null;
     await loadData();
   } catch (error) {
     logError('Error al procesar el retiro:', error);
   } finally {
-    loading.value = false;
+    showVerificationDialog.value = false;
   }
 };
 
@@ -152,10 +165,14 @@ onUnmounted(() => {
 
     <div v-if="userStatus.message"
          :class="[
-           'mt-4 p-3 rounded-lg text-center ',
-           userStatus.message === 'Necesitas adquirir un plan para realizar retiros' ? 'p-4 mb-4 rounded-lg  text-yellow-800 border  border-yellow-300 bg-yellow-50 dark:bg-transparent dark:text-yellow-300 dark:border-yellow-800' :
-           userStatus.canWithdraw ? 'p-4 mb-4 text-green-800 border border-green-300 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800' :
-           'p-4 mb-4 text-blue-800 border border-blue-300 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800'
+           'mt-4 p-3 rounded-lg text-center',
+           userStatus.message.includes('Necesitas adquirir un plan') ?
+             'p-4 mb-4 text-yellow-800 border border-yellow-300 bg-yellow-50 dark:bg-transparent dark:text-yellow-300 dark:border-yellow-800' :
+           userStatus.message.includes('retiro pendiente') ?
+             'p-4 mb-4 text-yellow-800 border border-yellow-300 bg-yellow-50 dark:bg-transparent dark:text-yellow-300 dark:border-yellow-800' :
+           userStatus.canWithdraw ?
+             'p-4 mb-4 text-green-800 border border-green-300 bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800' :
+           'p-4 mb-4 text-blue-800 border border-blue-300 bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800'
          ]">
       {{ userStatus.message }}
     </div>
@@ -164,8 +181,7 @@ onUnmounted(() => {
       <div class="flex flex-col gap-[6px] w-full">
         <label class="text-colorGray font-semibold">Ingrese monto a retirar</label>
         <div :class="`rounded-[7px] w-full p-[7px] h-[65px] grid grid-cols-2 ${inputBgClass}`">
-          <div
-              class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
+          <div class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
             <div class="bg-[#50AF95] p-1 rounded-full">
               <img src="@/assets/img/usdt.svg" class="w-4 h-4"/>
             </div>
@@ -183,8 +199,7 @@ onUnmounted(() => {
 
       <div v-if="porcentajeRetiro !== null" class="flex flex-col gap-[6px] w-full animate-fade-in">
         <div class="rounded-[7px] w-full p-[7px] h-[65px] grid grid-cols-2 bg-colorInputClaro dark:bg-colorTextBlack">
-          <div
-              class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
+          <div class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
             <span class="text-[14px] text-colorTextBlack dark:text-white uppercase font-bold">
               - {{ systemSettings.withdrawal }}% de retiro
             </span>
@@ -200,8 +215,7 @@ onUnmounted(() => {
 
       <div v-if="totalRetiro !== null" class="flex flex-col gap-[6px] w-full animate-fade-in">
         <div class="rounded-[7px] w-full p-[7px] h-[65px] grid grid-cols-2 bg-colorInputClaro dark:bg-colorTextBlack">
-          <div
-              class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
+          <div class="bg-white dark:bg-colorInput h-full py-[5px] px-[12px] flex items-center gap-[10px] w-fit rounded-[3.5px]">
             <span class="text-[14px] text-colorTextBlack dark:text-white uppercase font-bold">Total</span>
           </div>
           <input
@@ -223,6 +237,12 @@ onUnmounted(() => {
       <Loader2 v-if="loading" class="animate-spin" size="20"/>
       <span>Retirar</span>
     </button>
+
+    <WithdrawalVerificationDialog
+        v-if="showVerificationDialog"
+        @close="showVerificationDialog = false"
+        @verified="handleVerificationSuccess"
+    />
   </CardLayout>
 </template>
 

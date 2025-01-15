@@ -39,6 +39,32 @@ const inputError = ref(false);
 const errorMessage = ref('');
 const interestRate = computed(() => props.selectedPlan?.interes || 0);
 
+const getPaymentDays = (startDate, endDate) => {
+  let count = 0;
+  const curDate = new Date(startDate);
+  const end = new Date(endDate);
+
+  const startDayOfWeek = curDate.getDay();
+  let additionalDays = 2;
+
+  if (startDayOfWeek === 5) {
+    additionalDays = 4;
+  } else if (startDayOfWeek === 6) {
+    additionalDays = 3;
+  }
+
+  curDate.setDate(curDate.getDate() + additionalDays);
+
+  while (curDate <= end) {
+    const dayOfWeek = curDate.getDay();
+    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+      count++;
+    }
+    curDate.setDate(curDate.getDate() + 1);
+  }
+  return count;
+};
+
 watch(investment, (newValue) => {
   if (newValue && !isNaN(newValue)) {
     const amount = Number(newValue);
@@ -54,10 +80,13 @@ watch(investment, (newValue) => {
     } else {
       inputError.value = false;
       errorMessage.value = '';
-      // Cálculo considerando 22 días hábiles por mes
-      const diasHabilesPorMes = 22;
+
       const meses = Number(props.selectedPlan.tiempoMes);
-      const diasTotales = diasHabilesPorMes * meses;
+      const fechaInicio = new Date();
+      const fechaFin = new Date();
+      fechaFin.setMonth(fechaFin.getMonth() + meses);
+
+      const diasTotales = getPaymentDays(fechaInicio, fechaFin);
       const gananciasDiarias = amount * (interestRate.value / 100);
       earnings.value = (gananciasDiarias * diasTotales).toFixed(2);
     }
@@ -154,7 +183,7 @@ const handleSubmit = async () => {
 
     await investmentService.createInvestment(investmentData, voucherFile.value);
     logInfo('Inversión registrada exitosamente');
-    emit('submit'); // Modificar para no enviar datos
+    emit('submit');
     closeModal();
   } catch (error) {
     logError('Error al procesar la inversión:', error);

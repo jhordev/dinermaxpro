@@ -18,43 +18,34 @@ let unsubscribeWithdrawals = null;
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
   const date = typeof timestamp.toDate === 'function' ? timestamp.toDate() : new Date(timestamp);
-  return new Intl.DateTimeFormat('es-ES', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(date);
+  return new Intl.DateTimeFormat('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 };
 
 const handleGeneratePDF = async () => {
   try {
     isGeneratingPDF.value = true;
-    logInfo('Iniciando generación de PDF...');
-
     const transactions = tableRef.value?.transactions || [];
-    const filasPDF = transactions.map(transaction => [
-      transaction.fecha,
-      transaction.transaccion,
-      transaction.operacion,
-      transaction.network || '-',
-      tableRef.value.formatCurrency(transaction.monto),
-      transaction.operacion === 'Depósito' ?
-          (transaction.status === 'approved' ? 'Aprobado' :
-              transaction.status === 'pending' ? 'Pendiente' : 'Rechazado') :
-          (transaction.status === 'completed' ? 'Completado' : 'Pendiente')
+    const filasPDF = transactions.map(t => [
+      t.fecha,
+      t.transaccion,
+      t.operacion,
+      t.network || '-',
+      tableRef.value.formatCurrency(t.monto),
+      t.operacion === 'Depósito'
+          ? (t.status === 'approved' ? 'Aprobado' : t.status === 'pending' ? 'Pendiente' : 'Rechazado')
+          : (t.status === 'completed' ? 'Completado' : 'Pendiente')
     ]);
 
-    const opcionesPDF = {
+    const doc = generarPdf({
       nombreCompleto: auth.currentUser?.displayName || 'Usuario',
-      pais: ''|| 'No especificado',
-      telefono: ''|| 'No especificado',
+      pais: 'No especificado',
+      telefono: 'No especificado',
       email: auth.currentUser?.email || '',
       columnas: ['Fecha', 'Transacción', 'Operación', 'Red', 'Monto', 'Estado'],
       filas: filasPDF
-    };
+    });
 
-    const doc = generarPdf(opcionesPDF);
     doc.save(`reporte_movimientos_${new Date().toISOString().split('T')[0]}.pdf`);
-
     logInfo('PDF generado exitosamente');
   } catch (error) {
     logError('Error al generar PDF:', error);
@@ -63,60 +54,44 @@ const handleGeneratePDF = async () => {
   }
 };
 
+const mapMovement = (item, type) => ({
+  fecha: formatDate(item.createdAt),
+  transaccion: item.id.slice(0, 8).toUpperCase(),
+  operacion: type,
+  monto: type === 'Depósito' ? item.investment : item.netAmount,
+  status: item.status,
+  network: item.network || '',
+  paymentMethod: type === 'Depósito' ? item.paymentMethod : 'Wallet',
+  voucherUrl: type === 'Depósito' ? item.voucherUrl : '',
+  comision: type === 'Retiro' ? item.withdrawalFee : undefined,
+  billetera: type === 'Retiro' ? item.walletAddress : undefined,
+  timestamp: item.createdAt
+});
+
 onMounted(async () => {
   try {
     const userId = auth.currentUser?.uid;
-    if (userId) {
-      unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
-        const depositMovements = investments
-            .filter(inv => inv.userId === userId)
-            .map(inv => ({
-              fecha: formatDate(inv.createdAt),
-              transaccion: inv.id.slice(0, 8).toUpperCase(),
-              operacion: 'Depósito',
-              monto: inv.investment,
-              status: inv.status,
-              network: inv.network,
-              paymentMethod: inv.paymentMethod,
-              voucherUrl: inv.voucherUrl,
-              timestamp: inv.createdAt
-            }));
+    if (!userId) return;
 
-        movimientos.value = movimientos.value
-            .filter(m => m.operacion === 'Retiro')
-            .concat(depositMovements);
+    unsubscribeInvestments = investmentService.subscribeToInvestments((investments) => {
+      const depositMovements = investments
+          .filter(inv => inv.userId === userId)
+          .map(inv => mapMovement(inv, 'Depósito'));
 
-        ordenarMovimientos();
-        isLoading.value = false;
-        logInfo('Depósitos cargados:', depositMovements.length);
-      });
+      movimientos.value = [...movimientos.value.filter(m => m.operacion === 'Retiro'), ...depositMovements];
+      ordenarMovimientos();
+      isLoading.value = false;
+    });
 
-      unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
-        const withdrawalMovements = withdrawals
-            .filter(w => w.userId === userId)
-            .map(w => ({
-              fecha: formatDate(w.createdAt),
-              transaccion: w.id.slice(0, 8).toUpperCase(),
-              operacion: 'Retiro',
-              monto: w.netAmount,
-              status: w.status,
-              network: w.network || '',
-              paymentMethod: 'Wallet',
-              voucherUrl: '',
-              comision: w.withdrawalFee,
-              billetera: w.walletAddress,
-              timestamp: w.createdAt
-            }));
+    unsubscribeWithdrawals = subscribeToUserWithdrawals((withdrawals) => {
+      const withdrawalMovements = withdrawals
+          .filter(w => w.userId === userId)
+          .map(w => mapMovement(w, 'Retiro'));
 
-        movimientos.value = movimientos.value
-            .filter(m => m.operacion === 'Depósito')
-            .concat(withdrawalMovements);
-
-        ordenarMovimientos();
-        isLoading.value = false;
-        logInfo('Retiros cargados:', withdrawalMovements.length);
-      });
-    }
+      movimientos.value = [...movimientos.value.filter(m => m.operacion === 'Depósito'), ...withdrawalMovements];
+      ordenarMovimientos();
+      isLoading.value = false;
+    });
   } catch (error) {
     logError('Error al cargar los movimientos:', error);
     isLoading.value = false;
@@ -124,11 +99,19 @@ onMounted(async () => {
 });
 
 const ordenarMovimientos = () => {
-  movimientos.value.sort((a, b) => {
-    const dateA = a.timestamp instanceof Date ? a.timestamp : a.timestamp.toDate();
-    const dateB = b.timestamp instanceof Date ? b.timestamp : b.timestamp.toDate();
-    return dateB - dateA;
-  });
+  try {
+    movimientos.value.sort((a, b) => {
+      const getDate = (timestamp) => {
+        if (!timestamp) return new Date(0);
+        return timestamp instanceof Date ? timestamp :
+            typeof timestamp.toDate === 'function' ? timestamp.toDate() :
+                new Date(timestamp);
+      };
+      return getDate(b.timestamp) - getDate(a.timestamp);
+    });
+  } catch (error) {
+    logError('Error al ordenar movimientos:', error);
+  }
 };
 
 onUnmounted(() => {
