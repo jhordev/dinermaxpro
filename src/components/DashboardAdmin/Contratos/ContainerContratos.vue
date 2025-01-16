@@ -7,7 +7,11 @@ import { investmentService } from '@/services/investment_service';
 import { logError } from '@/utils/logger';
 import SecureLS from 'secure-ls';
 import { auth } from '@/services/firebase_config';
+import { useToast } from 'vue-toastification';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
+const toast = useToast();
 const ls = new SecureLS({ encodingType: 'aes' });
 const userRole = computed(() => ls.get('user_role') || '');
 
@@ -40,7 +44,6 @@ onMounted(() => {
           const mappedInvestments = await Promise.all(investments.map(async (inv) => {
             const userData = await investmentService.getUserDataForInvestment(inv.userId);
 
-            // Filtrar según el rol
             if (userRole.value === 'socio' && userData?.socioId !== currentUser.uid) {
               return null;
             }
@@ -75,9 +78,38 @@ onMounted(() => {
   );
 });
 
-const openModal = (user) => {
-  selectedUser.value = user;
-  isModalVisible.value = true;
+const verificarConfiguracion = async () => {
+  try {
+    if (userRole.value === 'socio') {
+      toast.info("Por favor, contacta al administrador para gestionar la configuración de porcentajes", {
+        timeout: 5000
+      });
+      return false;
+    }
+
+    const configData = await investmentService.getConfiguracion();
+
+    if (!configData || !configData.referral || !configData.admin || !configData.socio) {
+      toast.warning("Por favor, complete la configuración de porcentajes antes de continuar", {
+        timeout: 4000
+      });
+      router.push('/admin/configurations/recompensas');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    logError('Error al verificar la configuración:', error);
+    toast.error("Error al verificar la configuración");
+    return false;
+  }
+};
+
+const openModal = async (user) => {
+  const configuracionCompleta = await verificarConfiguracion();
+  if (configuracionCompleta) {
+    selectedUser.value = user;
+    isModalVisible.value = true;
+  }
 };
 
 const filteredProducts = computed(() => {
@@ -250,4 +282,7 @@ const paginationRange = computed(() => {
 </template>
 
 <style scoped>
+:global(.Vue-Toastification__toast) {
+  width: 420px !important;
+}
 </style>

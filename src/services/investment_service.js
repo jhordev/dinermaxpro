@@ -219,5 +219,20 @@ export const investmentService = {
             logError('Error al actualizar ganancias:', error);
             throw error;
         }
+    },
+
+    async getConfiguracion() {
+        try {
+            const configRef = doc(db, 'system', 'settings');
+            const configSnap = await getDoc(configRef);
+
+            if (configSnap.exists()) {
+                return configSnap.data();
+            }
+            return null;
+        } catch (error) {
+            logError('Error al obtener la configuración:', error);
+            throw error;
+        }
     }
 };
