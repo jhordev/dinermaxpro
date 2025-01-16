@@ -116,14 +116,23 @@ const handleSubmit = async (e) => {
         Registrate para iniciar
       </h1>
 
-      <div v-if="loadingReferral" class="mt-2 mb-3 flex items-center justify-center gap-2">
-        <div class="w-4 h-4 border-2 border-colorCeleste border-t-transparent rounded-full animate-spin"></div>
-      </div>
 
-      <div v-else-if="referralName" class="mt-2 mb-3 flex items-center justify-center gap-2">
-        <span class="text-colorGray dark:text-colorCelesteligth text-sm">
-          Invitado por <span class="font-semibold text-colorTextBlack dark:text-white">{{ referralName }}</span>
-        </span>
+
+      <div   class="mt-3 mb-2 flex items-center gap-2 w-full ">
+        <div class="mt-5 w-full border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
+          <label for="nombre" class="font-bold h-full text-[14px] md:text-[20px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
+            Referido por
+          </label>
+          <div v-if="loadingReferral" class="mt-2 mb-3 flex items-center justify-center gap-2">
+            <div class="w-4 h-4 border-2 border-colorCeleste border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <div v-else-if="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1">
+            {{ referralName }}
+          </div>
+          <div v-else="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1">
+            DinnerMax
+          </div>
+        </div>
       </div>
 
       <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">

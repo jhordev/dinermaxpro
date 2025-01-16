@@ -38,6 +38,7 @@ const voucherFile = ref(null);
 const inputError = ref(false);
 const errorMessage = ref('');
 const interestRate = computed(() => props.selectedPlan?.interes || 0);
+const showTooltip = ref(false);
 
 const getPaymentDays = (startDate, endDate) => {
   let count = 0;
@@ -136,8 +137,16 @@ const handleImageUpload = (event) => {
 
 const copyToClipboard = async (text) => {
   try {
+    if (!navigator.clipboard) {
+      logError('Clipboard API no soportada en este navegador');
+      return;
+    }
     await navigator.clipboard.writeText(text);
     logInfo('Dirección copiada al portapapeles');
+    showTooltip.value = true;
+    setTimeout(() => {
+      showTooltip.value = false;
+    }, 2000);
   } catch (error) {
     logError('Error al copiar al portapapeles:', error);
   }
@@ -290,11 +299,16 @@ onMounted(() => {
                     <span class="text-[12px] md:text-[14px] truncate text-colorTextBlack dark:text-white">
                       {{ activeWallet.walletAddress }}
                     </span>
-                    <button type="button"
-                            class="border border-colorTextBlack dark:border-gray-50 px-2 py-2 rounded-[5px] text-[10px] text-colorTextBlack dark:text-white"
-                            @click="copyToClipboard(activeWallet.walletAddress)">
-                      Copiar
-                    </button>
+                    <div class="relative">
+                      <button type="button"
+                              class="border border-colorTextBlack dark:border-gray-50 px-2 py-2 rounded-[5px] text-[10px] text-colorTextBlack dark:text-white"
+                              @click="copyToClipboard(activeWallet.walletAddress)">
+                        Copiar
+                      </button>
+                      <div v-if="showTooltip" class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs rounded px-2 py-1">
+                        Copiado
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="w-[80px] rounded-full md:w-auto absolute top-0 right-0 md:relative">

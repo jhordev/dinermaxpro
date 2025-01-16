@@ -133,8 +133,8 @@ const routes = [
         ]
       },
       {
-        path: 'asistentials',
-        name: 'asistentials',
+        path: 'socios',
+        name: 'socios',
         component: ContainerAsistens,
       },
       {

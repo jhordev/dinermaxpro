@@ -27,11 +27,11 @@ import {CircleDollarSign, Smartphone} from "lucide-vue-next";
         </div>
       </div>
       <div class="flex flex-col items-center gap-4 md:flex-row md:gap-6">
-        <a href="#" class=" container-btn flex items-center gap-3 py-[10px] px-4 md:py-4 md:px-7 rounded-full text-white font-medium">
+        <RouterLink to="/register" class=" container-btn flex items-center gap-3 py-[10px] px-4 md:py-4 md:px-7 rounded-full text-white font-medium">
           <CircleDollarSign />
           Empezar a invertir
-        </a>
-        <a href="#" class="w-fit container-btn-contact flex gap-3 py-[10px] px-4 md:py-4 md:px-7 border border-colorPurple dark:border-none  rounded-full text-colorTextBlack dark:text-white font-medium">
+        </RouterLink>
+        <a href="https://wa.me/593962185938?text=Hola%2C%20DinnerMax" target="_blank" class="w-fit container-btn-contact flex gap-3 py-[10px] px-4 md:py-4 md:px-7 border border-colorPurple dark:border-none  rounded-full text-colorTextBlack dark:text-white font-medium">
           <Smartphone />
           Contáctanos
         </a>

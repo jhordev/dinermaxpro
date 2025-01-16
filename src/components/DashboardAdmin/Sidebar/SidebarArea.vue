@@ -33,11 +33,10 @@ const menuGroups = ref([
         children: [
           {label: 'Planes', route: '/admin/plans'},
           {label: 'Configuración', route: '/admin/configurations'},
-          {label: 'Asistentes', route: '/admin/asistentials'}
+          {label: 'Socios', route: '/admin/socios'}
         ]
       },
-      {icon: Network, label: 'Red de referidos', route: '/admin/referidosadmin', hideFromAdmin: true},
-      {icon: MessageCircleQuestion, label: 'Soporte', route: '/soporte'}
+      {icon: Network, label: 'Red de referidos', route: '/admin/referidosadmin', hideFromAdmin: true}
     ]
   }
 ])
@@ -91,6 +90,10 @@ function isActive(routePath) {
                     @click="handleClick(menuItem)"
                 />
               </template>
+              <a href="https://wa.me/51959659501?text=Hola%2C%20Jhordev" target="_blank" class="group relative flex items-center gap-5 rounded-sm py-3 px-4 font-medium text-colorTextBlack dark:text-white duration-300 ease-in-out hover:bg-bghoverligth dark:hover:bg-colorTextBlack cursor-pointer">
+                <MessageCircleQuestion class="text-current w-5 h-5"/>
+                <span>Soporte</span>
+              </a>
             </ul>
           </div>
         </template>
