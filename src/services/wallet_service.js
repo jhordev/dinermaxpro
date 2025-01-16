@@ -1,20 +1,20 @@
 import { db, storage } from '@/services/firebase_config';
-import { collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { logInfo, logError } from '@/utils/logger.js';
 
 export const walletService = {
-    // Referencia a la colección
-    walletsRef: collection(db, 'wallets'),
+    // Referencia al documento único de wallets
+    walletsDoc: doc(db, 'system', 'wallets'),
 
     // Escuchar cambios en tiempo real
     subscribeToWallets(callback) {
-        return onSnapshot(this.walletsRef,
-            (snapshot) => {
-                const wallets = [];
-                snapshot.forEach((doc) => {
-                    wallets.push({ id: doc.id, ...doc.data() });
-                });
+        return onSnapshot(this.walletsDoc,
+            (doc) => {
+                const wallets = doc.exists() ? Object.entries(doc.data()).map(([id, wallet]) => ({
+                    id,
+                    ...wallet
+                })) : [];
                 callback(wallets);
             },
             (error) => {
@@ -25,7 +25,7 @@ export const walletService = {
 
     async uploadQrImage(file) {
         try {
-            const storageRef = ref(storage, `qr_images/${Date.now()}_${file.name}`);
+            const storageRef = ref(storage, `system/wallets/qr_images/${Date.now()}_${file.name}`);
             await uploadBytes(storageRef, file);
             const downloadURL = await getDownloadURL(storageRef);
             logInfo('QR imagen subida exitosamente');
@@ -43,7 +43,11 @@ export const walletService = {
                 qrImageUrl = await this.uploadQrImage(walletData.get('voucherImage'));
             }
 
-            const walletDoc = {
+            const docSnap = await getDoc(this.walletsDoc);
+            const currentWallets = docSnap.exists() ? docSnap.data() : {};
+
+            const walletId = Date.now().toString();
+            const newWallet = {
                 paymentMethod: walletData.get('paymentMethod'),
                 network: walletData.get('network'),
                 walletAddress: walletData.get('walletAddress'),
@@ -51,9 +55,13 @@ export const walletService = {
                 createdAt: new Date()
             };
 
-            const docRef = await addDoc(this.walletsRef, walletDoc);
+            await setDoc(this.walletsDoc, {
+                ...currentWallets,
+                [walletId]: newWallet
+            });
+
             logInfo('Wallet creada exitosamente');
-            return { id: docRef.id, ...walletDoc };
+            return { id: walletId, ...newWallet };
         } catch (error) {
             logError('Error al crear wallet:', error);
             throw error;
@@ -62,7 +70,13 @@ export const walletService = {
 
     async updateWallet(id, walletData) {
         try {
-            const docRef = doc(db, 'wallets', id);
+            const docSnap = await getDoc(this.walletsDoc);
+            const currentWallets = docSnap.exists() ? docSnap.data() : {};
+
+            if (!currentWallets[id]) {
+                throw new Error('Wallet no encontrada');
+            }
+
             let updateData = {
                 paymentMethod: walletData.get('paymentMethod'),
                 network: walletData.get('network'),
@@ -73,9 +87,18 @@ export const walletService = {
             if (walletData.get('voucherImage')) {
                 const qrImageUrl = await this.uploadQrImage(walletData.get('voucherImage'));
                 updateData.qrImage = qrImageUrl;
+            } else {
+                updateData.qrImage = currentWallets[id].qrImage;
             }
 
-            await updateDoc(docRef, updateData);
+            await setDoc(this.walletsDoc, {
+                ...currentWallets,
+                [id]: {
+                    ...currentWallets[id],
+                    ...updateData
+                }
+            });
+
             logInfo('Wallet actualizada exitosamente');
             return { id, ...updateData };
         } catch (error) {
@@ -86,8 +109,16 @@ export const walletService = {
 
     async deleteWallet(id) {
         try {
-            const docRef = doc(db, 'wallets', id);
-            await deleteDoc(docRef);
+            const docSnap = await getDoc(this.walletsDoc);
+            const currentWallets = docSnap.exists() ? docSnap.data() : {};
+
+            if (!currentWallets[id]) {
+                throw new Error('Wallet no encontrada');
+            }
+
+            const { [id]: deletedWallet, ...remainingWallets } = currentWallets;
+            await setDoc(this.walletsDoc, remainingWallets);
+
             logInfo('Wallet eliminada exitosamente');
             return true;
         } catch (error) {
