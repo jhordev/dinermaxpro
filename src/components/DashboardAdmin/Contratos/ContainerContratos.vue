@@ -80,16 +80,21 @@ onMounted(() => {
 
 const verificarConfiguracion = async () => {
   try {
-    if (userRole.value === 'socio') {
-      toast.info("Por favor, contacta al administrador para gestionar la configuración de porcentajes", {
-        timeout: 5000
-      });
-      return false;
-    }
-
     const configData = await investmentService.getConfiguracion();
 
-    // Validación específica de los campos requeridos
+    // Si es socio y existe configuración, permitir continuar
+    if (userRole.value === 'socio') {
+      if (configData) {
+        return true;
+      } else {
+        toast.info("Por favor, contacta al administrador para gestionar la configuración de porcentajes", {
+          timeout: 5000
+        });
+        return false;
+      }
+    }
+
+    // Verificaciones para el admin
     if (!configData) {
       toast.warning("No se encontró la configuración del sistema", {
         timeout: 4000
@@ -98,7 +103,6 @@ const verificarConfiguracion = async () => {
       return false;
     }
 
-    // Validar que los campos numéricos existan y sean mayores o iguales a 0
     const requiredFields = ['minimumWithdrawal', 'referral', 'withdrawal'];
     const missingFields = requiredFields.filter(field =>
         typeof configData[field] !== 'number' || configData[field] < 0
