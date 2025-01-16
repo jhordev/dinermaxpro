@@ -69,7 +69,7 @@ function isActive(routePath) {
                   :class="isActive(menuItem.route) ? 'bg-gray-200 dark:bg-colorTextBlack' : ''"
                   @click="sidebarStore.isSidebarOpen = !sidebarStore.isSidebarOpen"
               />
-              <a href="https://wa.me/593962185938?text=Hola%2C%20DinnerMax" target="_blank" class="group relative flex items-center gap-5 rounded-sm py-3 px-4 font-medium text-colorTextBlack dark:text-white duration-300 ease-in-out hover:bg-bghoverligth dark:hover:bg-colorTextBlack cursor-pointer">
+              <a href="https://wa.me/593963620095?text=Hola%2C%20DinnerMax" target="_blank" class="group relative flex items-center gap-5 rounded-sm py-3 px-4 font-medium text-colorTextBlack dark:text-white duration-300 ease-in-out hover:bg-bghoverligth dark:hover:bg-colorTextBlack cursor-pointer">
                 <MessageCircleQuestion class="text-current w-5 h-5"/>
                 <span>Soporte</span>
               </a>
