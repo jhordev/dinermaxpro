@@ -37,7 +37,7 @@ const scrollToSection = (sectionId) => {
                </svg>
              </a>
            </nav>
-           <p class="mt-[10px] hidden md:flex text-gray-600 dark:text-gray-400 text-left text-3">&copy 2024 DinnerMax, inversión segura</p>
+           <p class="mt-[10px] hidden md:flex text-gray-600 dark:text-gray-400 text-left text-3">&copy 2025 DinnerMax, inversión segura</p>
          </div>
          <div class="mt-5 grid grid-cols-2 md:gap-[100px]">
            <div class="flex flex-col gap-[10px] md:gap-[24px] text-colorTextBlack dark:text-white">
