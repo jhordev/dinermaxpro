@@ -255,7 +255,6 @@ export const referralService = {
 
     async getReferralInfoFromCode(code) {
         try {
-            // 1. Añadir limit(1) ya que solo necesitamos un resultado
             const q = query(
                 collection(db, 'referralCodes'),
                 where('code', '==', code),
@@ -268,18 +267,40 @@ export const referralService = {
                 const referralDoc = snapshot.docs[0];
                 const referralData = referralDoc.data();
 
-                // 2. Obtener datos del usuario
+                // Obtener datos del usuario que refiere
                 const userDoc = await getDoc(doc(db, 'users', referralData.userId));
 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+
+                    // Si el código es de un socio, usar su userId como socioId
+                    if (code.startsWith('SOC')) {
+                        logInfo(`Código de socio detectado: ${code}`);
+                        return {
+                            socioId: referralData.userId,
+                            nombre: userData.nombre,
+                            role: referralData.role
+                        };
+                    }
+
+                    // Si no es socio, heredar el socioId solo si existe
+                    if (userData.socioId) {
+                        logInfo(`Heredando socioId: ${userData.socioId} del referente`);
+                        return {
+                            socioId: userData.socioId,
+                            nombre: userData.nombre,
+                            role: referralData.role
+                        };
+                    }
+
+                    // Si no es socio y no tiene socioId, retornar solo nombre y role
                     return {
-                        socioId: referralData.userId,
                         nombre: userData.nombre,
                         role: referralData.role
                     };
                 }
             }
+            logInfo(`No se encontró información para el código: ${code}`);
             return null;
         } catch (error) {
             logError('Error al obtener información del referido:', error);
