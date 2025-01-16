@@ -227,7 +227,14 @@ export const investmentService = {
             const configSnap = await getDoc(configRef);
 
             if (configSnap.exists()) {
-                return configSnap.data();
+                const data = configSnap.data();
+                // Validar que los campos existan y sean números
+                const requiredFields = ['minimumWithdrawal', 'referral', 'withdrawal'];
+                const isValid = requiredFields.every(field =>
+                    typeof data[field] === 'number' && !isNaN(data[field])
+                );
+
+                return isValid ? data : null;
             }
             return null;
         } catch (error) {

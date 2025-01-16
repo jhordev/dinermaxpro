@@ -89,13 +89,29 @@ const verificarConfiguracion = async () => {
 
     const configData = await investmentService.getConfiguracion();
 
-    if (!configData || !configData.referral || !configData.admin || !configData.socio) {
-      toast.warning("Por favor, complete la configuración de porcentajes antes de continuar", {
+    // Validación específica de los campos requeridos
+    if (!configData) {
+      toast.warning("No se encontró la configuración del sistema", {
         timeout: 4000
       });
       router.push('/admin/configurations/recompensas');
       return false;
     }
+
+    // Validar que los campos numéricos existan y sean mayores o iguales a 0
+    const requiredFields = ['minimumWithdrawal', 'referral', 'withdrawal'];
+    const missingFields = requiredFields.filter(field =>
+        typeof configData[field] !== 'number' || configData[field] < 0
+    );
+
+    if (missingFields.length > 0) {
+      toast.warning(`Por favor, complete la configuración de: ${missingFields.join(', ')}`, {
+        timeout: 4000
+      });
+      router.push('/admin/configurations/recompensas');
+      return false;
+    }
+
     return true;
   } catch (error) {
     logError('Error al verificar la configuración:', error);
