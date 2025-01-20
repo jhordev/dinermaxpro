@@ -31,7 +31,7 @@ import {CircleDollarSign, Smartphone} from "lucide-vue-next";
           <CircleDollarSign />
           Empezar a invertir
         </RouterLink>
-        <a href="https://wa.me/593962185938?text=Hola%2C%20DinnerMax" target="_blank" class="w-fit container-btn-contact flex gap-3 py-[10px] px-4 md:py-4 md:px-7 border border-colorPurple dark:border-none  rounded-full text-colorTextBlack dark:text-white font-medium">
+        <a href="https://wa.me/593963620095?text=Hola%2C%20DinnerMax" target="_blank" class="w-fit container-btn-contact flex gap-3 py-[10px] px-4 md:py-4 md:px-7 border border-colorPurple dark:border-none  rounded-full text-colorTextBlack dark:text-white font-medium">
           <Smartphone />
           Contáctanos
         </a>
