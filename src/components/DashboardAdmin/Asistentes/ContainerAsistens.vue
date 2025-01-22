@@ -30,7 +30,8 @@ const selectedAssistant = ref(null);
 const socioData = ref({
   totalUsuarios: 0,
   fondos: 0,
-  retirados: 0
+  retirados: 0,
+  usuariosSinPlan: 0
 });
 
 const membershipData = ref({
@@ -63,6 +64,8 @@ const loadSocioData = async (socioId) => {
 
     unsubscribeUsers = await subscribeToSocioUsersList((users) => {
       socioData.value.totalUsuarios = users.length;
+      // Calcular usuarios sin plan activo
+      socioData.value.usuariosSinPlan = users.filter(user => !user.hasActivePlan).length;
     }, socioId);
 
     unsubscribeMemberships = await subscribeToSocioMembershipsStatus((stats) => {
