@@ -18,32 +18,30 @@ const isLoading = ref(true);
 let unsubscribe = null;
 
 const getPaymentDays = (startDate, endDate) => {
-  let count = 0;
-  const curDate = new Date(startDate);
+  const start = new Date(startDate);
   const end = new Date(endDate);
 
-  while (curDate <= end) {
-    const dayOfWeek = curDate.getDay();
-    // Solo contar martes(2) a sábado(6)
-    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  let count = 0;
+  const current = new Date(start);
+
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 1) {
       count++;
     }
-    curDate.setDate(curDate.getDate() + 1);
+    current.setDate(current.getDate() + 1);
   }
-  return count;
+
+  return Math.max(count, 0);
 };
 
 const getFirstPaymentDate = (activationDate) => {
   const date = new Date(activationDate);
-  const dayOfWeek = date.getDay();
-
-  if (dayOfWeek === 5) { // Viernes
-    date.setDate(date.getDate() + 4); // Pago el martes
-  } else if (dayOfWeek === 6) { // Sábado
-    date.setDate(date.getDate() + 3); // Pago el martes
-  } else {
-    date.setDate(date.getDate() + 2); // Para el resto de días, pago dos días después
-  }
+  date.setDate(date.getDate() + 2);
+  date.setHours(0, 0, 0, 0);
   return date;
 };
 
@@ -62,7 +60,6 @@ const investmentMetrics = computed(() => {
   const expirationDate = activeInvestment.value.expirationDate.toDate();
   const firstPaymentDate = getFirstPaymentDate(activationDate);
 
-  // Si aún no llega el primer día de pago
   if (now < firstPaymentDate) {
     return {
       daysElapsed: 0,

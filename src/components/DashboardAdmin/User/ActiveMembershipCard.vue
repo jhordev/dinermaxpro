@@ -1,14 +1,14 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { subscribeToUserInvestment } from '@/services/users_list_service'
-import { referralService } from '@/services/referral_service'
-import { Loader2 } from "lucide-vue-next"
+import {ref, computed, watch} from 'vue'
+import {subscribeToUserInvestment} from '@/services/users_list_service'
+import {referralService} from '@/services/referral_service'
+import {Loader2} from "lucide-vue-next"
 import inteIcon from '@/assets/img/interes.svg'
 import refIcon from '@/assets/img/item1.png'
 import refDinnerIcon from '@/assets/img/item2.png'
-import { Pie } from 'vue-chartjs'
-import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from 'chart.js'
-import { logError, logInfo } from '@/utils/logger'
+import {Pie} from 'vue-chartjs'
+import {Chart as ChartJS, Title, Tooltip, Legend, ArcElement} from 'chart.js'
+import {logError, logInfo} from '@/utils/logger'
 
 const props = defineProps({
   userId: {
@@ -29,58 +29,41 @@ const referralData = ref(null)
 const isLoading = ref(true)
 
 const getPaymentDays = (startDate, endDate) => {
-  let count = 0;
-  const curDate = new Date(startDate);
+  const start = new Date(startDate);
   const end = new Date(endDate);
 
-  while (curDate <= end) {
-    const dayOfWeek = curDate.getDay();
-    if (dayOfWeek >= 2 && dayOfWeek <= 6) {
+  start.setDate(start.getDate() + 2);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
+
+  let count = 0;
+  const current = new Date(start);
+
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 1) {
       count++;
     }
-    curDate.setDate(curDate.getDate() + 1);
+    current.setDate(current.getDate() + 1);
   }
-  return count;
-};
 
-const getFirstPaymentDate = (activationDate) => {
-  const date = new Date(activationDate);
-  const dayOfWeek = date.getDay();
-
-  if (dayOfWeek === 5) {
-    date.setDate(date.getDate() + 4);
-  } else if (dayOfWeek === 6) {
-    date.setDate(date.getDate() + 3);
-  } else {
-    date.setDate(date.getDate() + 2);
-  }
-  return date;
+  return Math.max(count, 0);
 };
 
 const calculateDaysMetrics = (investment) => {
   if (!investment || investment.status !== 'approved') {
-    return { daysElapsed: 0, totalPaymentDays: 0, percentage: 0 };
+    return {daysElapsed: 0, totalPaymentDays: 0, percentage: 0};
   }
 
   const now = new Date();
   const activationDate = new Date(investment.activationDate.seconds * 1000);
   const expirationDate = new Date(investment.expirationDate.seconds * 1000);
-  const firstPaymentDate = getFirstPaymentDate(activationDate);
 
-  if (now < firstPaymentDate) {
-    const totalDays = getPaymentDays(firstPaymentDate, expirationDate);
-    return {
-      daysElapsed: 0,
-      totalPaymentDays: totalDays,
-      percentage: 0
-    };
-  }
-
-  const daysElapsed = getPaymentDays(firstPaymentDate, now);
-  const totalPaymentDays = getPaymentDays(firstPaymentDate, expirationDate);
+  const daysElapsed = getPaymentDays(activationDate, now);
+  const totalPaymentDays = getPaymentDays(activationDate, expirationDate);
   const percentage = Math.min(Math.round((daysElapsed / totalPaymentDays) * 100), 100);
 
-  return { daysElapsed, totalPaymentDays, percentage };
+  return {daysElapsed, totalPaymentDays, percentage};
 };
 
 function subscribeToUserInvestmentPromise(id) {
@@ -159,7 +142,7 @@ watch(
         }
       }
     },
-    { immediate: true }
+    {immediate: true}
 )
 </script>
 
@@ -178,15 +161,18 @@ watch(
       <div class="flex items-center justify-between text-colorTextBlack dark:text-white mt-1.5">
         <span class="text-[10px] font-normal">Capital: {{ formatCurrency(investment?.investment || 0) }}</span>
         <span class="text-[10px] font-normal">
-          Rango: {{ investment ? `${formatDate(investment.activationDate)} a ${formatDate(investment.expirationDate)}` : 'Sin plan activo' }}
+          Rango: {{
+            investment ? `${formatDate(investment.activationDate)} a ${formatDate(investment.expirationDate)}` : 'Sin plan activo'
+          }}
         </span>
       </div>
     </header>
 
     <main class="flex flex-col lg:flex-row mt-5 gap-6 items-center">
       <div class="flex-1 grid grid-cols-4 w-full gap-5">
-        <div class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
-          <img :src="inteIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
+        <div
+            class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+          <img :src="inteIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full"/>
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Interés</h3>
             <strong class="text-[14px] font-black">
@@ -194,8 +180,9 @@ watch(
             </strong>
           </div>
         </div>
-        <div class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
-          <img :src="refIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
+        <div
+            class="col-span-2 lg:col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+          <img :src="refIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full"/>
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Referidos</h3>
             <strong class="text-[14px] font-black">
@@ -203,8 +190,9 @@ watch(
             </strong>
           </div>
         </div>
-        <div class="col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
-          <img :src="refDinnerIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full" />
+        <div
+            class="col-span-4 bg-colorGraySecundary rounded-[10px] py-2.5 px-2.5 flex-1 flex flex-col md:flex-row items-start md:items-center gap-2.5">
+          <img :src="refDinnerIcon" alt="Icono de fecha" class="w-[20px] md:w-[35px] rounded-full"/>
           <div class="flex flex-col gap-1.5">
             <h3 class="text-[12px] font-medium">Ganancias x referidos</h3>
             <strong class="text-[14px] font-black">
@@ -214,7 +202,7 @@ watch(
         </div>
       </div>
       <div class="relative flex-1 justify-center w-[140px] lg:w-[180px]">
-        <Pie :data="data" :options="options" />
+        <Pie :data="data" :options="options"/>
         <div class="absolute top-[58px] left-[53px] lg:top-[40%] lg:left-[36%] flex flex-col items-center">
           <span class="text-[18px] lg:text-[25px] font-bold text-colorTextBlack dark:text-white">
             {{ daysMetrics.percentage }}%
