@@ -159,7 +159,6 @@ exports.processInvestmentEarnings = onSchedule("0 5 * * *", async (event) => {
 
         for (const doc of activeInvestments.docs) {
             const investment = doc.data();
-
             const activationDate = investment.activationDate.toDate();
             const expirationDate = investment.expirationDate.toDate();
 
@@ -167,37 +166,11 @@ exports.processInvestmentEarnings = onSchedule("0 5 * * *", async (event) => {
                 continue;
             }
 
-            // Calcular el día de pago según el día de activación
+            // Normalizar las fechas
             const startDate = new Date(activationDate);
-            const activationDay = startDate.getDay();
-
-            // Ajustar la fecha de inicio de pago según el día de activación
-            switch (activationDay) {
-                case 1: // Lunes
-                    startDate.setDate(startDate.getDate() + 2); // Comienza el miércoles
-                    break;
-                case 2: // Martes
-                    startDate.setDate(startDate.getDate() + 2); // Comienza el jueves
-                    break;
-                case 3: // Miércoles
-                    startDate.setDate(startDate.getDate() + 2); // Comienza el viernes
-                    break;
-                case 4: // Jueves
-                    startDate.setDate(startDate.getDate() + 2); // Comienza el sábado
-                    break;
-                case 5: // Viernes
-                    startDate.setDate(startDate.getDate() + 4); // Comienza el martes
-                    break;
-                case 6: // Sábado
-                    startDate.setDate(startDate.getDate() + 3); // Comienza el martes
-                    break;
-                case 0: // Domingo
-                    startDate.setDate(startDate.getDate() + 3); // Comienza el miércoles
-                    break;
-            }
-
-            // Asegurarse de que la hora sea 00:00:00
+            startDate.setDate(startDate.getDate() + 2);
             startDate.setHours(0, 0, 0, 0);
+            now.setHours(23, 59, 59, 999);
 
             if (now >= startDate) {
                 const dailyEarning = investment.investment * (investment.interestRate / 100);

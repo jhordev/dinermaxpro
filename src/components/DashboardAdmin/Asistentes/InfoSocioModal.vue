@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Users, Wallet, WalletCards, DollarSign, X, CheckCircle2, XCircle, Crown, Star, Trophy, Users2, Coins } from 'lucide-vue-next';
+import { Users, Wallet, WalletCards, DollarSign, X, CheckCircle2, XCircle, Crown, Star, Trophy, Users2, Coins, UserX } from 'lucide-vue-next';
 import { logInfo } from '@/utils/logger';
 
 const props = defineProps({
@@ -13,7 +13,8 @@ const props = defineProps({
     default: () => ({
       totalUsuarios: 0,
       fondos: 0,
-      retirados: 0
+      retirados: 0,
+      usuariosSinPlan: 0
     })
   },
   membershipData: {
@@ -177,6 +178,15 @@ const cardsData = computed(() => [
                   </div>
                   <span class="text-lg font-semibold text-red-500">
                     {{ membershipData.inactive }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between p-4 transition-colors rounded-lg bg-white/5">
+                  <div class="flex items-center gap-3">
+                    <UserX class="w-5 h-5 text-orange-500" />
+                    <span class="text-gray-300">Sin Plan</span>
+                  </div>
+                  <span class="text-lg font-semibold text-orange-500">
+                    {{ socioData.usuariosSinPlan }}
                   </span>
                 </div>
               </div>
