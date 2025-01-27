@@ -91,7 +91,7 @@ const handleCopy = async () => {
     <div class="mt-5 p-5 bg-bgf3 rounded-[10px] flex gap-[30px] items-center">
       <div class="relative w-[80px] h-[80px]">
         <img
-            src="@/assets/img/item2.png"
+            src="@/assets/img/Tether.png"
             class="rounded-full w-[80px] h-[80px] object-cover"
             alt="Imagen de dinero"
         />
