@@ -106,9 +106,7 @@ const handleSubmit = async (e) => {
 </script>
 
 <template>
-  <main class="relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center">
-    <!-- Video de fondo -->
-    <img src="@/assets/fondo.gif" class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover"/>
+  <main class="container-main relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center">
 
     <div class="container-form relative py-6 z-10 w-full flex flex-col items-center">
       <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
@@ -221,6 +219,12 @@ const handleSubmit = async (e) => {
 </template>
 
 <style scoped>
+.container-main{
+  background-image: url("@/assets/fondo.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .container-form{
   overflow-y: auto;
 }
