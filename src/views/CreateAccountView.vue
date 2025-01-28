@@ -108,10 +108,8 @@ const handleSubmit = async (e) => {
 <template>
   <main class="relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center">
     <!-- Video de fondo -->
-    <video autoplay muted loop class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover">
-      <source src="@/assets/fondo.mp4" type="video/mp4" />
-      Tu navegador no soporta videos HTML5.
-    </video>
+    <img src="@/assets/fondo.gif" class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover"/>
+
     <div class="container-form relative py-6 z-10 w-full flex flex-col items-center">
       <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
         <img src="@/assets/img/logotipo.png" alt="Logo">
