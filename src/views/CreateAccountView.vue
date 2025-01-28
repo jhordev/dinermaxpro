@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onBeforeMount } from 'vue';
-import { Eye, EyeOff, Loader2 } from 'lucide-vue-next';
+import {CircleUserRound, Eye, EyeOff, KeyRound, Loader2, Mail} from 'lucide-vue-next';
 import { useRouter, useRoute } from 'vue-router';
 import { authService } from '@/services/auth_service';
 import { referralService } from '@/services/referral_service';
@@ -106,108 +106,113 @@ const handleSubmit = async (e) => {
 </script>
 
 <template>
-  <main class="bg-custom-gradient dark:bg-custom-gradient-dark min-h-screen flex flex-col gap-5 md:justify-center items-center py-8">
-    <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
-      <img src="@/assets/img/logotipo.png" alt="Logo">
-    </router-link>
+  <main class="relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center">
+    <!-- Video de fondo -->
+    <video autoplay muted loop class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover">
+      <source src="@/assets/fondo.mp4" type="video/mp4" />
+      Tu navegador no soporta videos HTML5.
+    </video>
+    <div class="container-form relative py-6 z-10 w-full flex flex-col items-center">
+      <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
+        <img src="@/assets/img/logotipo.png" alt="Logo">
+      </router-link>
+      <form @submit="handleSubmit" class="px-4 md:px-0 w-auto md:w-[500px] flex flex-col">
+        <h1 class="font-bold text-[26px] md:text-[30px] text-white text-center md:text-left">
+          Registrate para iniciar
+        </h1>
 
-    <form @submit="handleSubmit" class="px-4 md:px-0 w-auto md:w-[500px] flex flex-col">
-      <h1 class="font-bold text-[26px] md:text-[30px] text-colorTextBlack dark:text-white text-center md:text-left">
-        Registrate para iniciar
-      </h1>
 
 
+        <div   class="mt-3 mb-2 flex items-center gap-2 w-full ">
 
-      <div   class="mt-3 mb-2 flex items-center gap-2 w-full ">
-        <div class="mt-5 w-full border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
-          <label for="nombre" class="font-bold h-full text-[14px] md:text-[20px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
-            Referido por
-          </label>
-          <div v-if="loadingReferral" class="mt-2 mb-3 flex items-center justify-center gap-2">
-            <div class="w-4 h-4 border-2 border-colorCeleste border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <div v-else-if="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1">
-            {{ referralName }}
-          </div>
-          <div v-else="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1">
-            DinnerMax
+          <div class="mt-5 w-full border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[52px] md:h-[64px] flex gap-2 md:gap-5">
+            <label for="nombre" class="font-bold h-full text-[14px] md:text-[20px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+             <img src="@/assets/img/iconreferido.png" class=" md:w-[40px] md:h-[40px]" alt="icon-ref">
+            </label>
+            <div v-if="loadingReferral" class="mt-2 mb-3 flex items-center justify-center gap-2">
+              <div class="w-4 h-4 border-2 border-colorCeleste border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <div v-else-if="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-white w-full flex-1">
+              {{ referralName }}
+            </div>
+            <div v-else="referralName"  class="text-[18px] flex items-center font-bold md:text-[22px] bg-transparent outline-none rounded-[20px] text-white w-full flex-1">
+              DinnerMax
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
-        <label for="nombre" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
-          Nombre
-        </label>
-        <input
-            type="text"
-            id="nombre"
-            v-model="nombre"
-            placeholder="Nombre completo"
-            autocomplete="off"
-            class="text-[14px] md:text-[20px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1"
-        />
-      </div>
+        <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px]  h-[52px] md:h-[64px] flex">
+          <label for="nombre" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+            <CircleUserRound class="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
+          </label>
+          <input
+              type="text"
+              id="nombre"
+              v-model="nombre"
+              placeholder="Nombre completo"
+              autocomplete="off"
+              class="text-[14px] pl-3  md:text-[20px] bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px]  w-full flex-1"
+          />
+        </div>
 
-      <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5">
-        <label for="user" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
-          Correo
-        </label>
-        <input
-            type="email"
-            id="user"
-            v-model="email"
-            placeholder="Correo"
-            autocomplete="off"
-            class="text-[14px] md:text-[20px] bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1"
-        />
-      </div>
+        <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px]  h-[52px] md:h-[64px]  flex ">
+          <label for="user" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+            <Mail class="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
+          </label>
+          <input
+              type="email"
+              id="user"
+              v-model="email"
+              placeholder="Correo"
+              autocomplete="off"
+              class="text-[14px] pl-3  md:text-[20px] bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px]  w-full flex-1"
+          />
+        </div>
 
-      <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[64px] flex gap-2 md:gap-5 items-center relative">
-        <label for="password" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-[20px] flex-[0.4]">
-          Contraseña
-        </label>
-        <input
-            :type="passwordVisible ? 'text' : 'password'"
-            id="password"
-            v-model="password"
-            placeholder="Contraseña"
-            autocomplete="off"
-            class="pr-16 text-[14px] md:text-[20px] h-full bg-transparent outline-none rounded-[20px] text-colorTextBlack dark:text-white w-full flex-1"
-        />
-        <button
-            type="button"
-            @click="togglePasswordVisibility"
-            class="absolute right-5 cursor-pointer text-colorGray dark:text-white"
-        >
-          <Eye v-if="passwordVisible" class="w-[24px] h-[24px]" />
-          <EyeOff v-else class="w-[24px] h-[24px]" />
-        </button>
-      </div>
-
-      <p v-if="errorMessage" class="mt-2 text-red-500 text-sm text-center">
-        {{ errorMessage }}
-      </p>
-
-      <div class="w-full flex-col items-center justify-center">
-        <div class="mt-10 flex justify-center">
+        <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px]  h-[52px] md:h-[64px] flex  items-center relative">
+          <label for="password" class="font-bold h-full text-[16px] md:text-[24px] text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+            <KeyRound class="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
+          </label>
+          <input
+              :type="passwordVisible ? 'text' : 'password'"
+              id="password"
+              v-model="password"
+              placeholder="Contraseña"
+              autocomplete="off"
+              class="pr-16 pl-3  text-[14px] md:text-[20px] h-full bg-transparent focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px] text-white focus:text-colorTextBlack w-full flex-1"
+          />
           <button
-              type="submit"
-              :disabled="loading"
-              class="button dark:text-white bg-colorCeleste h-[65px] font-bold text-[18px] md:text-[20px] rounded-[20px] shadow-custom-purple cursor-pointer w-full md:max-w-[338px] text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              @click="togglePasswordVisibility"
+              class="absolute right-5 cursor-pointer text-colorGray dark:text-white"
           >
-            <Loader2 v-if="loading" class="animate-spin mr-2 h-5 w-5" />
-            {{ loading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+            <Eye v-if="passwordVisible" class="w-[24px] h-[24px]" />
+            <EyeOff v-else class="w-[24px] h-[24px]" />
           </button>
         </div>
-        <p class="text-center mt-6 text-colorTextBlack dark:text-white text-[14px]">
-          ¿Ya tienes una cuenta? <router-link to="/login" class="font-bold hover:underline">Inicio de Sesión</router-link>
-        </p>
-      </div>
-    </form>
 
-    <img src="@/assets/img/arrow-left.png" class="absolute top-0 right-0 w-36 md:w-auto" alt="Arrow Left">
-    <img src="@/assets/img/arrow-rigth.png" class="absolute top-0 left-0 w-36 md:w-auto" alt="Arrow Right">
+        <p v-if="errorMessage" class="mt-2 text-red-500 text-sm text-center">
+          {{ errorMessage }}
+        </p>
+
+        <div class="w-full flex-col items-center justify-center">
+          <div class="mt-10 flex justify-center">
+            <button
+                type="submit"
+                :disabled="loading"
+                class="button dark:text-white bg-colorCeleste h-[52px] md:h-[65px] font-bold text-[18px] md:text-[20px] rounded-[20px] shadow-custom-purple cursor-pointer w-full md:max-w-[338px] text-white flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Loader2 v-if="loading" class="animate-spin mr-2 h-5 w-5" />
+              {{ loading ? 'Creando cuenta...' : 'Crear Cuenta' }}
+            </button>
+          </div>
+          <p class="text-center mt-6 text-white text-[14px]">
+            ¿Ya tienes una cuenta? <router-link to="/login" class="font-bold hover:underline">Inicio de Sesión</router-link>
+          </p>
+        </div>
+      </form>
+    </div>
+
 
     <DialogValidation
         v-if="showValidationDialog"
@@ -218,4 +223,23 @@ const handleSubmit = async (e) => {
 </template>
 
 <style scoped>
+.container-form{
+  overflow-y: auto;
+}
+video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+}
+
+/* Asegúrate de que el contenido esté por encima del video */
+.relative {
+  position: relative;
+  z-index: 10;
+}
 </style>

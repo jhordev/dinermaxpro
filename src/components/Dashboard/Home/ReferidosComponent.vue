@@ -75,10 +75,10 @@ const handleCopy = async () => {
     </div>
 
     <div class="mt-5 p-5 bg-bgf3 rounded-[10px] flex gap-[30px] items-center">
-      <div class="relative w-[80px] h-[80px]">
+      <div class="relative ">
         <img
-            src="@/assets/img/item1.png"
-            class="rounded-full w-[80px] h-[80px] object-cover"
+            src="@/assets/img/iconref.png"
+            class=" w-[80px] h-[80px] object-cover"
             alt="Imagen de referidos"
         />
       </div>

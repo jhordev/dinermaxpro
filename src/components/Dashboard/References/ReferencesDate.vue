@@ -58,7 +58,7 @@ const copyToClipboard = () => {
     </div>
 
     <div class="mt-5 p-5 bg-bgf3 rounded-[10px] flex gap-[30px] items-center">
-      <img src="@/assets/img/item2.png" class="rounded-full w-[80px]" />
+      <img src="@/assets/img/iconref.png" class="rounded-full w-[80px]" />
       <div class="flex flex-col gap-[10px]">
         <h3 class="text-gray-500 font-bold text-[16px]">Total de referidos</h3>
         <strong class="font-bold text-[23px]">{{ totalReferrals }}</strong>
