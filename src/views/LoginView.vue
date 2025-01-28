@@ -67,13 +67,7 @@ const handleSubmit = async (e) => {
 </script>
 
 <template>
-  <main class="relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center ">
-    <!-- Video de fondo -->
-    <video autoplay muted loop class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover">
-      <source src="@/assets/fondo.mp4" type="video/mp4" />
-      Tu navegador no soporta videos HTML5.
-    </video>
-
+  <main class="container-main relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center ">
     <!-- Contenido sobre el video -->
     <div class="relative container-form z-10 w-full flex flex-col items-center">
       <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
@@ -150,6 +144,12 @@ const handleSubmit = async (e) => {
 </template>
 
 <style scoped>
+.container-main{
+  background-image: url("@/assets/fondo.gif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 .container-form{
   overflow-y: auto;
 }
