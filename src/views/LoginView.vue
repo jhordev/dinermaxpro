@@ -1,13 +1,18 @@
+<!-- Login.vue -->
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref } from 'vue';
 import { Eye, EyeOff, Loader2, CircleUserRound, KeyRound } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { authService } from '@/services/auth_service';
 import DialogValidation from '@/dialogs/DialogValidation.vue';
 import { logError, logInfo } from '@/utils/logger.js';
 import { useDarkModeStore } from '@/stores/darkMode.js';
+import ForgotPasswordDialog from "@/dialogs/ForgotPasswordDialog.vue";
+
+// Inicialización de la tienda de modo oscuro
 useDarkModeStore();
 
+// Definición de variables reactivas
 const router = useRouter();
 const passwordVisible = ref(false);
 const email = ref('');
@@ -16,12 +21,23 @@ const loading = ref(false);
 const errorMessage = ref('');
 const showValidationDialog = ref(false);
 const isSubmitting = ref(false);
-const isDarkMode = ref(true);
+const showForgotPasswordModal = ref(false);
 
+// Funciones para manejar la visibilidad del modal
+const openForgotPasswordModal = () => {
+  showForgotPasswordModal.value = true;
+};
+
+const closeForgotPasswordModal = () => {
+  showForgotPasswordModal.value = false;
+};
+
+// Función para alternar la visibilidad de la contraseña
 const togglePasswordVisibility = () => {
   passwordVisible.value = !passwordVisible.value;
 };
 
+// Función para manejar el envío del formulario de inicio de sesión
 const handleSubmit = async (e) => {
   e.preventDefault();
 
@@ -37,19 +53,19 @@ const handleSubmit = async (e) => {
   errorMessage.value = '';
 
   try {
-    // Primero intentamos autenticar al usuario
+    // Intentar autenticar al usuario
     const result = await authService.loginUser(email.value, password.value);
 
     if (result.success) {
       logInfo(`Credenciales verificadas para: ${email.value}`);
-      // Inmediatamente enviamos el código de verificación
+      // Enviar el código de verificación
       const verificationResult = await authService.sendVerificationCode(email.value);
 
       if (verificationResult.success) {
         showValidationDialog.value = true;
       } else {
         errorMessage.value = verificationResult.error;
-        // Si falla el envío del código, cerramos la sesión
+        // Si falla el envío del código, cerrar la sesión
         await authService.logout();
       }
     } else {
@@ -76,8 +92,8 @@ const handleSubmit = async (e) => {
 
       <form @submit="handleSubmit" class="px-4 md:px-0 w-auto md:w-[500px] flex flex-col">
         <h1 class="font-bold text-[26px] md:text-[30px] text-white text-center md:text-left">Iniciar Sesión</h1>
-        <div class="mt-5 border  border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[52px] md:h-[64px] flex ">
-          <label for="user" class="font-bold h-full  text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+        <div class="mt-5 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[52px] md:h-[64px] flex ">
+          <label for="user" class="font-bold h-full text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
             <CircleUserRound class="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
           </label>
           <input
@@ -86,11 +102,11 @@ const handleSubmit = async (e) => {
               id="user"
               placeholder="Correo"
               autocomplete="off"
-              class="text-[14px] pl-3  md:text-[20px] bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px]  w-full flex-1"
+              class="text-[14px] pl-3 md:text-[20px] bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px] w-full flex-1"
           />
         </div>
-        <div class="mt-10  border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[52px] md:h-[64px] flex items-center relative">
-          <label for="password" class="font-bold h-full  text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
+        <div class="mt-10 border border-colorblueblack dark:border-colorCelesteligth rounded-[20px] h-[52px] md:h-[64px] flex items-center relative">
+          <label for="password" class="font-bold h-full text-white px-5 flex justify-center items-center bg-custom-gradient-blue rounded-tl-[20px] rounded-bl-[20px] flex-[0.1]">
             <KeyRound class="w-[30px] h-[30px] md:w-[40px] md:h-[40px]" />
           </label>
           <input
@@ -99,7 +115,7 @@ const handleSubmit = async (e) => {
               id="password"
               placeholder="Contraseña"
               autocomplete="off"
-              class="pr-16 text-[14px] pl-3  md:text-[20px] h-full bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px]  w-full flex-1"
+              class="pr-16 text-[14px] pl-3 md:text-[20px] h-full bg-transparent text-white focus:text-colorTextBlack focus:bg-gray-100 outline-none rounded-tr-[20px] rounded-br-[20px] w-full flex-1"
           />
           <button
               type="button"
@@ -115,7 +131,7 @@ const handleSubmit = async (e) => {
           {{ errorMessage }}
         </p>
 
-        <a href="#" class="link text-white text-end mt-4 text-[14px] mr-3">¿Olvidaste tu contraseña?</a>
+        <button @click.prevent="openForgotPasswordModal" class="link text-white text-end mt-4 text-[14px] mr-3">¿Olvidaste tu contraseña?</button>
         <div class="w-full flex-col items-center justify-center">
           <div class="w-full mt-10 flex justify-center">
             <button
@@ -133,24 +149,28 @@ const handleSubmit = async (e) => {
         </div>
       </form>
 
+      <!-- Diálogo de validación -->
       <DialogValidation
           v-if="showValidationDialog"
           :email="email"
           :isLogin="true"
           @close="showValidationDialog = false"
       />
+
+      <!-- Modal de Recuperar Contraseña -->
+      <ForgotPasswordDialog v-if="showForgotPasswordModal" @close="closeForgotPasswordModal" />
     </div>
   </main>
 </template>
 
 <style scoped>
-.container-main{
+.container-main {
   background-image: url("@/assets/fondo.gif");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
-.container-form{
+.container-form {
   overflow-y: auto;
 }
 video {
