@@ -43,8 +43,9 @@ function isActive(routePath) {
   >
     <!-- SIDEBAR HEADER -->
     <div class="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-      <router-link to="/" class="flex items-center">
-        <img src="@/assets/img/isotipo.png" alt="Logo" class="w-12" />
+      <router-link to="/dashboard" class="flex gap-3 items-center">
+        <img src="@/assets/logonew.png" class="w-12  block dark:hidden" />
+        <img src="@/assets/logowhite.png" class="w-12  hidden dark:block" />
         <span class="md:text-[24px] font-bold text-colorTextBlack dark:text-white">DinnerMax</span>
       </router-link>
 

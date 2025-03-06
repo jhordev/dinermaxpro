@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import logotipo from "@/assets/DinnerMax.png";
+import logotipo from "@/assets/logotipo.png";
 import { logInfo, logError } from '@/utils/logger';
 
 export const generarPdf = ({

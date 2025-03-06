@@ -86,8 +86,8 @@ const handleSubmit = async (e) => {
   <main class="container-main relative h-[100vh] overflow-hidden flex flex-col gap-5 md:justify-center items-center ">
     <!-- Contenido sobre el video -->
     <div class="relative container-form z-10 w-full flex flex-col items-center">
-      <router-link to="/" class="w-[150px] md:w-[239px] mt-16 md:mt-0">
-        <img src="@/assets/img/logotipo.png" alt="Logo">
+      <router-link to="/" class="w-[150px] mb-8 md:w-[300px] mt-16 md:mt-0">
+        <img src="@/assets/logotipowhite.png"/>
       </router-link>
 
       <form @submit="handleSubmit" class="px-4 md:px-0 w-auto md:w-[500px] flex flex-col">
