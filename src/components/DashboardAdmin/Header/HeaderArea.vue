@@ -56,8 +56,8 @@ const pageTitle = computed(() => {
           <Menu class="w-8 h-8"/>
         </button>
         <router-link class="block flex-shrink-0 lg:hidden" to="/admin">
-          <img src="@/assets/logonew.png" class="w-8 mr-2 block dark:hidden" />
-          <img src="@/assets/logowhite.png" class="w-8 mr-2 hidden dark:block" />
+          <img src="@/assets/logonew.png" class="w-10 h-10 mr-2 block dark:hidden" />
+          <img src="@/assets/logowhite.png" class="w-10 h-10 mr-2 hidden dark:block" />
         </router-link>
         <h1 class="truncate max-w-36 lg:max-w-full font-bold text-[12px] md:text-[24px] text-colorTextBlack dark:text-white tracking-[2.4px]">
           {{ pageTitle }}
