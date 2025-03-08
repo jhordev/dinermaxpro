@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import logotipo from "@/assets/logotipo.png";
+import logotipo from "@/assets/logotipowhite.png";
 import { logInfo, logError } from '@/utils/logger';
 
 export const generarPdf = ({
@@ -42,7 +42,7 @@ export const generarPdf = ({
             doc.setFillColor(32, 31, 33);
             doc.rect(0, contenedorY, doc.internal.pageSize.width, contenedorAlto, "F");
 
-            doc.addImage(logotipo, "PNG", 20, 12, 110, 36);
+            doc.addImage(logotipo, "PNG", 20, 12, 100, 42);
         };
 
         // Pie de página
