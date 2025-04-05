@@ -141,50 +141,49 @@ export const createWithdrawalRequest = async (amount) => {
         const userId = auth.currentUser?.uid;
         if (!userId) throw new Error('Usuario no autenticado');
 
-        // Obtener balances mediante Promise
-        return new Promise((resolve, reject) => {
-            getUserBalances(async (balances) => {
-                try {
-                    if (!balances) {
-                        throw new Error('No se pudieron obtener los balances');
-                    }
-
-                    const systemSettings = await getSystemSettings();
-                    const withdrawalFee = Number((amount * systemSettings.withdrawal / 100).toFixed(2));
-                    const netAmount = Number((amount - withdrawalFee).toFixed(2));
-
-                    const userDoc = await getDoc(doc(db, 'users', userId));
-                    const userData = userDoc.data();
-
-                    const withdrawalData = {
-                        userId,
-                        userName: userData.nombre,
-                        email: userData.email,
-                        socioId: userData.socioId || null,
-                        amount: Number(amount),
-                        netAmount,
-                        withdrawalFee,
-                        walletAddress: userData.wallet,
-                        status: 'pending',
-                        createdAt: serverTimestamp(),
-                        updatedAt: serverTimestamp(),
-                        balanceInfo: {
-                            investment: balances.investment,
-                            earnings: balances.earnings,
-                            referralBonus: balances.referralBonus,
-                            isCompleted: balances.isCompleted
-                        },
-                    };
-
-                    const docRef = await addDoc(collection(db, 'withdrawals'), withdrawalData);
-                    logInfo('Solicitud de retiro creada:', docRef.id);
-                    resolve(docRef.id);
-                } catch (error) {
-                    logError('Error en proceso de retiro:', error);
-                    reject(error);
+        const balances = await new Promise((resolve, reject) => {
+            // Almacenar la función de cancelación del listener
+            const unsubscribe = getUserBalances((balancesData) => {
+                if (!balancesData) {
+                    reject(new Error('No se pudieron obtener los balances'));
+                } else {
+                    // Cancelar el listener inmediatamente después de recibir datos
+                    unsubscribe();
+                    resolve(balancesData);
                 }
             });
         });
+
+        const systemSettings = await getSystemSettings();
+        const withdrawalFee = Number((amount * systemSettings.withdrawal / 100).toFixed(2));
+        const netAmount = Number((amount - withdrawalFee).toFixed(2));
+
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        const userData = userDoc.data();
+
+        const withdrawalData = {
+            userId,
+            userName: userData.nombre,
+            email: userData.email,
+            socioId: userData.socioId || null,
+            amount: Number(amount),
+            netAmount,
+            withdrawalFee,
+            walletAddress: userData.wallet,
+            status: 'pending',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            balanceInfo: {
+                investment: balances.investment,
+                earnings: balances.earnings,
+                referralBonus: balances.referralBonus,
+                isCompleted: balances.isCompleted
+            },
+        };
+
+        const docRef = await addDoc(collection(db, 'withdrawals'), withdrawalData);
+        logInfo('Solicitud de retiro creada:', docRef.id);
+        return docRef.id;
     } catch (error) {
         logError('Error al crear solicitud de retiro:', error);
         throw error;
