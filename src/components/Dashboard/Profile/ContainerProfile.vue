@@ -221,7 +221,7 @@ onMounted(loadUserData);
           <input
               v-model="userData.cedula"
               type="text"
-              placeholder="Ingresa tu Cédula"
+              placeholder="Ingresa tu cédula o pasaporte"
               :disabled="!isEditable"
               :class="[
               'pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',
