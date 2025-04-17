@@ -21,7 +21,7 @@ let unsubscribeInvestments;
 let unsubscribeUser;
 
 const validateUserProfile = () => {
-  const requiredFields = ['wallet', 'telefono', 'pais'];
+  const requiredFields = ['wallet', 'telefono', 'pais', 'cedula'];
   return requiredFields.some(field => !userData.value?.[field]);
 };
 

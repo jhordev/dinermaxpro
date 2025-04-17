@@ -121,15 +121,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="flex flex-col md:flex-row gap-[24px]">
-    <FormRetirar class="flex-[0.4] h-fit" />
+  <section class="grid grid-cols-12 gap-[24px]">
+    <FormRetirar class="col-span-4 h-fit" />
     <TableMovimientos
         ref="tableRef"
         :datos="movimientos"
         :isLoading="isLoading"
         :isGeneratingPDF="isGeneratingPDF"
         @generate-pdf="handleGeneratePDF"
-        class="flex-1"
+        class="col-span-8"
     />
   </section>
 </template>

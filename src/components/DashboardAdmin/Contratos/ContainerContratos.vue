@@ -1,14 +1,80 @@
 <script setup>
 import CardLayout from "@/layouts/CardLayout.vue";
 import { ref, computed, onMounted } from 'vue';
-import { Search, Eye, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Search, Eye, ChevronLeft, ChevronRight, FileDown } from 'lucide-vue-next';
 import Contrato from "@/components/DashboardAdmin/Contratos/Contrato.vue";
 import { investmentService } from '@/services/investment_service';
+import { userService } from '@/services/user_service';
 import { logError } from '@/utils/logger';
 import SecureLS from 'secure-ls';
 import { auth } from '@/services/firebase_config';
 import { useToast } from 'vue-toastification';
 import { useRouter } from 'vue-router';
+import { generarPdf } from '@/utils/pdf_contrato.js';
+
+const formatearFecha = ts =>
+    ts?.toDate?.().toLocaleDateString('es-PE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }) || 'Sin fecha';
+
+const descargarContratoPDF = async (userId) => {
+  try {
+    toast.info('Generando contrato...', { timeout: 3000 });
+
+    const [investment, user] = await Promise.all([
+      investmentService.getInvestmentByUserId(userId),
+      userService.getUserById(userId)
+    ]);
+
+    if (!investment || !user?.data) {
+      toast.error('No se pudo generar el contrato. Datos incompletos');
+      logError('Datos incompletos para generar el contrato');
+      return;
+    }
+
+    const porcentajeMensual =
+        investment.interestRate === 0.3 ? '6%' :
+            investment.interestRate === 0.5 ? '10%' : '14%';
+    const retiroPorcentual =
+        investment.interestRate === 0.3 ? '12%, 24%, 36%, 48%, 60%, 72%, 84%, 96% y 4%' :
+            investment.interestRate === 0.5 ? '10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, 90% y 100%': '8%, 16%, 24%, 32%, 40%, 48%, 56%, 64%, 72%, 80%, 88%, 96% y 4%'
+
+    // Generar PDF y descargar ✨
+    const pdfDoc = await generarPdf({
+      ciudad:            'Ciudad de Panamá',
+      fecha:             formatearFecha(investment.activationDate),
+      numeroContrato:    investment.numberinvestment || '---',
+      empresa:           'DinnerMax S.A',
+      ruc:               '155763860-2-2025',
+      cliente:           user.data.nombre   || '---',
+      cedula:            user.data.cedula   || '---',
+      cedulaAdmin:       '8-408-751',
+      monto:             investment.investment ? `${investment.investment} USDT` : '---',
+      paquete:           investment.planName || '---',
+      porcentajeMensual,
+      duracion:          investment.duration || '---',
+      fechaInicio:       formatearFecha(investment.activationDate),
+      fechaFin:          formatearFecha(investment.expirationDate),
+      pais:              user.data.pais     || '---',
+      email:             user.data.email    || '---',
+      telefono:          user.data.telefono || '---',
+      incrementales: retiroPorcentual
+    });
+
+    pdfDoc.download(`Contrato_${user.data.nombre || 'Cliente'}.pdf`);
+
+    // Marcar contrato como descargado 🔖
+    await investmentService.marcarContratoComoDescargado(investment.id);
+
+    toast.success('Contrato descargado correctamente', { timeout: 3000 });
+  } catch (error) {
+    toast.error('Error al generar el contrato');
+    logError('Error al generar contrato PDF:', error);
+  }
+};
 
 const router = useRouter();
 const toast = useToast();
@@ -66,7 +132,8 @@ onMounted(() => {
               caducidad: caducidad,
               estado: inv.status,
               walletAddress: inv.walletAddress,
-              voucherUrl: inv.voucherUrl
+              voucherUrl: inv.voucherUrl,
+              documentContract: inv.documentContract
             };
           }));
 
@@ -212,6 +279,7 @@ const paginationRange = computed(() => {
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Capital</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Registro</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Caducidad</th>
+          <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Contrato</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Estado</th>
           <th class="p-4 text-center text-sm font-medium uppercase text-black dark:text-white">Ver</th>
         </tr>
@@ -236,6 +304,31 @@ const paginationRange = computed(() => {
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">{{
               product.caducidad
             }}
+          </td>
+          <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
+            <div class="flex justify-center">
+              <button
+                  :disabled="product.estado !== 'approved'"
+                  @click="descargarContratoPDF(product.userId)"
+                  class="flex items-center py-1 px-2 rounded-[8px] gap-2 border transition-all duration-300"
+                  :class="{
+                    'bg-red-200 text-red-700 border-red-700': product.documentContract === 'notdownloaded' && product.estado === 'approved',
+                    'bg-green-200 text-green-700 border-green-700': product.documentContract === 'downloaded' && product.estado === 'approved',
+                    'bg-gray-300 text-gray-500  border-yellow-500 cursor-not-allowed': product.estado !== 'approved'
+                  }"
+                  >
+                <FileDown />
+                <span>
+                {{
+                            product.estado !== 'approved'
+                                ? 'No disponible'
+                                : product.documentContract === 'downloaded'
+                                    ? 'Descargado'
+                                    : 'Descargar'
+                          }}
+                </span>
+              </button>
+            </div>
           </td>
           <td class="p-4 text-[14px] font-normal text-center text-colorTextBlack dark:text-white">
             <div :style="{ backgroundColor: colors[product.estado] }"

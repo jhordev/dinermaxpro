@@ -40,6 +40,13 @@ const requiredFields = computed(() => [
     icon: props.userData?.pais ? CircleCheck : CircleX,
     status: props.userData?.pais ? 'completado' : 'pendiente',
     description: 'Requerido para cumplimiento legal'
+  },
+  {
+    key: 'cedula',
+    label: 'Cédula',
+    icon: props.userData?.cedula ? CircleCheck : CircleX,
+    status: props.userData?.cedula ? 'completado' : 'pendiente',
+    description: 'Documento de identidad requerido'
   }
 ]);
 
@@ -51,7 +58,7 @@ const closeDialog = () => {
 const goToProfile = () => {
   logInfo('Redirigiendo al usuario al perfil para completar datos');
   closeDialog();
-  router.push({ name: 'profileuser' });
+  router.push({name: 'profileuser'});
 };
 
 const getCompletionPercentage = computed(() => {
@@ -68,18 +75,20 @@ const getCompletionPercentage = computed(() => {
 
       <span class="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
 
-      <div class="inline-block w-full max-w-md p-6 my-8 text-left align-middle transition-all transform bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-100 relative">
+      <div
+          class="inline-block w-full max-w-md p-6 my-8 text-left align-middle transition-all transform bg-white dark:bg-gray-800 rounded-2xl shadow-2xl scale-100 relative">
         <button @click="closeDialog"
                 class="absolute right-4 top-4 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 group">
-          <X class="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300" />
+          <X class="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:text-gray-500 dark:group-hover:text-gray-300"/>
         </button>
 
         <div class="mt-2">
           <div class="flex flex-col items-center mb-8">
             <div class="relative">
-              <div class="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur opacity-75 animate-pulse"></div>
+              <div
+                  class="absolute -inset-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur opacity-75 animate-pulse"></div>
               <div class="relative bg-white dark:bg-gray-800 rounded-full p-3">
-                <AlertTriangle class="w-12 h-12 text-yellow-500" />
+                <AlertTriangle class="w-12 h-12 text-yellow-500"/>
               </div>
             </div>
             <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white text-center">
@@ -106,17 +115,19 @@ const getCompletionPercentage = computed(() => {
                                :class="field.status === 'completado'
                                ? 'text-white'
                                : 'text-gray-400 dark:text-gray-500'"
-                               class="w-5 h-5" />
+                               class="w-5 h-5"/>
                     <div>
                       <h4 class="font-medium" :class="field.status === 'completado' ? 'text-white' : 'dark:text-white'">
                         {{ field.label }}
                       </h4>
-                      <p class="text-xs" :class="field.status === 'completado' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'">
+                      <p class="text-xs"
+                         :class="field.status === 'completado' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'">
                         {{ field.description }}
                       </p>
                     </div>
                   </div>
-                  <ChevronRight class="w-5 h-5" :class="field.status === 'completado' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'" />
+                  <ChevronRight class="w-5 h-5"
+                                :class="field.status === 'completado' ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'"/>
                 </div>
               </div>
             </div>
@@ -126,7 +137,7 @@ const getCompletionPercentage = computed(() => {
                   class="mt-8 w-full inline-flex justify-center items-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium transition-all duration-200 transform hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
                   @click="goToProfile">
             Completar mi Perfil
-            <ChevronRight class="ml-2 w-5 h-5" />
+            <ChevronRight class="ml-2 w-5 h-5"/>
           </button>
         </div>
       </div>

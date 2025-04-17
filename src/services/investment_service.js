@@ -1,10 +1,27 @@
 import { db, storage } from '@/services/firebase_config';
 import {collection, addDoc, serverTimestamp, onSnapshot, query,
-    orderBy, doc, updateDoc, getDoc, where, getDocs, increment} from 'firebase/firestore';
+    orderBy, doc, runTransaction, updateDoc, getDoc, where, getDocs, increment} from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { logInfo, logError, logDebug } from '@/utils/logger.js';
 
+async function getNextNumberInvestment() {
+    const counterRef = doc(db, 'counters', 'investments');
+    return await runTransaction(db, async (tx) => {
+        const snap = await tx.get(counterRef);
+        const current = snap.exists()
+            ? (snap.data().currentNumberInvestment || 120155456000)
+            : 120155456000;
+        const next = current + 1;
+        tx.set(counterRef, { currentNumberInvestment: next }, { merge: true });
+        return next;
+    });
+}
+
+
 export const investmentService = {
+
+
+
     async createInvestment(investmentData, voucherFile) {
         try {
             let voucherUrl = '';
@@ -15,15 +32,19 @@ export const investmentService = {
                 logInfo('Voucher subido exitosamente');
             }
 
+            const numberinvestment = await getNextNumberInvestment(); // ← numeración secuencial
+
             const investmentDoc = {
                 ...investmentData,
                 voucherUrl,
+                numberinvestment,              // nuevo campo
                 status: 'pending',
                 earnings: 0,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 expirationDate: null,
-                activationDate: null
+                activationDate: null,
+                documentContract: 'notdownloaded'
             };
 
             const docRef = await addDoc(collection(db, 'investments'), investmentDoc);
@@ -45,6 +66,25 @@ export const investmentService = {
             throw error;
         }
     },
+
+    async getInvestmentByUserId(userId) {
+        try {
+            const q = query(collection(db, 'investments'), where('userId', '==', userId));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                return { id: docSnap.id, ...docSnap.data() };
+            } else {
+                logDebug(`No se encontró inversión para userId: ${userId}`);
+                return null;
+            }
+        } catch (error) {
+            logError('Error al obtener inversión por userId:', error);
+            throw error;
+        }
+    },
+
 
     subscribeToInvestments(callback, userRole, socioId = null) {
         const q = query(collection(db, 'investments'), orderBy('createdAt', 'desc'));
@@ -241,5 +281,20 @@ export const investmentService = {
             logError('Error al obtener la configuración:', error);
             throw error;
         }
+    },
+
+    async marcarContratoComoDescargado(investmentId) {
+        try {
+            const investmentRef = doc(db, 'investments', investmentId);
+            await updateDoc(investmentRef, {
+                documentContract: "downloaded",
+                updatedAt: serverTimestamp()
+            });
+            logInfo(`Contrato marcado como descargado para inversión ${investmentId}`);
+        } catch (error) {
+            logError('Error al actualizar el estado del contrato:', error);
+            throw error;
+        }
     }
+
 };

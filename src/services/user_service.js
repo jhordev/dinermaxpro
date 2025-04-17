@@ -80,6 +80,7 @@ export const userService = {
             if (userData.email) updateData.email = userData.email;
             if (userData.wallet) updateData.wallet = userData.wallet;
             if (userData.sexo) updateData.sexo = userData.sexo;
+            if (userData.cedula) updateData.cedula = userData.cedula; // Se agregó el campo de cédula
             if (userData.telefono) updateData.telefono = userData.telefono;
             if (userData.pais) updateData.pais = userData.pais;
             if (userData.telegram) updateData.telegram = userData.telegram;

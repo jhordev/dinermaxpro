@@ -20,7 +20,8 @@ const userData = ref({
   email: '',
   referido: '',
   photoURL: '',
-  updated_at: ''
+  updated_at: '',
+  cedula: ''
 });
 
 const loadUserData = async () => {
@@ -201,8 +202,8 @@ onMounted(loadUserData);
     </header>
 
     <div class="mt-[30px]">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-[20px] md:gap-[30px]">
-        <div class="col-span-2 flex flex-col gap-2.5">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-[20px] md:gap-[30px]">
+        <div class="col-span-6 md:col-span-2 flex flex-col gap-2.5">
           <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Nombre</label>
           <input
               v-model="userData.nombre"
@@ -215,8 +216,21 @@ onMounted(loadUserData);
             ]"
           >
         </div>
+        <div class="col-span-6 md:col-span-2 flex flex-col gap-2.5">
+          <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Cédula / Pasaporte</label>
+          <input
+              v-model="userData.cedula"
+              type="text"
+              placeholder="Ingresa tu Cédula"
+              :disabled="!isEditable"
+              :class="[
+              'pl-5 py-3 md:py-4 outline-none bg-transparent text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal',
+              !isEditable ? 'opacity-75 cursor-not-allowed' : ''
+            ]"
+          >
+        </div>
 
-        <div class="col-span-2 flex flex-col gap-2.5">
+        <div class="col-span-6 md:col-span-2 flex flex-col gap-2.5">
           <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Billetera (red: TRC20)</label>
           <input
               v-model="userData.wallet"
@@ -230,8 +244,8 @@ onMounted(loadUserData);
           >
         </div>
 
-        <div class="w-full col-span-2 md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-[20px] md:gap-[30px]">
-          <div class="w-full col-span-1 flex flex-col gap-2.5">
+        <div class="w-full  col-span-6 grid grid-cols-3 gap-[20px] md:gap-[30px]">
+          <div class="w-full col-span-3 md:col-span-1 flex flex-col gap-2.5">
             <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Sexo</label>
             <div class="relative">
               <select
@@ -258,7 +272,7 @@ onMounted(loadUserData);
             </div>
           </div>
 
-          <div class="col-span-1 flex flex-col gap-2.5">
+          <div class="col-span-3 md:col-span-1 flex flex-col gap-2.5">
             <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Teléfono</label>
             <input
                 v-model="userData.telefono"
@@ -272,7 +286,7 @@ onMounted(loadUserData);
             >
           </div>
 
-          <div class="col-span-1 flex flex-col gap-2.5">
+          <div class="col-span-3 md:col-span-1 flex flex-col gap-2.5">
             <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">País</label>
             <input
                 v-model="userData.pais"
@@ -287,7 +301,7 @@ onMounted(loadUserData);
           </div>
         </div>
 
-        <div class="col-span-2 flex flex-col gap-2.5">
+        <div class="col-span-6 md:col-span-3 flex flex-col gap-2.5">
           <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Referido por</label>
           <input
               v-model="userData.referido"
@@ -299,7 +313,7 @@ onMounted(loadUserData);
           >
         </div>
 
-        <div class="col-span-2 flex flex-col gap-2.5">
+        <div class="col-span-6 md:col-span-3 flex flex-col gap-2.5">
           <label class="text-colorTextBlack dark:text-white font-semibold text-[14px] md:text-[16px]">Actualizar Contraseña</label>
           <div class="flex items-center justify-between pr-5 gap-8 text-colorTextBlack dark:text-white border rounded-[6px] text-[16px] font-normal">
             <input
