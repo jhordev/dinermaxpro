@@ -47,6 +47,7 @@ const loadUserData = async () => {
         email: response.data.email || "Sin email",
         pais: response.data.pais || "No especificado",
         telefono: response.data.telefono || "No especificado",
+        cedula: response.data.cedula || "No especificado",
         wallet: response.data.wallet || "No especificada",
         referidoPor: ""
       };
@@ -110,6 +111,10 @@ const copyToClipboard = () => {
     </header>
 
     <article class="pt-2.5 text-colorTextBlack dark:text-white">
+      <div class="flex p-1.5 items-center justify-between">
+        <h3>Cédula</h3>
+        <h3>{{ userData.cedula }}</h3>
+      </div>
       <div class="flex p-1.5 items-center justify-between">
         <h3>País</h3>
         <h3>{{ userData.pais }}</h3>
