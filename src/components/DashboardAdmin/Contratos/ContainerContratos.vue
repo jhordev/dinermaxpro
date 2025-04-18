@@ -47,7 +47,7 @@ const descargarContratoPDF = async (userId) => {
       ciudad:            'Ciudad de Panamá',
       fecha:             formatearFecha(investment.activationDate),
       numeroContrato:    investment.numberinvestment || '---',
-      empresa:           'DinnerMax S.A',
+      empresa:           'DinnerMax',
       ruc:               '155763860-2-2025',
       cliente:           user.data.nombre   || '---',
       cedula:            user.data.cedula   || '---',
